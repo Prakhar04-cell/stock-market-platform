@@ -1,0 +1,22 @@
+# Docker ignore for TradeX Backend
+.env
+.env.*
+.env.local
+.env.production
+.venv/
+env/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+credentials*.json
+*.pem
+*.key
+*.cert
+.git
+.gitignore
+README.md

@@ -175,3 +175,72 @@ async def get_trading_engine_health():
         "message": "TradeX Virtual Paper Execution Engine active. Real-money orders strictly disabled.",
     }
 
+
+@router.get("/infrastructure", summary="Infrastructure runtime diagnostics")
+async def get_infrastructure_health(db: AsyncSession = Depends(get_db)):
+    """Diagnostics for container runtime, database, redis, and hosting environment."""
+    in_docker = os.path.exists("/.dockerenv")
+    if not in_docker:
+        try:
+            with open("/proc/1/cgroup", "rt") as f:
+                content = f.read()
+                in_docker = "docker" in content or "containerd" in content
+        except Exception:
+            in_docker = False
+
+    # Check DB
+    db_ok = False
+    try:
+        await db.execute(text("SELECT 1"))
+        db_ok = True
+    except Exception:
+        db_ok = False
+
+    # Check Redis
+    redis_ok = await check_redis_health()
+
+    # Check Upstox
+    from app.services.market_data.upstox_client import upstox_client
+    from app.services.market_data.websocket_service import upstream_feed
+    verification = await upstox_client.verify_token()
+
+    db_url = settings.DATABASE_URL
+    is_neon = "neon.tech" in db_url
+    is_docker_db = "@postgres:" in db_url
+
+    redis_url = settings.REDIS_URL
+    is_upstash = "upstash.io" in redis_url
+    is_docker_redis = "@redis:" in redis_url or "redis://redis:" in redis_url
+
+    return {
+        "environment": settings.ENVIRONMENT,
+        "docker_runtime": {
+            "is_container": in_docker,
+            "status": "RUNNING_IN_DOCKER" if in_docker else "NOT AVAILABLE (HOST PROCESS)",
+        },
+        "backend_container": {
+            "status": "HEALTHY" if in_docker else "NOT RUNNING (NATIVE HOST)",
+        },
+        "backend": {
+            "status": "HEALTHY",
+            "service": "FastAPI",
+            "version": settings.VERSION,
+        },
+        "database": {
+            "status": "CONNECTED" if db_ok else "FAILED",
+            "provider": "Neon PostgreSQL" if is_neon else ("Docker PostgreSQL" if is_docker_db else "PostgreSQL"),
+        },
+        "redis": {
+            "status": "CONNECTED" if redis_ok else "FAILED",
+            "provider": "Upstash Redis" if is_upstash else ("Docker Redis" if is_docker_redis else "Redis"),
+        },
+        "upstox": {
+            "configured": verification["configured"],
+            "status": "AUTHENTICATED" if verification["authenticated"] else ("EXPIRED" if verification["configured"] else "NOT CONFIGURED"),
+        },
+        "websocket": {
+            "status": "CONNECTED" if upstream_feed.is_connected else "DISCONNECTED",
+        },
+    }
+
+

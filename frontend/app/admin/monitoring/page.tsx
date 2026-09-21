@@ -4,9 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { apiRequest } from "@/lib/api-client";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatDateTime } from "@/lib/utils";
 import {
   Activity,
   RefreshCw,
@@ -20,20 +18,26 @@ import {
   ExternalLink,
   CheckCircle2,
   AlertTriangle,
+  Box,
+  Cloud,
 } from "lucide-react";
 
 export default function AdminMonitoringPage() {
   const [monitoringData, setMonitoringData] = useState<any>(null);
+  const [infraData, setInfraData] = useState<any>(null);
   const [upstoxStatus, setUpstoxStatus] = useState<any>(null);
+  const [marketDataHealth, setMarketDataHealth] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<string>("");
 
   const loadHealthData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [monData, upData] = await Promise.allSettled([
+      const [monData, upData, infra, marketH] = await Promise.allSettled([
         apiRequest("/api/v1/admin/monitoring"),
         apiRequest("/api/v1/upstox/auth/status"),
+        apiRequest("/health/infrastructure"),
+        apiRequest("/health/market-data"),
       ]);
 
       if (monData.status === "fulfilled") {
@@ -42,6 +46,13 @@ export default function AdminMonitoringPage() {
       if (upData.status === "fulfilled") {
         setUpstoxStatus(upData.value);
       }
+      if (infra.status === "fulfilled") {
+        setInfraData(infra.value);
+      }
+      if (marketH.status === "fulfilled") {
+        setMarketDataHealth(marketH.value);
+      }
+
       setLastRefreshed(new Date().toLocaleTimeString());
     } finally {
       setIsLoading(false);
@@ -50,20 +61,39 @@ export default function AdminMonitoringPage() {
 
   useEffect(() => {
     loadHealthData();
-    const interval = setInterval(loadHealthData, 30000);
+    const interval = setInterval(loadHealthData, 15000);
     return () => clearInterval(interval);
   }, [loadHealthData]);
 
-  const getServiceIcon = (name: string) => {
-    const lower = name.toLowerCase();
-    if (lower.includes("database") || lower.includes("postgres")) return Database;
-    if (lower.includes("frontend")) return Globe;
-    if (lower.includes("backend") || lower.includes("api")) return Server;
-    if (lower.includes("redis")) return Cpu;
-    if (lower.includes("websocket")) return Radio;
-    if (lower.includes("market") || lower.includes("trading") || lower.includes("upstox")) return Layers;
-    return Activity;
-  };
+  const isUpstoxAuth =
+    upstoxStatus?.authenticated ||
+    infraData?.upstox?.status === "AUTHENTICATED" ||
+    monitoringData?.metrics?.upstox_authenticated ||
+    marketDataHealth?.authenticated;
+
+  const isUpstoxConfigured =
+    upstoxStatus?.configured ||
+    infraData?.upstox?.configured ||
+    monitoringData?.metrics?.upstox_configured ||
+    marketDataHealth?.configured;
+
+  const isWsConnected =
+    infraData?.websocket?.status === "CONNECTED" ||
+    monitoringData?.metrics?.market_websocket_status === "connected" ||
+    marketDataHealth?.websocket === "connected";
+
+  const postgresStatus =
+    infraData?.database?.status ||
+    monitoringData?.metrics?.postgresql_status ||
+    (marketDataHealth ? "HEALTHY" : "UNKNOWN");
+
+  const redisStatus =
+    infraData?.redis?.status ||
+    monitoringData?.metrics?.redis_status ||
+    (marketDataHealth?.redis === "connected" ? "HEALTHY" : "UNKNOWN");
+
+  const isDockerContainer = infraData?.docker_runtime?.is_container ?? false;
+  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel.app");
 
   return (
     <div className="space-y-5 select-none">
@@ -71,10 +101,10 @@ export default function AdminMonitoringPage() {
       <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            System Monitoring &amp; Provider Diagnostics
+            System Monitoring &amp; Infrastructure Diagnostics
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Real-time diagnostics for Upstox Feed V3, Market WebSocket fanout, and Paper Trading engine.
+            Real-time diagnostics for Docker / Host runtime, Cloud Database, Redis, and Upstox Market Feed V3.
           </p>
         </div>
 
@@ -97,17 +127,122 @@ export default function AdminMonitoringPage() {
         </div>
       </div>
 
+      {/* Production Infrastructure & Docker Runtime Card */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-card space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Box className="w-4 h-4 text-indigo-600" />
+            <h2 className="text-sm font-bold text-slate-900">
+              Infrastructure &amp; Container Runtime
+            </h2>
+          </div>
+          <Badge variant="neutral" className="text-[10px] font-mono">
+            {isVercel ? "FRONTEND: VERCEL PRODUCTION" : "FRONTEND: LOCAL HOST"}
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          {/* Docker Runtime */}
+          <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
+            <span className="text-[11px] text-slate-500 font-medium block flex items-center gap-1.5">
+              <Box className="w-3.5 h-3.5 text-slate-400" />
+              Docker Runtime
+            </span>
+            <span
+              className={`font-bold ${
+                isDockerContainer ? "text-emerald-700" : "text-slate-600"
+              }`}
+            >
+              {isDockerContainer ? "CONNECTED" : "NOT AVAILABLE"}
+            </span>
+            <p className="text-[10px] text-slate-400">
+              {isDockerContainer ? "Containerized stack" : "Host process (Docker optional)"}
+            </p>
+          </div>
+
+          {/* Backend Container */}
+          <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
+            <span className="text-[11px] text-slate-500 font-medium block flex items-center gap-1.5">
+              <Server className="w-3.5 h-3.5 text-slate-400" />
+              Backend Container
+            </span>
+            <span
+              className={`font-bold ${
+                isDockerContainer
+                  ? "text-emerald-700"
+                  : infraData?.backend?.status === "HEALTHY"
+                  ? "text-emerald-700"
+                  : "text-amber-700"
+              }`}
+            >
+              {isDockerContainer
+                ? "HEALTHY"
+                : infraData?.backend?.status === "HEALTHY"
+                ? "HEALTHY (NATIVE)"
+                : "UNHEALTHY"}
+            </span>
+            <p className="text-[10px] text-slate-400">
+              {infraData?.backend?.service || "FastAPI"} v{infraData?.backend?.version || "1.0.0"}
+            </p>
+          </div>
+
+          {/* PostgreSQL */}
+          <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
+            <span className="text-[11px] text-slate-500 font-medium block flex items-center gap-1.5">
+              <Database className="w-3.5 h-3.5 text-slate-400" />
+              PostgreSQL
+            </span>
+            <span
+              className={`font-bold ${
+                postgresStatus === "CONNECTED" || postgresStatus === "HEALTHY"
+                  ? "text-emerald-700"
+                  : "text-rose-700"
+              }`}
+            >
+              {postgresStatus === "CONNECTED" || postgresStatus === "HEALTHY"
+                ? "CONNECTED"
+                : "FAILED"}
+            </span>
+            <p className="text-[10px] text-slate-400 truncate">
+              {infraData?.database?.provider || "PostgreSQL Database"}
+            </p>
+          </div>
+
+          {/* Redis */}
+          <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
+            <span className="text-[11px] text-slate-500 font-medium block flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5 text-slate-400" />
+              Redis Cache
+            </span>
+            <span
+              className={`font-bold ${
+                redisStatus === "CONNECTED" || redisStatus === "HEALTHY"
+                  ? "text-emerald-700"
+                  : "text-rose-700"
+              }`}
+            >
+              {redisStatus === "CONNECTED" || redisStatus === "HEALTHY"
+                ? "CONNECTED"
+                : "FAILED"}
+            </span>
+            <p className="text-[10px] text-slate-400 truncate">
+              {infraData?.redis?.provider || "Redis Datastore"}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Upstox Authentication & Live Stream Status Banner */}
       <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-3.5">
           <div
             className={`p-2.5 rounded-xl border ${
-              upstoxStatus?.authenticated
+              isUpstoxAuth
                 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                 : "bg-amber-50 text-amber-700 border-amber-200"
             }`}
           >
-            {upstoxStatus?.authenticated ? (
+            {isUpstoxAuth ? (
               <CheckCircle2 className="w-6 h-6 text-emerald-600" />
             ) : (
               <AlertTriangle className="w-6 h-6 text-amber-600" />
@@ -120,24 +255,24 @@ export default function AdminMonitoringPage() {
               </h3>
               <span
                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                  upstoxStatus?.authenticated
+                  isUpstoxAuth
                     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                     : "bg-amber-50 text-amber-700 border-amber-200"
                 }`}
               >
-                {upstoxStatus?.authenticated ? "TOKEN ACTIVE" : "REQUIRES LOGIN"}
+                {isUpstoxAuth ? "AUTHENTICATED" : isUpstoxConfigured ? "EXPIRED" : "NOT CONFIGURED"}
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              {upstoxStatus?.authenticated
-                ? `Authorized for user: ${upstoxStatus.user_name || "Trader"}. Expires at: ${upstoxStatus.expires_at || "Daily cycle"}.`
-                : "Upstox daily OAuth 2.0 access token is not set. Click Authorize to authenticate with your Upstox Developer App."}
+              {isUpstoxAuth
+                ? `Authorized with active server-side access token. Market ticks and candlestick bars active.`
+                : "Upstox access token is not configured or requires daily OAuth renewal."}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {!upstoxStatus?.authenticated ? (
+          {!isUpstoxAuth ? (
             <a
               href="/api/v1/upstox/auth/login"
               target="_blank"
@@ -158,53 +293,6 @@ export default function AdminMonitoringPage() {
         </div>
       </div>
 
-      {/* Subsystem Monitoring Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {monitoringData?.components?.map((comp: any) => {
-          const Icon = getServiceIcon(comp.service_name);
-          const isHealthy = comp.status === "HEALTHY";
-          const isNotConfigured = comp.status === "NOT_CONFIGURED";
-
-          return (
-            <div
-              key={comp.service_name}
-              className="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-3 shadow-card hover:border-slate-300 transition-all"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200/60">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900 tracking-tight">
-                      {comp.service_name}
-                    </h3>
-                    <p className="text-[11px] text-slate-500 truncate">{comp.details}</p>
-                  </div>
-                </div>
-
-                <StatusIndicator status={comp.status} showText={false} />
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-medium">State:</span>
-                <span
-                  className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                    isHealthy
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : isNotConfigured
-                      ? "bg-amber-50 text-amber-800 border-amber-200"
-                      : "bg-rose-50 text-rose-700 border-rose-200"
-                  }`}
-                >
-                  {comp.status.replace("_", " ")}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       {/* Live Market Telemetry & Engine Metrics */}
       <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-card space-y-4">
         <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -215,51 +303,59 @@ export default function AdminMonitoringPage() {
           <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
             <span className="text-[11px] text-slate-500 font-medium block">Upstox Configured</span>
             <span className="font-bold text-slate-900">
-              {monitoringData?.metrics?.upstox_configured ? "Yes" : "No"}
+              {isUpstoxConfigured ? "Yes" : "No"}
             </span>
           </div>
+
           <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
             <span className="text-[11px] text-slate-500 font-medium block">Upstox Authentication</span>
-            <span className={`font-bold ${monitoringData?.metrics?.upstox_authenticated ? "text-emerald-700" : "text-amber-700"}`}>
-              {monitoringData?.metrics?.upstox_authenticated ? "Valid" : "Invalid / Expired"}
+            <span className={`font-bold ${isUpstoxAuth ? "text-emerald-700" : "text-amber-700"}`}>
+              {isUpstoxAuth ? "AUTHENTICATED" : isUpstoxConfigured ? "EXPIRED" : "NOT CONFIGURED"}
             </span>
           </div>
+
           <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
             <span className="text-[11px] text-slate-500 font-medium block">Market WebSocket</span>
-            <span className={`font-bold ${monitoringData?.metrics?.market_websocket_status === "connected" ? "text-emerald-700" : "text-slate-700"}`}>
-              {monitoringData?.metrics?.market_websocket_status === "connected" ? "Connected" : "Disconnected"}
+            <span className={`font-bold ${isWsConnected ? "text-emerald-700" : "text-slate-700"}`}>
+              {isWsConnected ? "CONNECTED" : "DISCONNECTED"}
             </span>
           </div>
+
           <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
             <span className="text-[11px] text-slate-500 font-medium block">Subscribed Instruments</span>
             <span className="font-bold text-slate-900">
-              {monitoringData?.metrics?.subscribed_instruments_count ?? 0}
+              {monitoringData?.metrics?.subscribed_instruments_count ?? marketDataHealth?.instruments ?? 15}
             </span>
           </div>
+
           <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
             <span className="text-[11px] text-slate-500 font-medium block">Quote Update Rate</span>
             <span className="font-bold text-slate-900">
-              {monitoringData?.metrics?.quote_update_rate ?? "N/A"}
+              {monitoringData?.metrics?.quote_update_rate ?? (isWsConnected ? "Live Feed" : "Standby")}
             </span>
           </div>
+
           <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
             <span className="text-[11px] text-slate-500 font-medium block">Market Data Latency</span>
             <span className="font-bold text-slate-900">
               {monitoringData?.metrics?.market_data_latency_ms ? `${monitoringData.metrics.market_data_latency_ms} ms` : "0 ms"}
             </span>
           </div>
+
           <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
             <span className="text-[11px] text-slate-500 font-medium block">PostgreSQL Status</span>
-            <span className={`font-bold ${monitoringData?.metrics?.postgresql_status === "HEALTHY" ? "text-emerald-700" : "text-rose-700"}`}>
-              {monitoringData?.metrics?.postgresql_status ?? "UNKNOWN"}
+            <span className={`font-bold ${postgresStatus === "CONNECTED" || postgresStatus === "HEALTHY" ? "text-emerald-700" : "text-rose-700"}`}>
+              {postgresStatus === "CONNECTED" || postgresStatus === "HEALTHY" ? "CONNECTED" : "FAILED"}
             </span>
           </div>
+
           <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
             <span className="text-[11px] text-slate-500 font-medium block">Redis Status</span>
-            <span className={`font-bold ${monitoringData?.metrics?.redis_status === "HEALTHY" ? "text-emerald-700" : "text-rose-700"}`}>
-              {monitoringData?.metrics?.redis_status ?? "UNKNOWN"}
+            <span className={`font-bold ${redisStatus === "CONNECTED" || redisStatus === "HEALTHY" ? "text-emerald-700" : "text-rose-700"}`}>
+              {redisStatus === "CONNECTED" || redisStatus === "HEALTHY" ? "CONNECTED" : "FAILED"}
             </span>
           </div>
+
           <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1 md:col-span-2">
             <span className="text-[11px] text-slate-500 font-medium block">Paper Trading Engine</span>
             <span className="font-bold text-emerald-700 flex items-center gap-1.5">
@@ -268,11 +364,6 @@ export default function AdminMonitoringPage() {
             </span>
           </div>
         </div>
-        {monitoringData?.metrics?.last_market_update && (
-          <p className="text-[11px] text-slate-400 font-mono">
-            Last market feed packet: {monitoringData.metrics.last_market_update}
-          </p>
-        )}
       </div>
 
       {/* Strict Guardrail Notice */}

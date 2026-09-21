@@ -18,6 +18,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - tradex-net
 
   redis:
     image: redis:7-alpine
@@ -32,6 +34,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - tradex-net
 
   backend:
     build:
@@ -45,9 +49,13 @@ services:
       redis:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/tradex
-      - SYNC_DATABASE_URL=postgresql://postgres:postgres@postgres:5432/tradex
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-tradex}
+      - SYNC_DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-tradex}
       - REDIS_URL=redis://redis:6379/0
+      - UPSTOX_ACCESS_TOKEN=${UPSTOX_ACCESS_TOKEN:-}
+      - UPSTOX_CLIENT_ID=${UPSTOX_CLIENT_ID:-}
+      - UPSTOX_CLIENT_SECRET=${UPSTOX_CLIENT_SECRET:-}
+      - UPSTOX_REDIRECT_URI=${UPSTOX_REDIRECT_URI:-}
       - JWT_SECRET=${JWT_SECRET:-tradex_super_secret_jwt_key_must_be_changed_in_production_at_least_32_chars}
       - INITIAL_PAPER_BALANCE=${INITIAL_PAPER_BALANCE:-100000.00}
       - ENVIRONMENT=development
@@ -55,18 +63,20 @@ services:
     ports:
       - "8000:8000"
     command: >
-      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
-
-  uptime-kuma:
-    image: louislam/uptime-kuma:1
-    container_name: tradex_uptime_kuma
-    restart: unless-stopped
-    ports:
-      - "3001:3001"
-    volumes:
-      - tradex_uptime_kuma_data:/app/data
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - tradex-net
 
 volumes:
   tradex_postgres_data:
   tradex_redis_data:
-  tradex_uptime_kuma_data:
+
+networks:
+  tradex-net:
+    driver: bridge
