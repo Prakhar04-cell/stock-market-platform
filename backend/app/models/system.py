@@ -79,3 +79,22 @@ class Notification(Base, UUIDPrimaryKeyMixin):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
 
     user: Mapped["User"] = relationship("User", back_populates="notifications")
+
+
+class ProviderCredential(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """
+    Secure server-side storage for market data provider OAuth tokens (e.g. Upstox).
+    Stores access_token, issued_at, expires_at, and provider metadata.
+    """
+    __tablename__ = "provider_credentials"
+
+    provider_name: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False) # e.g. "upstox"
+    access_token: Mapped[str] = mapped_column(Text, nullable=False)
+    refresh_token: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    token_type: Mapped[str] = mapped_column(String(20), default="Bearer", nullable=False)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    user_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True) # Provider user/client ID
+    user_name: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    extra_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)

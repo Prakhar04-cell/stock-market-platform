@@ -1,0 +1,389 @@
+import asyncio
+import json
+import logging
+from datetime import datetime, timezone
+from decimal import Decimal
+from typing import Any, Dict, List, Optional, Set
+from fastapi import WebSocket, WebSocketDisconnect
+
+from app.services.market_data.instrument_service import instrument_service
+from app.services.market_data.normalizer import MarketQuote, normalize_upstox_quote
+from app.services.market_data.quote_service import quote_service
+
+logger = logging.getLogger("tradex.websocket")
+
+
+class MarketWebSocketManager:
+    """
+    FastAPI TradeX WebSocket connection manager for client browser connections.
+    Routes real-time quote updates to subscribed clients without full-page rerenders.
+    """
+
+    def __init__(self):
+        # Maps active WebSocket connection -> Set of subscribed instrument keys / symbols
+        self.active_connections: Dict[WebSocket, Set[str]] = {}
+        # Reverse map: key/symbol -> Set of connected WebSockets
+        self.subscriptions: Dict[str, Set[WebSocket]] = {}
+        self._lock = asyncio.Lock()
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        async with self._lock:
+            self.active_connections[websocket] = set()
+        logger.info(f"TradeX WebSocket client connected: {websocket.client}")
+
+    async def disconnect(self, websocket: WebSocket):
+        async with self._lock:
+            subbed = self.active_connections.pop(websocket, set())
+            for item in subbed:
+                if item in self.subscriptions:
+                    self.subscriptions[item].discard(websocket)
+                    if not self.subscriptions[item]:
+                        self.subscriptions.pop(item, None)
+        logger.info("TradeX WebSocket client disconnected.")
+
+    async def subscribe(self, websocket: WebSocket, symbols: List[str]):
+        """Subscribes a client to quote streams for the given symbols."""
+        async with self._lock:
+            if websocket not in self.active_connections:
+                return
+
+            for sym in symbols:
+                clean = sym.strip().upper()
+                ikey = await instrument_service.resolve_instrument_key(clean)
+                self.active_connections[websocket].add(clean)
+                self.active_connections[websocket].add(ikey)
+
+                self.subscriptions.setdefault(clean, set()).add(websocket)
+                self.subscriptions.setdefault(ikey, set()).add(websocket)
+
+                # Send immediate latest cached quote if available
+                quote = await quote_service.get_quote(clean)
+                if quote:
+                    try:
+                        await websocket.send_json({
+                            "type": "quote",
+                            "data": json.loads(quote.model_dump_json()),
+                        })
+                    except Exception:
+                        pass
+
+        # Request upstream feed to track these keys
+        await upstream_feed.add_subscriptions(symbols)
+
+    async def unsubscribe(self, websocket: WebSocket, symbols: List[str]):
+        async with self._lock:
+            if websocket not in self.active_connections:
+                return
+            for sym in symbols:
+                clean = sym.strip().upper()
+                ikey = await instrument_service.resolve_instrument_key(clean)
+                self.active_connections[websocket].discard(clean)
+                self.active_connections[websocket].discard(ikey)
+
+                if clean in self.subscriptions:
+                    self.subscriptions[clean].discard(websocket)
+                if ikey in self.subscriptions:
+                    self.subscriptions[ikey].discard(websocket)
+
+    async def broadcast_quote(self, quote: MarketQuote):
+        """Broadcasts a normalized quote to all clients subscribed to this symbol or key."""
+        target_sockets: Set[WebSocket] = set()
+        async with self._lock:
+            if quote.symbol in self.subscriptions:
+                target_sockets.update(self.subscriptions[quote.symbol])
+            if quote.symbol.upper() in self.subscriptions:
+                target_sockets.update(self.subscriptions[quote.symbol.upper()])
+            if quote.instrument_key in self.subscriptions:
+                target_sockets.update(self.subscriptions[quote.instrument_key])
+
+        if not target_sockets:
+            return
+
+        message = {
+            "type": "quote",
+            "data": json.loads(quote.model_dump_json()),
+        }
+
+        stale_sockets = []
+        for ws in target_sockets:
+            try:
+                await ws.send_json(message)
+            except Exception:
+                stale_sockets.append(ws)
+
+        for ws in stale_sockets:
+            await self.disconnect(ws)
+
+    def get_stats(self) -> Dict[str, Any]:
+        return {
+            "connected_clients": len(self.active_connections),
+            "subscribed_symbols": len(self.subscriptions),
+        }
+
+
+market_ws_manager = MarketWebSocketManager()
+
+
+DEFAULT_SUBSCRIBED_KEYS: Set[str] = {
+    "NSE_INDEX|Nifty 50",
+    "BSE_INDEX|SENSEX",
+    "NSE_INDEX|Nifty Bank",
+    "NSE_INDEX|Nifty Fin Service",
+    "NSE_INDEX|NIFTY MID SELECT",
+    "NSE_EQ|INE002A01018",  # RELIANCE
+    "NSE_EQ|INE467B01029",  # TCS
+    "NSE_EQ|INE009A01021",  # INFY
+}
+
+
+class UpstoxUpstreamFeed:
+    """
+    Manages upstream WebSocket connection to Upstox Market Data Feed V3.
+    Decodes binary Protobuf feed, updates Redis quote cache, and fans out to TradeX clients.
+    """
+
+    def __init__(self):
+        self._is_running = False
+        self._connected = False
+        self._subscribed_keys: Set[str] = set(DEFAULT_SUBSCRIBED_KEYS)
+        self._last_message_at: Optional[datetime] = None
+        self._messages_received: int = 0
+        self._reconnect_count: int = 0
+        self._error_count: int = 0
+        self._last_error: Optional[str] = None
+        self._task: Optional[asyncio.Task] = None
+        self._ws = None
+
+    @property
+    def is_connected(self) -> bool:
+        return self._connected
+
+    async def add_subscriptions(self, symbols_or_keys: List[str]):
+        """Adds instrument keys to upstream feed tracking and sends dynamic sub packet."""
+        new_keys: List[str] = []
+        for s in symbols_or_keys:
+            ikey = await instrument_service.resolve_instrument_key(s)
+            if ikey and ikey not in self._subscribed_keys:
+                self._subscribed_keys.add(ikey)
+                new_keys.append(ikey)
+
+        if new_keys and self._connected and self._ws:
+            try:
+                sub_msg = {
+                    "guid": f"sub_{int(datetime.now(timezone.utc).timestamp())}",
+                    "method": "sub",
+                    "data": {
+                        "mode": "full",
+                        "instrumentKeys": new_keys,
+                    },
+                }
+                await self._ws.send(json.dumps(sub_msg).encode("utf-8"))
+            except Exception as e:
+                logger.debug(f"Dynamic subscription send failed: {e}")
+
+    async def start(self):
+        """Starts the upstream listener task if configured."""
+        if self._is_running:
+            return
+        self._is_running = True
+        self._task = asyncio.create_task(self._run_loop())
+        logger.info("Upstox Upstream WebSocket Feed manager started.")
+
+    async def stop(self):
+        self._is_running = False
+        self._connected = False
+        if self._ws:
+            try:
+                await self._ws.close()
+            except Exception:
+                pass
+            self._ws = None
+
+        if self._task:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+        logger.info("Upstox Upstream WebSocket Feed manager stopped.")
+
+    async def _run_loop(self):
+        """Continuous background reconnect loop with exponential backoff."""
+        from app.services.market_data.upstox_provider import upstox_provider
+
+        backoff = 2.0
+        max_backoff = 60.0
+
+        while self._is_running:
+            try:
+                # Check provider configuration and authentication status
+                if not upstox_provider.is_configured:
+                    await asyncio.sleep(10)
+                    continue
+
+                auth_url = await upstox_provider.get_ws_feed_authorized_url()
+                if not auth_url:
+                    self._connected = False
+                    await asyncio.sleep(15)
+                    continue
+
+                import websockets
+
+                logger.info("Connecting to Upstox Market Data Feed V3...")
+                async with websockets.connect(auth_url, ping_interval=30, ping_timeout=10) as ws:
+                    self._ws = ws
+                    self._connected = True
+                    backoff = 2.0  # Reset backoff on successful connect
+                    logger.info("Successfully connected to Upstox Market Data Feed V3.")
+
+                    # Send initial subscription message for tracked instruments
+                    if self._subscribed_keys:
+                        sub_msg = {
+                            "guid": "tradex_sub_init",
+                            "method": "sub",
+                            "data": {
+                                "mode": "full",
+                                "instrumentKeys": list(self._subscribed_keys),
+                            },
+                        }
+                        await ws.send(json.dumps(sub_msg).encode("utf-8"))
+
+                    while self._is_running:
+                        msg = await ws.recv()
+                        self._last_message_at = datetime.now(timezone.utc)
+                        self._messages_received += 1
+                        await self._handle_message(msg)
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self._connected = False
+                self._ws = None
+                self._error_count += 1
+                self._reconnect_count += 1
+                self._last_error = str(e)
+                logger.warning(f"Upstox WebSocket error: {e}. Reconnecting in {backoff:.1f}s...")
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 1.5, max_backoff)
+
+        self._connected = False
+        self._ws = None
+
+    async def _handle_message(self, raw_message: Any):
+        """Decodes JSON or binary Protobuf feed payload."""
+        try:
+            if isinstance(raw_message, bytes):
+                from app.services.market_data.MarketDataFeedV3_pb2 import FeedResponse
+
+                feed_resp = FeedResponse()
+                feed_resp.ParseFromString(raw_message)
+
+                # Feed type 2 is market_info status message
+                if not feed_resp.feeds:
+                    return
+
+                ts_ms = feed_resp.currentTs or int(datetime.now(timezone.utc).timestamp() * 1000)
+                quote_time = datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc)
+
+                for ikey, f in feed_resp.feeds.items():
+                    ltp = 0.0
+                    cp = 0.0
+                    open_p = 0.0
+                    high_p = 0.0
+                    low_p = 0.0
+                    vol = 0
+
+                    if f.HasField("ltpc"):
+                        ltp = f.ltpc.ltp
+                        cp = f.ltpc.cp
+                    elif f.HasField("fullFeed"):
+                        ff = f.fullFeed
+                        if ff.HasField("marketFF"):
+                            m = ff.marketFF
+                            ltp = m.ltpc.ltp
+                            cp = m.ltpc.cp
+                            vol = m.vtt
+                            for ohlc in m.marketOHLC.ohlc:
+                                if ohlc.interval == "1d":
+                                    open_p = ohlc.open
+                                    high_p = ohlc.high
+                                    low_p = ohlc.low
+                                    break
+                                elif open_p == 0.0:
+                                    open_p = ohlc.open
+                                    high_p = ohlc.high
+                                    low_p = ohlc.low
+                        elif ff.HasField("indexFF"):
+                            idx = ff.indexFF
+                            ltp = idx.ltpc.ltp
+                            cp = idx.ltpc.cp
+                            for ohlc in idx.marketOHLC.ohlc:
+                                if ohlc.interval == "1d":
+                                    open_p = ohlc.open
+                                    high_p = ohlc.high
+                                    low_p = ohlc.low
+                                    break
+                                elif open_p == 0.0:
+                                    open_p = ohlc.open
+                                    high_p = ohlc.high
+                                    low_p = ohlc.low
+
+                    if ltp > 0:
+                        symbol = await instrument_service.get_symbol_for_key(ikey)
+                        change = ltp - cp if cp > 0 else 0.0
+                        change_pct = (change / cp * 100.0) if cp > 0 else 0.0
+
+                        norm_quote = MarketQuote(
+                            symbol=symbol,
+                            instrument_key=ikey,
+                            exchange=ikey.split("_")[0] if "_" in ikey else "NSE",
+                            timestamp=quote_time,
+                            ltp=Decimal(str(round(ltp, 2))),
+                            open=Decimal(str(round(open_p or ltp, 2))),
+                            high=Decimal(str(round(high_p or ltp, 2))),
+                            low=Decimal(str(round(low_p or ltp, 2))),
+                            previous_close=Decimal(str(round(cp, 2))),
+                            change=Decimal(str(round(change, 2))),
+                            change_percent=Decimal(str(round(change_pct, 4))),
+                            volume=int(vol),
+                        )
+                        await quote_service.cache_quote(norm_quote)
+                        await market_ws_manager.broadcast_quote(norm_quote)
+
+                        # Trigger limit order engine evaluation
+                        try:
+                            from app.services.paper_trading.execution_service import paper_execution_service
+                            await paper_execution_service.evaluate_open_limit_orders(norm_quote)
+                        except Exception:
+                            pass
+
+            elif isinstance(raw_message, str):
+                data = json.loads(raw_message)
+                feeds = data.get("feeds", {})
+                for ikey, quote_dict in feeds.items():
+                    norm_quote = normalize_upstox_quote(instrument_key=ikey, raw_quote=quote_dict)
+                    await quote_service.cache_quote(norm_quote)
+                    await market_ws_manager.broadcast_quote(norm_quote)
+                    try:
+                        from app.services.paper_trading.execution_service import paper_execution_service
+                        await paper_execution_service.evaluate_open_limit_orders(norm_quote)
+                    except Exception:
+                        pass
+        except Exception as e:
+            logger.debug(f"Error handling Upstox WS message: {e}")
+
+    def get_monitoring_metrics(self) -> Dict[str, Any]:
+        return {
+            "status": "connected" if self._connected else "disconnected",
+            "connected": self._connected,
+            "last_message": self._last_message_at.isoformat() if self._last_message_at else None,
+            "messages_received": self._messages_received,
+            "reconnect_count": self._reconnect_count,
+            "error_count": self._error_count,
+            "last_error": self._last_error,
+            "subscribed_instruments_count": len(self._subscribed_keys),
+        }
+
+
+upstream_feed = UpstoxUpstreamFeed()

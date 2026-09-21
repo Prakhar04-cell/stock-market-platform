@@ -101,100 +101,72 @@ async def get_order_by_id(
     return _format_order(order)
 
 
-@router.post("", response_model=OrderResponse, status_code=status.HTTP_201_CREATED, summary="Create order draft / submission")
+@router.post("", response_model=OrderResponse, status_code=status.HTTP_201_CREATED, summary="Create and execute paper trading order")
 async def create_order(
     order_in: OrderCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Submits a trading order to the platform order book.
-    In Phase 1, the execution engine status is NOT_CONFIGURED.
-    Orders are validated against user's wallet balance and saved as PENDING / NOT_CONFIGURED.
+    Submits and processes a paper-trading BUY or SELL order.
+    Market orders fill immediately using the latest normalized real market price.
+    Limit orders remain OPEN until market price satisfies the limit criteria.
+    Never sends orders to real brokers or exchanges.
     """
-    # 1. Verify Stock
-    stock_stmt = select(Stock).where(Stock.id == order_in.stock_id)
-    stock = (await db.execute(stock_stmt)).scalar_one_or_none()
-    if not stock:
-        raise ResourceNotFoundError(resource="Stock", identifier=order_in.stock_id)
+    from app.services.paper_trading.execution_service import paper_execution_service
 
-    # 2. Verify Wallet
-    wallet_stmt = select(Wallet).where(Wallet.user_id == current_user.id)
-    wallet = (await db.execute(wallet_stmt)).scalar_one_or_none()
-    if not wallet:
-        raise ResourceNotFoundError(resource="Wallet", identifier=current_user.id)
-
-    # Calculate required margin if limit order
-    if order_in.order_type == "LIMIT" and order_in.price:
-        required_funds = order_in.quantity * order_in.price
-        available = wallet.balance - wallet.locked_balance
-        if order_in.side == "BUY" and available < required_funds:
-            raise TradeXException(
-                code="INSUFFICIENT_FUNDS",
-                message=f"Insufficient balance. Required: {wallet.currency} {required_funds:,.2f}, Available: {wallet.currency} {available:,.2f}",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-    # In Phase 1, Execution Engine is strictly NOT_CONFIGURED.
-    # We record the order with status PENDING and inform the trader.
-    order = Order(
+    order = await paper_execution_service.submit_order(
         user_id=current_user.id,
-        wallet_id=wallet.id,
-        stock_id=stock.id,
-        order_type=order_in.order_type,
+        stock_id=order_in.stock_id,
         side=order_in.side,
+        order_type=order_in.order_type,
         quantity=order_in.quantity,
         price=order_in.price,
         stop_price=order_in.stop_price,
-        status="PENDING", # Waiting for ExecutionProvider
-        filled_quantity=Decimal("0.0000"),
+        db=db,
     )
-    db.add(order)
-    await db.flush()
 
     await record_audit_log(
         db=db,
-        action="ORDER_CREATED",
+        action="PAPER_ORDER_SUBMITTED",
         entity_type="order",
         user_id=current_user.id,
         entity_id=order.id,
         new_values={
-            "symbol": stock.symbol,
             "side": order.side,
             "type": order.order_type,
             "quantity": str(order.quantity),
             "price": str(order.price) if order.price else None,
-            "execution_provider": "NOT_CONFIGURED",
+            "status": order.status,
+            "execution_engine": "PAPER_TRADING",
         },
     )
-    await db.commit()
 
-    # Reload with relations
     return await get_order_by_id(order.id, current_user, db)
 
 
-@router.delete("/{order_id}", summary="Cancel pending order")
+@router.delete("/{order_id}", summary="Cancel open paper limit order")
 async def cancel_order(
     order_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Cancel an open/pending order."""
-    stmt = select(Order).where(Order.id == order_id, Order.user_id == current_user.id)
-    order = (await db.execute(stmt)).scalar_one_or_none()
-    if not order:
-        raise ResourceNotFoundError(resource="Order", identifier=order_id)
+    """Cancel an open limit order and release any locked paper margin."""
+    from app.services.paper_trading.execution_service import paper_execution_service
 
-    if order.status not in ["PENDING", "OPEN"]:
-        raise ResourceConflictError(message=f"Cannot cancel order in '{order.status}' status.")
+    order = await paper_execution_service.cancel_order(
+        order_id=order_id,
+        user_id=current_user.id,
+        db=db,
+    )
 
-    order.status = "CANCELLED"
     await record_audit_log(
         db=db,
-        action="ORDER_CANCELLED",
+        action="PAPER_ORDER_CANCELLED",
         entity_type="order",
         user_id=current_user.id,
         entity_id=order.id,
     )
-    await db.commit()
-    return {"success": True, "message": "Order cancelled successfully."}
+
+    return {"success": True, "message": "Paper order cancelled successfully."}
+

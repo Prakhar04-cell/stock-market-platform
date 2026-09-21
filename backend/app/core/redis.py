@@ -30,6 +30,9 @@ async def get_redis_client() -> Optional[aioredis.Redis]:
     return redis_client
 
 
+get_redis = get_redis_client
+
+
 async def close_redis():
     """Close Redis connection pool gracefully on shutdown."""
     global redis_client

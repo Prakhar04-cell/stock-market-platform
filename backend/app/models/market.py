@@ -24,6 +24,7 @@ class Stock(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     exchange_id: Mapped[str] = mapped_column(String(36), ForeignKey("exchanges.id", ondelete="RESTRICT"), nullable=False, index=True)
     symbol: Mapped[str] = mapped_column(String(30), index=True, nullable=False) # e.g. RELIANCE, TCS, INFY
+    instrument_key: Mapped[Optional[str]] = mapped_column(String(100), unique=True, index=True, nullable=True) # Upstox key e.g. NSE_EQ|INE002A01018
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     isin: Mapped[Optional[str]] = mapped_column(String(30), unique=True, nullable=True)
     sector: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
@@ -40,11 +41,34 @@ class Stock(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     historical_prices: Mapped[List["HistoricalPrice"]] = relationship("HistoricalPrice", back_populates="stock", cascade="all, delete-orphan")
 
 
+class Instrument(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """
+    Comprehensive instrument master model for Upstox integration.
+    Supports NSE equity, BSE equity, NSE indices, BSE indices, Futures, Options, and MCX commodities.
+    """
+    __tablename__ = "instruments"
+
+    instrument_key: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False) # Primary provider identifier
+    symbol: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
+    trading_symbol: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    exchange: Mapped[str] = mapped_column(String(20), index=True, nullable=False) # NSE, BSE, MCX
+    segment: Mapped[str] = mapped_column(String(30), index=True, nullable=False) # NSE_EQ, NSE_INDEX, BSE_EQ, etc.
+    instrument_type: Mapped[str] = mapped_column(String(30), nullable=False) # EQ, INDEX, FUT, OPT, COM
+    isin: Mapped[Optional[str]] = mapped_column(String(50), index=True, nullable=True)
+    lot_size: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    tick_size: Mapped[Decimal] = mapped_column(Numeric(10, 4), default=Decimal("0.05"), nullable=False)
+    expiry: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    strike_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 4), nullable=True)
+    underlying_key: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+
 class MarketPrice(Base, UUIDPrimaryKeyMixin):
-    """Real-time market snapshot. In Phase 1, strictly populated only when real providers connect."""
+    """Real-time market snapshot populated from normalized market feeds."""
     __tablename__ = "market_prices"
 
     stock_id: Mapped[str] = mapped_column(String(36), ForeignKey("stocks.id", ondelete="CASCADE"), nullable=False, index=True)
+    instrument_key: Mapped[Optional[str]] = mapped_column(String(100), index=True, nullable=True)
     open: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 4), nullable=True)
     high: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 4), nullable=True)
     low: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 4), nullable=True)
@@ -63,6 +87,7 @@ class HistoricalPrice(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "historical_prices"
 
     stock_id: Mapped[str] = mapped_column(String(36), ForeignKey("stocks.id", ondelete="CASCADE"), nullable=False, index=True)
+    instrument_key: Mapped[Optional[str]] = mapped_column(String(100), index=True, nullable=True)
     interval: Mapped[str] = mapped_column(String(20), default="1D", nullable=False) # 1m, 5m, 15m, 1h, 1D
     open: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)
     high: Mapped[Decimal] = mapped_column(Numeric(18, 4), nullable=False)

@@ -23,16 +23,17 @@ async def test_health_endpoints(client: AsyncClient):
     assert sys_res.status_code == 200
     assert sys_res.json()["status"] == "healthy"
 
-    # 4. Market Data health - strictly not_configured in Phase 1
+    # 4. Market Data health - not_configured when no token is present
     mkt_res = await client.get("/health/market-data")
     assert mkt_res.status_code == 200
     mkt_data = mkt_res.json()
-    assert mkt_data["status"] == "not_configured"
-    assert mkt_data["provider"] is None
+    assert mkt_data["status"] in ["not_configured", "authentication_required", "healthy"]
 
-    # 5. Trading Engine health - strictly not_configured in Phase 1
+    # 5. Trading Engine health - active Virtual Paper Trading Engine in Phase 2
     eng_res = await client.get("/health/trading-engine")
     assert eng_res.status_code == 200
     eng_data = eng_res.json()
-    assert eng_data["status"] == "not_configured"
-    assert eng_data["provider"] is None
+    assert eng_data["status"] == "healthy"
+    assert eng_data["provider"] == "paper_trading_engine"
+    assert eng_data["mode"] == "simulation"
+

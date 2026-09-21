@@ -48,7 +48,7 @@ async def seed_initial_data():
                 if not (await db.execute(stmt)).scalar_one_or_none():
                     db.add(SystemSetting(key=key, value=val, description=desc))
 
-            # 3. Seed NSE Exchange
+            # 3. Seed Exchanges (NSE & BSE)
             stmt = select(Exchange).where(Exchange.code == "NSE")
             nse = (await db.execute(stmt)).scalar_one_or_none()
             if not nse:
@@ -62,37 +62,99 @@ async def seed_initial_data():
                 db.add(nse)
                 await db.flush()
 
-            # 4. Seed Essential Foundation Stocks (Metadata only, no fake market prices!)
+            stmt_bse = select(Exchange).where(Exchange.code == "BSE")
+            bse = (await db.execute(stmt_bse)).scalar_one_or_none()
+            if not bse:
+                bse = Exchange(
+                    code="BSE",
+                    name="Bombay Stock Exchange",
+                    currency="INR",
+                    timezone="Asia/Kolkata",
+                    is_active=True,
+                )
+                db.add(bse)
+                await db.flush()
+
+            # 4. Seed Essential Foundation Stocks & Instruments
+            from app.models.market import Instrument
             stocks_data = [
-                ("RELIANCE", "Reliance Industries Limited", "INE002A01018", "Energy & Conglomerate"),
-                ("TCS", "Tata Consultancy Services Limited", "INE467B01029", "Information Technology"),
-                ("HDFCBANK", "HDFC Bank Limited", "INE040A01034", "Banking & Finance"),
-                ("INFY", "Infosys Limited", "INE009A01021", "Information Technology"),
-                ("ICICIBANK", "ICICI Bank Limited", "INE090A01021", "Banking & Finance"),
-                ("TATAMOTORS", "Tata Motors Limited", "INE155A01022", "Automotive"),
-                ("ITC", "ITC Limited", "INE154A01025", "FMCG"),
-                ("SBIN", "State Bank of India", "INE062A01020", "Banking & Finance"),
-                ("BHARTIARTL", "Bharti Airtel Limited", "INE397D01024", "Telecommunications"),
-                ("LT", "Larsen & Toubro Limited", "INE018A01030", "Construction & Engineering"),
+                ("RELIANCE", "Reliance Industries Limited", "NSE_EQ|INE002A01018", "INE002A01018", "Energy & Conglomerate", "NSE", "NSE_EQ", "EQ"),
+                ("TCS", "Tata Consultancy Services Limited", "NSE_EQ|INE467B01029", "INE467B01029", "Information Technology", "NSE", "NSE_EQ", "EQ"),
+                ("HDFCBANK", "HDFC Bank Limited", "NSE_EQ|INE040A01034", "INE040A01034", "Banking & Finance", "NSE", "NSE_EQ", "EQ"),
+                ("INFY", "Infosys Limited", "NSE_EQ|INE009A01021", "INE009A01021", "Information Technology", "NSE", "NSE_EQ", "EQ"),
+                ("ICICIBANK", "ICICI Bank Limited", "NSE_EQ|INE090A01021", "INE090A01021", "Banking & Finance", "NSE", "NSE_EQ", "EQ"),
+                ("TATAMOTORS", "Tata Motors Limited", "NSE_EQ|INE155A01022", "INE155A01022", "Automotive", "NSE", "NSE_EQ", "EQ"),
+                ("ITC", "ITC Limited", "NSE_EQ|INE154A01025", "INE154A01025", "FMCG", "NSE", "NSE_EQ", "EQ"),
+                ("SBIN", "State Bank of India", "NSE_EQ|INE062A01020", "INE062A01020", "Banking & Finance", "NSE", "NSE_EQ", "EQ"),
+                ("BHARTIARTL", "Bharti Airtel Limited", "NSE_EQ|INE397D01024", "INE397D01024", "Telecommunications", "NSE", "NSE_EQ", "EQ"),
+                ("LT", "Larsen & Toubro Limited", "NSE_EQ|INE018A01030", "INE018A01030", "Construction & Engineering", "NSE", "NSE_EQ", "EQ"),
             ]
-            for sym, name, isin, sector in stocks_data:
+            for sym, name, ikey, isin, sector, exch_code, seg, itype in stocks_data:
+                exch = nse if exch_code == "NSE" else bse
                 s_stmt = select(Stock).where(Stock.symbol == sym)
-                if not (await db.execute(s_stmt)).scalar_one_or_none():
+                stock_obj = (await db.execute(s_stmt)).scalar_one_or_none()
+                if not stock_obj:
+                    stock_obj = Stock(
+                        exchange_id=exch.id,
+                        symbol=sym,
+                        instrument_key=ikey,
+                        name=name,
+                        isin=isin,
+                        sector=sector,
+                        is_tradable=True,
+                        lot_size=1,
+                        tick_size=Decimal("0.05"),
+                    )
+                    db.add(stock_obj)
+                else:
+                    if not stock_obj.instrument_key:
+                        stock_obj.instrument_key = ikey
+
+                # Ensure in Instrument master table
+                inst_stmt = select(Instrument).where(Instrument.instrument_key == ikey)
+                if not (await db.execute(inst_stmt)).scalar_one_or_none():
                     db.add(
-                        Stock(
-                            exchange_id=nse.id,
+                        Instrument(
+                            instrument_key=ikey,
                             symbol=sym,
+                            trading_symbol=sym,
                             name=name,
+                            exchange=exch_code,
+                            segment=seg,
+                            instrument_type=itype,
                             isin=isin,
-                            sector=sector,
-                            is_tradable=True,
+                            lot_size=1,
+                            tick_size=Decimal("0.05"),
+                        )
+                    )
+
+            # 5. Seed Core Market Indices in Instrument table
+            indices_data = [
+                ("NIFTY 50", "NIFTY", "NSE_INDEX|Nifty 50", "NIFTY 50 Index", "NSE", "NSE_INDEX", "INDEX"),
+                ("BANKNIFTY", "BANKNIFTY", "NSE_INDEX|Nifty Bank", "NIFTY Bank Index", "NSE", "NSE_INDEX", "INDEX"),
+                ("FINNIFTY", "FINNIFTY", "NSE_INDEX|Nifty Fin Service", "NIFTY Financial Services Index", "NSE", "NSE_INDEX", "INDEX"),
+                ("MIDCPNIFTY", "MIDCPNIFTY", "NSE_INDEX|NIFTY MID SELECT", "NIFTY Midcap Select Index", "NSE", "NSE_INDEX", "INDEX"),
+                ("SENSEX", "SENSEX", "BSE_INDEX|SENSEX", "BSE SENSEX Index", "BSE", "BSE_INDEX", "INDEX"),
+            ]
+            for sym, tsym, ikey, name, exch_code, seg, itype in indices_data:
+                inst_stmt = select(Instrument).where(Instrument.instrument_key == ikey)
+                if not (await db.execute(inst_stmt)).scalar_one_or_none():
+                    db.add(
+                        Instrument(
+                            instrument_key=ikey,
+                            symbol=sym,
+                            trading_symbol=tsym,
+                            name=name,
+                            exchange=exch_code,
+                            segment=seg,
+                            instrument_type=itype,
                             lot_size=1,
                             tick_size=Decimal("0.05"),
                         )
                     )
 
             await db.commit()
-            logger.info("TradeX initial foundation data successfully verified/seeded.")
+            logger.info("TradeX initial foundation & Phase 2 instrument data successfully verified/seeded.")
     except Exception as e:
         logger.warning(f"Database seed skipped or failed (possibly tables not created yet): {e}")
 
@@ -108,8 +170,15 @@ async def lifespan(app: FastAPI):
         await seed_initial_data()
     except Exception as e:
         logger.warning(f"Database initialization during lifespan: {e}")
+
+    # Start upstream market feed background worker if provider configured
+    from app.services.market_data.websocket_service import upstream_feed
+    await upstream_feed.start()
+
     yield
+
     logger.info("Shutting down TradeX API Core...")
+    await upstream_feed.stop()
     await close_redis()
 
 

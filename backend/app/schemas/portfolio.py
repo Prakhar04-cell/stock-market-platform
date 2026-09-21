@@ -12,10 +12,14 @@ class HoldingResponse(BaseModel):
     quantity: Decimal
     average_buy_price: Decimal
     invested_value: Decimal
+    current_price: Optional[Decimal] = None
     current_value: Optional[Decimal] = None
     unrealized_pnl: Optional[Decimal] = None
-    market_data_status: str = "NOT_CONFIGURED"
-    market_data_message: str = "Market data provider not connected"
+    pnl_percent: Optional[Decimal] = None
+    day_change: Optional[Decimal] = None
+    day_change_percent: Optional[Decimal] = None
+    market_data_status: str = "LIVE"
+    market_data_message: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -23,7 +27,10 @@ class PortfolioSummaryResponse(BaseModel):
     total_invested_value: Decimal
     current_portfolio_value: Optional[Decimal] = None
     total_unrealized_pnl: Optional[Decimal] = None
+    realized_pnl: Optional[Decimal] = None
+    total_pnl: Optional[Decimal] = None
     cash_balance: Decimal
-    provider_status: str = "NOT_CONFIGURED"
-    provider_message: str = "Market data provider is not connected yet. Phase 1 foundation active."
+    available_cash: Optional[Decimal] = None
+    provider_status: str = "healthy"
+    provider_message: Optional[str] = None
     holdings: List[HoldingResponse] = []

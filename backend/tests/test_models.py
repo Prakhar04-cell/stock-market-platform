@@ -22,9 +22,9 @@ async def test_models_relationships(db_session: AsyncSession):
 
     stock = Stock(
         exchange_id=exchange.id,
-        symbol="INFY",
-        name="Infosys Limited",
-        isin="INE009A01021",
+        symbol="WIPRO",
+        name="Wipro Limited",
+        isin="INE075A01022",
         lot_size=1,
         tick_size=Decimal("0.05"),
     )
@@ -32,8 +32,9 @@ async def test_models_relationships(db_session: AsyncSession):
     await db_session.commit()
 
     # Query back
-    stmt = select(Stock).where(Stock.symbol == "INFY")
+    stmt = select(Stock).where(Stock.symbol == "WIPRO")
     queried_stock = (await db_session.execute(stmt)).scalar_one()
-    assert queried_stock.name == "Infosys Limited"
+    assert queried_stock.name == "Wipro Limited"
     assert queried_stock.tick_size == Decimal("0.05")
     assert queried_stock.exchange.code == "BSE"
+

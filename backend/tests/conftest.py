@@ -49,8 +49,54 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         for r_name in ["TRADER", "ADMIN"]:
             role = Role(name=r_name, description=f"{r_name} role")
             session.add(role)
+
+        # Seed NSE Exchange
+        nse = Exchange(
+            code="NSE",
+            name="National Stock Exchange of India",
+            currency="INR",
+            timezone="Asia/Kolkata",
+            is_active=True,
+        )
+        session.add(nse)
+        await session.flush()
+
+        # Seed Stocks & Instruments
+        from app.models.market import Instrument
+        stocks_data = [
+            ("RELIANCE", "Reliance Industries Limited", "NSE_EQ|INE002A01018", "INE002A01018"),
+            ("TCS", "Tata Consultancy Services Limited", "NSE_EQ|INE467B01029", "INE467B01029"),
+            ("INFY", "Infosys Limited", "NSE_EQ|INE009A01021", "INE009A01021"),
+        ]
+        for sym, name, ikey, isin in stocks_data:
+            s = Stock(
+                exchange_id=nse.id,
+                symbol=sym,
+                instrument_key=ikey,
+                name=name,
+                isin=isin,
+                is_tradable=True,
+                lot_size=1,
+                tick_size=Decimal("0.05"),
+            )
+            session.add(s)
+            inst = Instrument(
+                instrument_key=ikey,
+                symbol=sym,
+                trading_symbol=sym,
+                name=name,
+                exchange="NSE",
+                segment="NSE_EQ",
+                instrument_type="EQ",
+                isin=isin,
+                lot_size=1,
+                tick_size=Decimal("0.05"),
+            )
+            session.add(inst)
+
         await session.commit()
         yield session
+
 
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)

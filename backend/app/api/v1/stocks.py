@@ -61,7 +61,9 @@ async def get_stock_by_symbol(
     exchange: str = "NSE",
     db: AsyncSession = Depends(get_db),
 ):
-    """Retrieve stock profile, company information, and market structure."""
+    """Retrieve stock profile, company information, and live market statistics."""
+    from app.services.market_data.quote_service import quote_service
+
     sym = symbol.strip().upper()
     stmt = (
         select(Stock)
@@ -74,6 +76,43 @@ async def get_stock_by_symbol(
     if not stock:
         raise ResourceNotFoundError(resource="Stock", identifier=sym)
 
+    quote = await quote_service.get_quote(sym)
+    if quote:
+        market_status = quote.status
+        market_msg = None
+        ltp = quote.ltp
+        day_chg = quote.change
+        day_chg_pct = quote.change_percent
+        stats = {
+            "status": quote.status,
+            "open": quote.open,
+            "high": quote.high,
+            "low": quote.low,
+            "close": quote.close,
+            "previous_close": quote.previous_close,
+            "volume": quote.volume,
+            "52w_high": quote.year_high,
+            "52w_low": quote.year_low,
+        }
+    else:
+        market_status = "NOT_CONFIGURED"
+        market_msg = "Market data provider is not connected yet."
+        ltp = None
+        day_chg = None
+        day_chg_pct = None
+        stats = {
+            "status": "NOT_CONFIGURED",
+            "message": "Market data provider not connected.",
+            "open": None,
+            "high": None,
+            "low": None,
+            "close": None,
+            "previous_close": None,
+            "volume": None,
+            "52w_high": None,
+            "52w_low": None,
+        }
+
     return StockDetailResponse(
         id=stock.id,
         exchange_code=stock.exchange.code if stock.exchange else exchange,
@@ -84,22 +123,12 @@ async def get_stock_by_symbol(
         lot_size=stock.lot_size,
         tick_size=stock.tick_size,
         is_tradable=stock.is_tradable,
-        market_data_status="NOT_CONFIGURED",
-        market_data_message="Market data provider is not connected yet. Phase 1 foundation active.",
-        ltp=None,
-        day_change=None,
-        day_change_percent=None,
-        market_stats={
-            "status": "NOT_CONFIGURED",
-            "message": "Real-time quote engine not connected in Phase 1.",
-            "open": None,
-            "high": None,
-            "low": None,
-            "close": None,
-            "volume": None,
-            "52w_high": None,
-            "52w_low": None,
-        },
+        market_data_status=market_status,
+        market_data_message=market_msg,
+        ltp=ltp,
+        day_change=day_chg,
+        day_change_percent=day_chg_pct,
+        market_stats=stats,
         company_info={
             "description": f"{stock.name} is a publicly traded company on {stock.exchange.code if stock.exchange else 'NSE'}.",
             "sector": stock.sector or "General",
@@ -107,3 +136,4 @@ async def get_stock_by_symbol(
         },
         chart_compatible_format="TradingView_Lightweight_Charts_v4",
     )
+

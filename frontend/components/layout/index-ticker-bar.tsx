@@ -1,101 +1,158 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
+import { apiRequest } from "@/lib/api-client";
+import { marketWs, WsPriceUpdate, useMarketWebSocket } from "@/lib/market-ws";
+import { formatCurrency } from "@/lib/utils";
 
-interface IndexTickerItem {
+interface IndexItem {
   name: string;
-  value: string;
-  change: string;
-  changePercent: string;
-  isPositive: boolean;
-  expiryBadge?: string;
-  expiryVariant?: "default" | "alert";
+  symbol: string;
+  instrument_key: string | null;
+  value: number | null;
+  change: number | null;
+  change_percent: number | null;
+  is_positive: boolean;
+  status: string;
 }
 
 export function IndexTickerBar() {
-  const tickerItems: IndexTickerItem[] = [
-    {
-      name: "NIFTY 50",
-      value: "23,282.95",
-      change: "+65.35",
-      changePercent: "+0.28%",
-      isPositive: true,
-      expiryBadge: "Exp. 22 Sep",
-      expiryVariant: "default",
-    },
-    {
-      name: "SENSEX",
-      value: "74,387.41",
-      change: "+50.96",
-      changePercent: "+0.07%",
-      isPositive: true,
-      expiryBadge: "Exp. Today",
-      expiryVariant: "alert",
-    },
-    {
-      name: "BANKNIFTY",
-      value: "56,118.30",
-      change: "-174.15",
-      changePercent: "-0.31%",
-      isPositive: false,
-      expiryBadge: "Exp. 29 Sep",
-      expiryVariant: "default",
-    },
-    {
-      name: "MIDCPNIFTY",
-      value: "14,411.80",
-      change: "+123.35",
-      changePercent: "+0.86%",
-      isPositive: true,
-    },
-    {
-      name: "FINNIFTY",
-      value: "25,331.10",
-      change: "+68.70",
-      changePercent: "+0.27%",
-      isPositive: true,
-    },
-  ];
+  const [indices, setIndices] = useState<IndexItem[]>([
+    { name: "NIFTY 50", symbol: "NIFTY 50", instrument_key: "NSE_INDEX|Nifty 50", value: null, change: null, change_percent: null, is_positive: true, status: "LOADING" },
+    { name: "SENSEX", symbol: "SENSEX", instrument_key: "BSE_INDEX|SENSEX", value: null, change: null, change_percent: null, is_positive: true, status: "LOADING" },
+    { name: "BANKNIFTY", symbol: "BANKNIFTY", instrument_key: "NSE_INDEX|Nifty Bank", value: null, change: null, change_percent: null, is_positive: true, status: "LOADING" },
+    { name: "MIDCPNIFTY", symbol: "MIDCPNIFTY", instrument_key: "NSE_INDEX|NIFTY MIDCAP 50", value: null, change: null, change_percent: null, is_positive: true, status: "LOADING" },
+    { name: "FINNIFTY", symbol: "FINNIFTY", instrument_key: "NSE_INDEX|Nifty Fin Service", value: null, change: null, change_percent: null, is_positive: true, status: "LOADING" },
+  ]);
+
+  const [providerConfigured, setProviderConfigured] = useState<boolean>(true);
+  const { connectionState } = useMarketWebSocket();
+
+  const loadTicker = useCallback(async () => {
+    try {
+      const res = await apiRequest<{ indices: IndexItem[]; provider_configured: boolean }>("/api/v1/market/ticker");
+      if (res && res.indices && res.indices.length > 0) {
+        setIndices(res.indices);
+        setProviderConfigured(res.provider_configured ?? true);
+      }
+    } catch {
+      // Mark as unavailable if request fails
+      setIndices((prev) =>
+        prev.map((item) => ({ ...item, status: "UNAVAILABLE" }))
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTicker();
+    const interval = setInterval(loadTicker, 20000); // Polling fallback
+    return () => clearInterval(interval);
+  }, [loadTicker]);
+
+  // Subscribe to live websocket updates for each index
+  useEffect(() => {
+    const unsubs: (() => void)[] = [];
+
+    indices.forEach((idx) => {
+      const targetKey = idx.instrument_key || idx.symbol;
+      const unsub = marketWs.subscribe(targetKey, (update: WsPriceUpdate) => {
+        setIndices((prev) =>
+          prev.map((item) => {
+            if (
+              item.symbol === update.symbol ||
+              item.instrument_key === update.instrument_key ||
+              item.name === update.symbol
+            ) {
+              const ltp = typeof update.ltp === "string" ? parseFloat(update.ltp) : update.ltp;
+              const chg = typeof update.change === "string" ? parseFloat(update.change) : update.change;
+              const chgPct = typeof update.change_percent === "string" ? parseFloat(update.change_percent) : update.change_percent;
+              return {
+                ...item,
+                value: ltp ?? item.value,
+                change: chg ?? item.change,
+                change_percent: chgPct ?? item.change_percent,
+                is_positive: (chg ?? 0) >= 0,
+                status: "LIVE",
+              };
+            }
+            return item;
+          })
+        );
+      });
+      unsubs.push(unsub);
+    });
+
+    return () => {
+      unsubs.forEach((u) => u());
+    };
+  }, [indices]);
+
+  const isLive = connectionState === "CONNECTED";
 
   return (
     <div className="w-full bg-white border-b border-slate-200/90 px-4 sm:px-6 py-1.5 flex items-center gap-4 text-xs overflow-x-auto select-none no-scrollbar shadow-[0_1px_1px_rgba(0,0,0,0.02)]">
       {/* 1. Live Indicator Badge */}
-      <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold shrink-0">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        <span>LIVE</span>
+      <div
+        className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 border transition-colors ${
+          isLive
+            ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+            : "bg-slate-100 border-slate-200 text-slate-500"
+        }`}
+      >
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${
+            isLive ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
+          }`}
+        />
+        <span>{isLive ? "LIVE NSE" : "FEED OFFLINE"}</span>
       </div>
 
       {/* 2. Horizontal Index List */}
       <div className="flex items-center gap-6 sm:gap-8 shrink-0">
-        {tickerItems.map((item) => (
-          <div key={item.name} className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity">
-            <span className="font-bold text-slate-800 text-[11px] tracking-tight">
-              {item.name}
-            </span>
-            <span className="font-semibold text-slate-900 text-xs font-mono">
-              {item.value}
-            </span>
-            <span
-              className={`font-semibold text-[11px] font-mono ${
-                item.isPositive ? "text-emerald-600" : "text-rose-600"
-              }`}
-            >
-              {item.change} ({item.changePercent})
-            </span>
+        {indices.map((item) => {
+          const hasValue = item.value !== null && item.value !== undefined;
+          const displayVal = hasValue
+            ? item.value!.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : null;
+          const displayChg = item.change !== null && item.change !== undefined
+            ? `${item.is_positive ? "+" : ""}${item.change.toFixed(2)}`
+            : null;
+          const displayChgPct = item.change_percent !== null && item.change_percent !== undefined
+            ? `${item.is_positive ? "+" : ""}${item.change_percent.toFixed(2)}%`
+            : null;
 
-            {item.expiryBadge && (
-              <span
-                className={`text-[9px] font-semibold px-1.5 py-0.2 rounded border ${
-                  item.expiryVariant === "alert"
-                    ? "bg-rose-50 text-rose-600 border-rose-200"
-                    : "bg-slate-100 text-slate-500 border-slate-200"
-                }`}
-              >
-                {item.expiryBadge}
+          return (
+            <Link
+              key={item.name}
+              href={`/stocks/${encodeURIComponent(item.symbol)}`}
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <span className="font-bold text-slate-800 text-[11px] tracking-tight">
+                {item.name}
               </span>
-            )}
-          </div>
-        ))}
+
+              {hasValue ? (
+                <>
+                  <span className="font-semibold text-slate-900 text-xs font-mono">
+                    {displayVal}
+                  </span>
+                  <span
+                    className={`font-semibold text-[11px] font-mono ${
+                      item.is_positive ? "text-emerald-600" : "text-rose-600"
+                    }`}
+                  >
+                    {displayChg} ({displayChgPct})
+                  </span>
+                </>
+              ) : (
+                <span className="text-[11px] text-slate-400 font-mono italic">
+                  {item.status === "LOADING" ? "Loading..." : "Market data unavailable"}
+                </span>
+              )}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

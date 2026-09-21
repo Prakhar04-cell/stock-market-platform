@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Search, Plus, LineChart, Layers, ArrowUpRight, ArrowDownRight, ChevronRight } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { apiRequest } from "@/lib/api-client";
+import { marketWs, WsPriceUpdate } from "@/lib/market-ws";
 
 export interface WatchlistStockItem {
   id: string;
@@ -12,6 +14,7 @@ export interface WatchlistStockItem {
   price?: number | string;
   change?: number | string;
   changePercent?: number | string;
+  isPositive?: boolean;
 }
 
 export interface WatchlistDockProps {
@@ -30,21 +33,83 @@ export function WatchlistDock({
   const [activeListTab, setActiveListTab] = useState(1);
   const [searchFilter, setSearchFilter] = useState("");
 
-  const sampleStocks: WatchlistStockItem[] = [
+  const [stocks, setStocks] = useState<WatchlistStockItem[]>([
     { id: "s-1", symbol: "RELIANCE", name: "Reliance Industries Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
-    { id: "s-2", symbol: "HDFCBANK", name: "HDFC Bank Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
-    { id: "s-3", symbol: "BHARTIARTL", name: "Bharti Airtel Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
-    { id: "s-4", symbol: "ICICIBANK", name: "ICICI Bank Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
-    { id: "s-5", symbol: "SBIN", name: "State Bank of India", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
-    { id: "s-6", symbol: "TCS", name: "Tata Consultancy Services", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
-    { id: "s-7", symbol: "INFY", name: "Infosys Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
+    { id: "s-2", symbol: "TCS", name: "Tata Consultancy Services", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
+    { id: "s-3", symbol: "INFY", name: "Infosys Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
+    { id: "s-4", symbol: "HDFCBANK", name: "HDFC Bank Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
+    { id: "s-5", symbol: "BHARTIARTL", name: "Bharti Airtel Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
+    { id: "s-6", symbol: "ICICIBANK", name: "ICICI Bank Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
+    { id: "s-7", symbol: "SBIN", name: "State Bank of India", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
     { id: "s-8", symbol: "LT", name: "Larsen & Toubro Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
     { id: "s-9", symbol: "BAJFINANCE", name: "Bajaj Finance Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
     { id: "s-10", symbol: "TATAMOTORS", name: "Tata Motors Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
-    { id: "s-11", symbol: "TITAN", name: "Titan Company Ltd", exchange: "NSE EQ", price: "--", change: "--", changePercent: "--" },
-  ];
+  ]);
 
-  const filteredStocks = sampleStocks.filter((s) =>
+  // Batch fetch quotes
+  useEffect(() => {
+    async function loadBatchQuotes() {
+      try {
+        const syms = stocks.map((s) => s.symbol).join(",");
+        const batchQuotes = await apiRequest<Record<string, any>>(`/api/v1/market/quotes?symbols=${syms}`);
+        if (batchQuotes) {
+          setStocks((prev) =>
+            prev.map((s) => {
+              const q = batchQuotes[s.symbol];
+              if (q && q.ltp) {
+                const numLtp = Number(q.ltp);
+                const chg = q.change !== undefined && q.change !== null ? Number(q.change) : null;
+                const chgPct = q.change_percent !== undefined && q.change_percent !== null ? Number(q.change_percent) : null;
+                return {
+                  ...s,
+                  price: `₹${numLtp.toFixed(2)}`,
+                  change: chg !== null ? `${chg >= 0 ? "+" : ""}${chg.toFixed(2)} (${chgPct?.toFixed(2)}%)` : "--",
+                  isPositive: (chg ?? 0) >= 0,
+                };
+              }
+              return s;
+            })
+          );
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    loadBatchQuotes();
+  }, []);
+
+  // Subscribe to live websocket updates for each stock
+  useEffect(() => {
+    const unsubs: (() => void)[] = [];
+
+    stocks.forEach((s) => {
+      const unsub = marketWs.subscribe(s.symbol, (update: WsPriceUpdate) => {
+        setStocks((prev) =>
+          prev.map((item) => {
+            if (item.symbol === update.symbol) {
+              const ltp = Number(update.ltp);
+              const chg = update.change !== undefined && update.change !== null ? Number(update.change) : null;
+              const chgPct = update.change_percent !== undefined && update.change_percent !== null ? Number(update.change_percent) : null;
+              return {
+                ...item,
+                price: `₹${ltp.toFixed(2)}`,
+                change: chg !== null ? `${chg >= 0 ? "+" : ""}${chg.toFixed(2)} (${chgPct?.toFixed(2)}%)` : item.change,
+                isPositive: (chg ?? 0) >= 0,
+              };
+            }
+            return item;
+          })
+        );
+      });
+      unsubs.push(unsub);
+    });
+
+    return () => {
+      unsubs.forEach((u) => u());
+    };
+  }, []);
+
+  const filteredStocks = stocks.filter((s) =>
     s.symbol.toLowerCase().includes(searchFilter.toLowerCase()) ||
     s.name.toLowerCase().includes(searchFilter.toLowerCase())
   );
@@ -121,7 +186,15 @@ export function WatchlistDock({
                 <span className="text-xs font-bold text-slate-800 block">
                   {stock.price}
                 </span>
-                <span className="text-[10px] text-slate-400 font-medium">
+                <span
+                  className={`text-[10px] font-medium ${
+                    stock.isPositive === undefined
+                      ? "text-slate-400"
+                      : stock.isPositive
+                      ? "text-emerald-600"
+                      : "text-rose-600"
+                  }`}
+                >
                   {stock.change}
                 </span>
               </div>
@@ -133,7 +206,7 @@ export function WatchlistDock({
                     e.stopPropagation();
                     onQuickTrade(stock, "BUY");
                   }}
-                  className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                  className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
                   title="Buy"
                 >
                   B
@@ -143,7 +216,7 @@ export function WatchlistDock({
                     e.stopPropagation();
                     onQuickTrade(stock, "SELL");
                   }}
-                  className="px-2 py-1 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
+                  className="px-2 py-1 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors"
                   title="Sell"
                 >
                   S
@@ -153,7 +226,7 @@ export function WatchlistDock({
                     e.stopPropagation();
                     onSelectStock(stock);
                   }}
-                  className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200"
+                  className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors"
                   title="Chart"
                 >
                   <LineChart className="w-3.5 h-3.5" />

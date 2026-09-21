@@ -1,7 +1,7 @@
 from app.core.database import Base
 from app.models.base import UUIDPrimaryKeyMixin, TimestampMixin
 from app.models.user import User, Profile, Role, UserRole
-from app.models.market import Exchange, Stock, MarketPrice, HistoricalPrice
+from app.models.market import Exchange, Stock, Instrument, MarketPrice, HistoricalPrice
 from app.models.wallet import Wallet, LedgerEntry, TradeCharge
 from app.models.trading import Order, OrderExecution, Holding, PortfolioSnapshot, PriceAlert
 from app.models.watchlist import Watchlist, WatchlistItem
@@ -12,6 +12,7 @@ from app.models.system import (
     SystemHealth,
     ApiHealthCheck,
     Notification,
+    ProviderCredential,
 )
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "UserRole",
     "Exchange",
     "Stock",
+    "Instrument",
     "MarketPrice",
     "HistoricalPrice",
     "Wallet",
@@ -42,4 +44,5 @@ __all__ = [
     "SystemHealth",
     "ApiHealthCheck",
     "Notification",
+    "ProviderCredential",
 ]

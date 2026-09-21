@@ -4,7 +4,7 @@ import sys
 from typing import Any, Dict
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
-from sqlalchemy import text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -110,20 +110,68 @@ async def get_system_health():
 
 
 @router.get("/market-data", summary="Market data provider status")
-async def get_market_data_health():
-    """Phase 1 Market Data Provider status. Strictly displays not_configured."""
+async def get_market_data_health(db: AsyncSession = Depends(get_db)):
+    """
+    Market Data Provider status probe.
+    Returns:
+    {
+      "status": "healthy",
+      "provider": "upstox",
+      "websocket": "connected" | "disconnected",
+      "last_update": "...",
+      "instruments": 15
+    }
+    Or if token expired:
+    {
+      "status": "authentication_required"
+    }
+    Never reports healthy incorrectly.
+    """
+    from sqlalchemy import func
+    from app.core.redis import check_redis_health
+    from app.models.market import Instrument
+    from app.services.market_data.upstox_client import upstox_client
+    from app.services.market_data.upstox_provider import upstox_provider
+    from app.services.market_data.websocket_service import upstream_feed
+
+    redis_ok = await check_redis_health()
+    redis_status = "connected" if redis_ok else "disconnected"
+
+    verification = await upstox_client.verify_token()
+    configured = verification["configured"]
+    authenticated = verification["authenticated"]
+
+    metrics = upstream_feed.get_monitoring_metrics()
+    ws_status = "connected" if upstream_feed.is_connected else "disconnected"
+    last_update = metrics.get("last_message") or (
+        upstox_provider._last_successful_request.isoformat()
+        if upstox_provider._last_successful_request
+        else None
+    )
+
+    inst_count = (await db.execute(select(func.count(Instrument.id)))).scalar() or 0
+
     return {
-        "status": "not_configured",
-        "provider": None,
-        "message": "Market data provider is not connected yet. Phase 1 foundation active.",
+        "provider": "upstox",
+        "configured": configured,
+        "authenticated": authenticated,
+        "websocket": ws_status,
+        "last_update": last_update,
+        "redis": redis_status,
+        "instruments": inst_count,
+        "status": "healthy" if (configured and authenticated and redis_ok) else (
+            "authentication_required" if not authenticated else "degraded"
+        ),
     }
 
 
 @router.get("/trading-engine", summary="Trading engine provider status")
 async def get_trading_engine_health():
-    """Phase 1 Trading Engine status. Strictly displays not_configured."""
+    """Phase 2 Virtual Paper Trading Engine status."""
     return {
-        "status": "not_configured",
-        "provider": None,
-        "message": "Trading engine provider is not configured yet. Phase 1 foundation active.",
+        "status": "healthy",
+        "provider": "paper_trading_engine",
+        "mode": "simulation",
+        "message": "TradeX Virtual Paper Execution Engine active. Real-money orders strictly disabled.",
     }
+

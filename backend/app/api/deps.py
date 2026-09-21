@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import Depends, Header, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,6 +42,18 @@ async def get_current_user(
     # Attach to request.state for logging & rate limiting
     request.state.user_id = user.id
     return user
+
+
+async def get_current_user_optional(
+    request: Request,
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    """Dependency that returns authenticated active user or None if unauthenticated."""
+    try:
+        return await get_current_user(request, token, db)
+    except Exception:
+        return None
 
 
 def require_role(allowed_roles: List[str]):

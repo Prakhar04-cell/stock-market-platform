@@ -89,6 +89,23 @@ class Settings(BaseSettings):
     # Sentry Configuration (Phase 2 - Placeholder only)
     SENTRY_DSN: str = ""
 
+    # Upstox API Configuration (Official API)
+    UPSTOX_CLIENT_ID: str = ""
+    UPSTOX_CLIENT_SECRET: str = ""
+    UPSTOX_REDIRECT_URI: str = "http://localhost:8000/api/v1/upstox/auth/callback"
+    UPSTOX_ACCESS_TOKEN: str = ""
+    UPSTOX_INTEGRATION_TEST: bool = False
+    UPSTOX_API_BASE_URL: str = "https://api.upstox.com/v2"
+
+    # Configurable Paper Trading Charges (Regulatory & Brokerage)
+    PAPER_BROKERAGE_PERCENT: Decimal = Decimal("0.0003")  # 0.03%
+    PAPER_BROKERAGE_MAX_PER_ORDER: Decimal = Decimal("20.00")  # max ₹20
+    PAPER_STT_PERCENT: Decimal = Decimal("0.001")  # 0.1% on delivery BUY & SELL
+    PAPER_EXCHANGE_TURNOVER_PERCENT: Decimal = Decimal("0.0000345")  # 0.00345%
+    PAPER_STAMP_DUTY_PERCENT: Decimal = Decimal("0.00015")  # 0.015% on BUY only
+    PAPER_SEBI_PERCENT: Decimal = Decimal("0.000001")  # ₹10/crore = 0.0001%
+    PAPER_GST_PERCENT: Decimal = Decimal("0.18")  # 18% on (brokerage + turnover + sebi)
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { apiRequest } from "@/lib/api-client";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
@@ -9,8 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs } from "@/components/ui/tabs";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Modal } from "@/components/ui/modal";
-import { ProviderStatusBanner } from "@/components/trading/provider-status-banner";
-import { Layers, Eye, Ban, CheckCircle2, Clock } from "lucide-react";
+import { Layers, Eye, Ban, CheckCircle2, Clock, RefreshCw, ShieldCheck } from "lucide-react";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -19,24 +18,26 @@ export default function OrdersPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await apiRequest("/api/v1/orders");
-      setOrders(data);
+      setOrders(data || []);
     } catch {
-      // Fallback
+      setOrders([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadOrders();
-  }, []);
+    const interval = setInterval(loadOrders, 10000);
+    return () => clearInterval(interval);
+  }, [loadOrders]);
 
   const handleCancel = async (orderId: string) => {
-    if (!confirm("Are you sure you want to cancel this order?")) return;
+    if (!confirm("Are you sure you want to cancel this pending limit order? Locked margin will be released back to your virtual wallet.")) return;
     try {
       await apiRequest(`/api/v1/orders/${orderId}`, { method: "DELETE" });
       await loadOrders();
@@ -58,19 +59,27 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-5 select-none">
-      <ProviderStatusBanner />
-
       {/* Page Header */}
       <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            Order Book &amp; Executions
+            Paper Order Book &amp; Executions
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Audit trail of simulated orders, fill prices, and order lifecycle states.
+            Audit trail of simulated orders, live execution fills, and virtual margin locks.
           </p>
         </div>
-        <Badge variant="unconfigured">ENGINE OFFLINE</Badge>
+
+        <div className="flex items-center gap-2">
+          <Badge variant="success">PAPER TRADING ENGINE</Badge>
+          <button
+            onClick={loadOrders}
+            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+            title="Refresh Order Book"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+          </button>
+        </div>
       </div>
 
       {/* Order Tabs */}
@@ -95,6 +104,7 @@ export default function OrdersPage() {
               <TableHead>Type</TableHead>
               <TableHead className="text-right">Qty</TableHead>
               <TableHead className="text-right">Limit Price</TableHead>
+              <TableHead className="text-right">Avg Fill Price</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Placed At</TableHead>
               <TableHead className="text-center">Action</TableHead>
@@ -104,12 +114,20 @@ export default function OrdersPage() {
             {filteredOrders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell className="font-bold text-slate-900">
-                  {order.symbol || "STOCK"}
+                  <Link href={`/stocks/${order.symbol || "STOCK"}`} className="hover:text-indigo-600">
+                    {order.symbol || "STOCK"}
+                  </Link>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={order.side === "BUY" ? "success" : "danger"}>
+                  <span
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                      order.side === "BUY"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        : "bg-rose-50 text-rose-700 border border-rose-200"
+                    }`}
+                  >
                     {order.side}
-                  </Badge>
+                  </span>
                 </TableCell>
                 <TableCell className="font-mono text-xs text-slate-600">
                   {order.order_type}
@@ -118,20 +136,23 @@ export default function OrdersPage() {
                   {order.quantity}
                 </TableCell>
                 <TableCell className="text-right font-mono text-xs text-slate-800">
-                  {order.price ? formatCurrency(order.price) : "Market"}
+                  {order.price ? formatCurrency(order.price) : "Market Best"}
+                </TableCell>
+                <TableCell className="text-right font-mono text-xs font-bold text-slate-900">
+                  {order.average_execution_price ? formatCurrency(order.average_execution_price) : "--"}
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant={
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                       order.status === "FILLED"
-                        ? "success"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                         : order.status === "CANCELLED"
-                        ? "danger"
-                        : "unconfigured"
-                    }
+                        ? "bg-rose-50 text-rose-700 border-rose-200"
+                        : "bg-amber-50 text-amber-700 border-amber-200 animate-pulse"
+                    }`}
                   >
                     {order.status}
-                  </Badge>
+                  </span>
                 </TableCell>
                 <TableCell className="text-xs text-slate-500 font-mono">
                   {formatDateTime(order.created_at)}
@@ -152,7 +173,7 @@ export default function OrdersPage() {
                       <button
                         onClick={() => handleCancel(order.id)}
                         className="p-1 rounded text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200"
-                        title="Cancel Order"
+                        title="Cancel Pending Limit Order"
                       >
                         <Ban className="w-3.5 h-3.5" />
                       </button>
@@ -164,18 +185,17 @@ export default function OrdersPage() {
           </TableBody>
         </Table>
       ) : (
-        /* Section 25 Empty State */
         <div className="py-14 text-center rounded-2xl border border-dashed border-slate-200 bg-white shadow-card flex flex-col items-center justify-center">
           <div className="p-3 rounded-full bg-slate-100 text-slate-400 mb-3">
             <Layers className="w-6 h-6" />
           </div>
-          <h3 className="text-sm font-bold text-slate-900">No orders yet</h3>
+          <h3 className="text-sm font-bold text-slate-900">No orders logged yet</h3>
           <p className="text-xs text-slate-500 max-w-sm mt-1 mb-4">
-            Simulated paper orders and execution history will be logged here.
+            Simulated paper orders and execution history will appear here.
           </p>
           <Link
             href="/dashboard"
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-colors"
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-colors"
           >
             Go to Trading Terminal
           </Link>
@@ -207,6 +227,16 @@ export default function OrdersPage() {
               <div>
                 <span className="text-slate-500 text-[11px] block">Quantity</span>
                 <span className="font-mono text-slate-800">{selectedOrder.quantity}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 text-[11px] block">Execution Price</span>
+                <span className="font-mono font-bold text-slate-900">
+                  {selectedOrder.average_execution_price ? formatCurrency(selectedOrder.average_execution_price) : "--"}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 text-[11px] block">Filled Quantity</span>
+                <span className="font-mono text-slate-800">{selectedOrder.filled_quantity || 0}</span>
               </div>
             </div>
 
