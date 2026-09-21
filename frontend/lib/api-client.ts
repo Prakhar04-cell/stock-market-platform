@@ -1,9 +1,11 @@
 // Centralized API Client for TradeX Frontend
 // NEVER expose secrets, database credentials, or broker private keys here.
 
-export const API_BASE_URL =
+const rawBaseUrl =
   process.env.NEXT_PUBLIC_API_URL ||
   (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
+
+export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, "");
 
 export interface ApiError {
   code: string;

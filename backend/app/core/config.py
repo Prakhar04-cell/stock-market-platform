@@ -1,7 +1,7 @@
 import os
 import re
 from decimal import Decimal
-from typing import List, Union
+from typing import Any, List, Optional, Union
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -20,15 +20,34 @@ class Settings(BaseSettings):
 
     # CORS
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    CORS_ORIGIN_REGEX: Optional[str] = r"^https:\/\/.*\.vercel\.app$"
+
+    @field_validator("BACKEND_PORT", mode="before")
+    @classmethod
+    def assemble_backend_port(cls, v: Any) -> int:
+        port_env = os.getenv("PORT")
+        if port_env:
+            try:
+                return int(port_env)
+            except ValueError:
+                pass
+        return int(v) if v else 8000
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        origins: List[str] = []
         if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
+            origins = [i.strip() for i in v.split(",") if i.strip()]
         elif isinstance(v, list):
-            return v
-        return ["http://localhost:3000", "http://127.0.0.1:3000"]
+            origins = list(v)
+        else:
+            origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+        frontend_url = os.getenv("FRONTEND_URL")
+        if frontend_url and frontend_url.strip() not in origins:
+            origins.append(frontend_url.strip())
+        return origins
 
     # Database Configuration
     DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/tradex"

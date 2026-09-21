@@ -16,8 +16,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application source code
 COPY . .
 
-# Expose port
+# Expose default port (overridable by cloud platforms via PORT env var)
+ENV PORT=8000
 EXPOSE 8000
 
-# Run uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run database migrations and start uvicorn
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

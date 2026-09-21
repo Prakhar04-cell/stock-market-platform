@@ -1,9 +1,13 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 from app.models.base import UUIDPrimaryKeyMixin, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.user import User
+
 
 
 class AuditLog(Base, UUIDPrimaryKeyMixin):
