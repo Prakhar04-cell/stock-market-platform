@@ -25,6 +25,16 @@ class PaperExecutionService:
     Authoritative virtual paper trading execution engine.
     Strictly isolated from broker real-money routing.
     Executes fills using real market prices with full atomic database integrity.
+
+    STRICT PRODUCTION SAFETY GUARDRAILS:
+    1. ZERO BROKER ORDER ROUTING: There is NO connection, code path, or credential
+       flow to Upstox Order Placement API or any external broker execution endpoint.
+    2. SIMULATED FILLS ONLY: Market and limit orders execute strictly against virtual
+       paper wallets stored in TradeX PostgreSQL.
+    3. REAL MARKET DATA USAGE: Real Upstox market prices (LTP) are used exclusively as
+       passive benchmarks for fill execution and portfolio mark-to-market valuations.
+    4. IMMUTABLE PAPER AUDITING: All paper trades write double-entry ledger records
+       to ensure financial accuracy without real-money capital risk.
     """
 
     async def submit_order(

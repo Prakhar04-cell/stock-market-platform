@@ -1,5 +1,8 @@
 import logging
+import time
+import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from decimal import Decimal
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -200,6 +203,55 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Optional Sentry initialization with strict sensitive data sanitization
+if settings.SENTRY_DSN:
+    try:
+        import sentry_sdk
+
+        def _sentry_before_send(event, hint):
+            req = event.get("request", {})
+            headers = req.get("headers", {})
+            for h in ["authorization", "cookie", "x-token", "proxy-authorization"]:
+                if h in headers:
+                    headers[h] = "[FILTERED]"
+            data = req.get("data")
+            if isinstance(data, dict):
+                for k in list(data.keys()):
+                    if any(s in k.lower() for s in ["password", "token", "secret", "card", "key"]):
+                        data[k] = "[FILTERED]"
+            return event
+
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            environment=settings.ENVIRONMENT,
+            traces_sample_rate=0.1,
+            before_send=_sentry_before_send,
+        )
+        logger.info("Sentry monitoring initialized with sensitive field sanitization.")
+    except ImportError:
+        logger.info("sentry-sdk not installed; skipping Sentry initialization.")
+
+
+# Structured HTTP Logging Middleware
+@app.middleware("http")
+async def structured_logging_middleware(request: Request, call_next):
+    request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+    t0 = time.time()
+
+    response = await call_next(request)
+
+    latency_ms = round((time.time() - t0) * 1000, 2)
+    # Log safe operational metrics (never log authorization headers, passwords, or tokens)
+    if not request.url.path.startswith("/health"):
+        logger.info(
+            f'{{"timestamp": "{datetime.now(timezone.utc).isoformat()}", "service": "TradeX-API", '
+            f'"environment": "{settings.ENVIRONMENT}", "request_id": "{request_id}", '
+            f'"route": "{request.url.path}", "method": "{request.method}", '
+            f'"status_code": {response.status_code}, "latency_ms": {latency_ms}}}'
+        )
+    response.headers["X-Request-ID"] = request_id
+    return response
 
 
 # Standardized Exception Handlers
