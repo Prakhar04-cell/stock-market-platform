@@ -120,3 +120,52 @@ async def get_index_ticker():
         "provider": "upstox",
         "provider_configured": upstox_provider.is_configured,
     }
+
+
+@router.get("/movers", summary="Get top gainers, top losers, and most active stocks")
+async def get_market_movers():
+    """
+    Returns real top gainers, losers, and most active stocks based on real market quotes.
+    Strictly uses actual real-time market data without inventing fake prices.
+    """
+    tracked_stocks = [
+        "RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK", "SBIN",
+        "BHARTIARTL", "ITC", "KOTAKBANK", "LT", "AXISBANK", "WIPRO",
+        "MARUTI", "TATAMOTORS", "TITAN"
+    ]
+    quotes_map = await quote_service.get_quotes(tracked_stocks)
+
+    items = []
+    for sym in tracked_stocks:
+        q = quotes_map.get(sym)
+        if q and q.ltp and q.ltp > 0:
+            chg = float(q.change) if q.change is not None else 0.0
+            chg_pct = float(q.change_percent) if q.change_percent is not None else 0.0
+            items.append({
+                "symbol": q.symbol,
+                "name": q.symbol,
+                "exchange": q.exchange or "NSE",
+                "price": float(q.ltp),
+                "change": chg,
+                "change_percent": chg_pct,
+                "is_positive": chg >= 0,
+                "volume": int(q.volume or 0),
+                "status": q.status,
+            })
+
+    # Gainers (change_percent desc)
+    gainers = sorted([i for i in items if i["change"] > 0], key=lambda x: x["change_percent"], reverse=True)[:5]
+    # Losers (change_percent asc)
+    losers = sorted([i for i in items if i["change"] < 0], key=lambda x: x["change_percent"])[:5]
+    # Most active (volume desc, or by price if volume not available)
+    most_active = sorted(items, key=lambda x: x["volume"] if x["volume"] > 0 else x["price"], reverse=True)[:5]
+
+    return {
+        "gainers": gainers,
+        "losers": losers,
+        "most_active": most_active,
+        "total_tracked": len(items),
+        "provider": "upstox",
+        "status": "LIVE" if items else "UNAVAILABLE",
+    }
+

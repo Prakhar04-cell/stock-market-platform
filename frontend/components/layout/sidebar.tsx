@@ -1,122 +1,149 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  Home,
+  LayoutDashboard,
   LineChart,
-  Star,
-  Briefcase,
+  Bookmark,
   Layers,
+  Briefcase,
+  ShieldCheck,
+  Activity,
+  Users,
+  Cpu,
+  FileText,
+  ChevronRight,
   TrendingUp,
-  Wallet,
-  Bell,
-  SlidersHorizontal,
-  CircleDot,
-  Clock,
-  Wheat,
-  BookOpen,
-  HelpCircle,
-  Crown,
 } from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const primaryNav = [
-    { name: "Dashboard", href: "/dashboard", icon: Home },
-    { name: "Markets", href: "/dashboard", icon: LineChart },
-    { name: "Watchlist", href: "/watchlist", icon: Star },
-    { name: "Portfolio", href: "/portfolio", icon: Briefcase },
+  useEffect(() => {
+    // Check if current user is admin
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("tradex_token");
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          if (payload.role === "ADMIN" || payload.roles?.includes("ADMIN")) {
+            setIsAdmin(true);
+          }
+        } catch {
+          // Ignore
+        }
+      }
+    }
+  }, []);
+
+  const traderNav = [
+    { name: "Home", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Markets", href: "/stocks/NIFTY%2050", icon: LineChart },
+    { name: "Watchlist", href: "/watchlist", icon: Bookmark },
     { name: "Orders", href: "/orders", icon: Layers },
-    { name: "Positions", href: "/portfolio", icon: TrendingUp },
-    { name: "Funds", href: "/portfolio", icon: Wallet },
-    { name: "Alerts", href: "/watchlist", icon: Bell },
-    { name: "Screener", href: "/stocks/RELIANCE", icon: SlidersHorizontal },
-    { name: "Options", href: "/stocks/RELIANCE", icon: CircleDot },
-    { name: "Futures", href: "/stocks/RELIANCE", icon: Clock },
-    { name: "Commodities", href: "/dashboard", icon: Wheat },
+    { name: "Portfolio", href: "/portfolio", icon: Briefcase },
   ];
 
-  const secondaryNav = [
-    { name: "Learn", href: "/dashboard", icon: BookOpen },
-    { name: "Support", href: "/dashboard", icon: HelpCircle },
+  const adminNav = [
+    { name: "Admin Dashboard", href: "/admin", icon: ShieldCheck },
+    { name: "Monitoring", href: "/admin/monitoring", icon: Activity },
+    { name: "Users", href: "/admin/users", icon: Users },
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-[210px] shrink-0 bg-white border-r border-slate-200/90 p-3 justify-between select-none min-h-[calc(100vh-100px)]">
-      {/* 1. Primary & Secondary Navigation */}
-      <div className="space-y-1">
-        {primaryNav.map((item) => {
-          const isActive = pathname === item.href && item.name === "Dashboard";
-          const Icon = item.icon;
+    <aside className="hidden md:flex flex-col w-52 shrink-0 bg-white border-r border-[#E5E7EB] p-3 justify-between select-none min-h-[calc(100vh-100px)]">
+      <div className="space-y-6">
+        {/* Trader Navigation Section */}
+        <div>
+          <div className="px-3 pb-2 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">
+            Trading Desk
+          </div>
+          <div className="space-y-0.5">
+            {traderNav.map((item) => {
+              const isActive =
+                item.name === "Home"
+                  ? pathname === "/dashboard"
+                  : item.name === "Markets"
+                  ? pathname.startsWith("/stocks")
+                  : pathname === item.href;
 
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all",
-                isActive
-                  ? "bg-[#EEF2FF] text-[#4F46E5] font-semibold"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-              )}
-            >
-              <Icon
-                className={cn(
-                  "w-4 h-4 shrink-0",
-                  isActive ? "text-[#4F46E5]" : "text-slate-400"
-                )}
-              />
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
+              const Icon = item.icon;
 
-        {/* Separator */}
-        <div className="pt-2 pb-1">
-          <div className="h-[1px] bg-slate-100 mx-2" />
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all group",
+                    isActive
+                      ? "bg-[#EEF2FF] text-[#4F46E5] font-semibold"
+                      : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "w-4 h-4 shrink-0 transition-colors",
+                      isActive ? "text-[#4F46E5]" : "text-[#9CA3AF] group-hover:text-[#4B5563]"
+                    )}
+                  />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Secondary Links */}
-        {secondaryNav.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all"
-            >
-              <Icon className="w-4 h-4 shrink-0 text-slate-400" />
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
+        {/* Separator & Admin Section */}
+        <div className="pt-2 border-t border-[#E5E7EB]">
+          <div className="px-3 pb-2 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider flex items-center justify-between">
+            <span>Administration</span>
+            <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-[#6B7280]">
+              OPS
+            </span>
+          </div>
+          <div className="space-y-0.5">
+            {adminNav.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all group",
+                    isActive
+                      ? "bg-[#EEF2FF] text-[#4F46E5] font-semibold"
+                      : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "w-4 h-4 shrink-0 transition-colors",
+                      isActive ? "text-[#4F46E5]" : "text-[#9CA3AF] group-hover:text-[#4B5563]"
+                    )}
+                  />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* 2. Bottom Promo Card: Upgrade to Pro */}
-      <div className="pt-4 mt-4">
-        <div className="rounded-2xl bg-gradient-to-b from-[#F5F3FF] to-[#EDE9FE] border border-indigo-100/90 p-3.5 text-center shadow-xs">
-          <div className="flex justify-center mb-1">
-            <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 shadow-2xs">
-              <Crown className="w-4 h-4 fill-amber-400 text-amber-500" />
-            </div>
-          </div>
-          <h4 className="text-[13px] font-bold text-slate-900">
-            Upgrade to Pro
-          </h4>
-          <p className="text-[10px] text-slate-500 mt-0.5 mb-2.5">
-            Advanced tools, insights &amp; more
-          </p>
-          <button
-            onClick={() => alert("TradeX Pro features activated in Phase 1!")}
-            className="w-full py-1.5 px-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-semibold rounded-xl transition-colors shadow-2xs cursor-pointer"
-          >
-            Learn More
-          </button>
+      {/* Bottom Compact Environment Badge */}
+      <div className="p-3 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] text-center space-y-1">
+        <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#00A86B]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
+          <span>Paper Engine Active</span>
         </div>
+        <p className="text-[10px] text-[#6B7280]">
+          Zero Capital Risk • Live Upstox Feeds
+        </p>
       </div>
     </aside>
   );

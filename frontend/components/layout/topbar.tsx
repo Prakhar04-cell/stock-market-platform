@@ -5,19 +5,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Search,
-  LineChart,
-  Star,
-  FileText,
-  PieChart,
-  ChevronDown,
   Bell,
-  Activity,
-  Layers,
+  ChevronDown,
+  X,
   ArrowRight,
   TrendingUp,
-  X,
+  TrendingDown,
+  Activity,
+  CheckCircle2,
+  ShieldCheck,
+  AlertTriangle,
+  Info,
+  LogOut,
+  User as UserIcon,
+  Wallet as WalletIcon,
+  Check,
 } from "lucide-react";
 import { apiRequest } from "@/lib/api-client";
+import { formatCurrency } from "@/lib/utils";
+import { useMarketWebSocket } from "@/lib/market-ws";
 
 interface SearchResultItem {
   instrument_key: string;
@@ -26,18 +32,89 @@ interface SearchResultItem {
   exchange: string;
   segment?: string;
   instrument_type?: string;
+  price?: number;
+  change_percent?: number;
+}
+
+interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  notification_type: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+interface WalletData {
+  balance: number;
+  available_balance: number;
+  locked_balance: number;
+  currency: string;
 }
 
 export function Topbar() {
   const router = useRouter();
+
+  // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Market WebSocket connection state
+  const { connectionState } = useMarketWebSocket();
+
+  // Wallet & Paper Trading state
+  const [wallet, setWallet] = useState<WalletData | null>(null);
+  const [isPaperModalOpen, setIsPaperModalOpen] = useState(false);
+
+  // Notifications state
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  // Profile dropdown state
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const [userEmail, setUserEmail] = useState<string>("Trader");
+
+  // Load wallet balance
+  const loadWallet = useCallback(async () => {
+    try {
+      const data = await apiRequest<WalletData>("/api/v1/wallet");
+      if (data) setWallet(data);
+    } catch {
+      // Default virtual wallet if unauthenticated
+      setWallet({ balance: 100000, available_balance: 100000, locked_balance: 0, currency: "INR" });
+    }
+  }, []);
+
+  // Load notifications
+  const loadNotifications = useCallback(async () => {
+    try {
+      const data = await apiRequest<{ notifications: NotificationItem[]; unread_count: number }>("/api/v1/notifications");
+      if (data) {
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unread_count || 0);
+      }
+    } catch {
+      // Ignore if unauthenticated
+    }
+  }, []);
+
+  useEffect(() => {
+    loadWallet();
+    loadNotifications();
+    const interval = setInterval(() => {
+      loadWallet();
+      loadNotifications();
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [loadWallet, loadNotifications]);
 
   // Global hotkey '/' to focus search
   useEffect(() => {
@@ -51,7 +128,7 @@ export function Topbar() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Debounced search query execution
+  // Search query with real batch quote enrichment
   useEffect(() => {
     if (!searchQuery.trim()) {
       setResults([]);
@@ -63,9 +140,30 @@ export function Topbar() {
       setIsLoading(true);
       try {
         const data = await apiRequest<SearchResultItem[]>(
-          `/api/v1/market/instruments/search?query=${encodeURIComponent(searchQuery.trim())}&limit=8`
+          `/api/v1/market/instruments/search?query=${encodeURIComponent(searchQuery.trim())}&limit=6`
         );
-        setResults(data || []);
+        const list = data || [];
+
+        // Enrich with real live prices where possible
+        if (list.length > 0) {
+          try {
+            const symbolsParam = list.map((i) => i.symbol).join(",");
+            const quotes = await apiRequest<Record<string, any>>(`/api/v1/market/quotes?symbols=${encodeURIComponent(symbolsParam)}`);
+            if (quotes) {
+              list.forEach((item) => {
+                const q = quotes[item.symbol] || quotes[item.instrument_key];
+                if (q && q.ltp) {
+                  item.price = Number(q.ltp);
+                  item.change_percent = q.change_percent !== null ? Number(q.change_percent) : 0;
+                }
+              });
+            }
+          } catch {
+            // Quotes fetch optional
+          }
+        }
+
+        setResults(list);
         setIsOpen(true);
         setSelectedIndex(-1);
       } catch {
@@ -78,7 +176,7 @@ export function Topbar() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Click outside to close dropdown
+  // Click outside listener for dropdowns
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -88,6 +186,12 @@ export function Topbar() {
         !searchInputRef.current.contains(e.target as Node)
       ) {
         setIsOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setIsNotifOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setIsProfileOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -120,181 +224,426 @@ export function Topbar() {
     }
   };
 
-  return (
-    <header className="h-[58px] bg-white border-b border-slate-200/90 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 select-none shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-      {/* 1. Left: Brand Logo */}
-      <div className="flex items-center gap-8 shrink-0">
-        <Link href="/dashboard" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
-            <Activity className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[17px] font-bold tracking-tight text-slate-900 leading-tight">
-              Trade<span className="text-indigo-600">X</span>
-            </span>
-            <span className="text-[10px] text-slate-400 font-medium tracking-wide">
-              Virtual Trading Hub
-            </span>
-          </div>
-        </Link>
-      </div>
+  const handleMarkAllRead = async () => {
+    try {
+      await apiRequest("/api/v1/notifications/mark-all-read", { method: "POST" });
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+    } catch {
+      // Ignore
+    }
+  };
 
-      {/* 2. Center: Search Bar with Autocomplete Dropdown */}
-      <div className="flex-1 max-w-xl mx-4 lg:mx-10 hidden sm:block relative">
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => {
-              if (results.length > 0) setIsOpen(true);
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="Search stocks, indices, ETFs (e.g. RELIANCE, NIFTY 50, TCS)..."
-            className="w-full pl-10 pr-9 py-2 rounded-full bg-slate-50/70 border border-slate-200/90 text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all"
-          />
-          {searchQuery ? (
-            <button
-              onClick={() => {
-                setSearchQuery("");
-                setResults([]);
-                setIsOpen(false);
+  const handleMarkOneRead = async (id: string) => {
+    try {
+      await apiRequest(`/api/v1/notifications/${id}/read`, { method: "PATCH" });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch {
+      // Ignore
+    }
+  };
+
+  const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("tradex_token");
+      localStorage.removeItem("tradex_refresh_token");
+      router.push("/login");
+    }
+  };
+
+  const isMarketConnected = connectionState === "CONNECTED";
+
+  return (
+    <>
+      <header className="h-14 bg-white border-b border-[#E5E7EB] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 select-none shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+        {/* 1. Left: Brand Logo & Market Status Badge */}
+        <div className="flex items-center gap-4 shrink-0">
+          <Link href="/dashboard" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-lg bg-[#4F46E5] flex items-center justify-center text-white shadow-xs group-hover:bg-[#4338CA] transition-colors">
+              <span className="font-extrabold text-sm tracking-tight">TX</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[17px] font-bold tracking-tight text-[#111827] leading-none">
+                Trade<span className="text-[#4F46E5]">X</span>
+              </span>
+              <span className="text-[9.5px] text-[#6B7280] font-medium tracking-wide">
+                Trading Platform
+              </span>
+            </div>
+          </Link>
+
+          {/* Market Status Pill */}
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F7F8FA] border border-[#E5E7EB] text-[#4B5563]">
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                isMarketConnected ? "bg-[#00A86B] animate-pulse" : "bg-slate-400"
+              }`}
+            />
+            <span>{isMarketConnected ? "Live Feed" : "Feed Standby"}</span>
+          </div>
+        </div>
+
+        {/* 2. Center: Global Search Bar */}
+        <div className="flex-1 max-w-lg mx-3 sm:mx-6 relative">
+          <div className="relative">
+            <Search className="w-4 h-4 text-[#9CA3AF] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => {
+                if (results.length > 0) setIsOpen(true);
               }}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              onKeyDown={handleKeyDown}
+              placeholder="Search stocks, indices, ETFs..."
+              className="w-full pl-9 pr-8 py-1.5 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#4F46E5] focus:bg-white focus:ring-2 focus:ring-[#EEF2FF] transition-all"
+            />
+            {searchQuery ? (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setResults([]);
+                  setIsOpen(false);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#4B5563]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <kbd className="hidden sm:inline-flex absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-white border border-[#E5E7EB] text-[10px] font-mono text-[#9CA3AF] pointer-events-none">
+                /
+              </kbd>
+            )}
+          </div>
+
+          {/* Autocomplete Dropdown */}
+          {isOpen && (
+            <div
+              ref={dropdownRef}
+              className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-[#E5E7EB] rounded-xl shadow-dropdown z-50 overflow-hidden text-xs max-h-96 overflow-y-auto"
             >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          ) : (
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-mono text-slate-400 pointer-events-none">
-              /
+              {isLoading && (
+                <div className="p-3.5 text-center text-[#6B7280] flex items-center justify-center gap-2">
+                  <div className="w-3.5 h-3.5 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
+                  <span>Searching instruments...</span>
+                </div>
+              )}
+
+              {!isLoading && results.length === 0 && searchQuery && (
+                <div className="p-4 text-center text-[#6B7280]">
+                  No matching stocks found for &quot;{searchQuery}&quot;. Press Enter to view.
+                </div>
+              )}
+
+              {!isLoading && results.length > 0 && (
+                <div className="py-1">
+                  <div className="px-3.5 py-1.5 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">
+                    Instruments ({results.length})
+                  </div>
+                  {results.map((item, idx) => {
+                    const hasPrice = item.price !== undefined && item.price !== null;
+                    const isPos = (item.change_percent ?? 0) >= 0;
+                    return (
+                      <div
+                        key={item.instrument_key || item.symbol}
+                        onClick={() => handleSelect(item)}
+                        className={`px-3.5 py-2.5 flex items-center justify-between cursor-pointer border-b border-slate-50 last:border-none transition-colors ${
+                          idx === selectedIndex
+                            ? "bg-[#EEF2FF] text-[#111827]"
+                            : "hover:bg-[#F7F8FA] text-[#111827]"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-7 h-7 rounded-md bg-[#F3F4F6] border border-[#E5E7EB] flex items-center justify-center font-bold text-[#374151] text-[11px] font-mono shrink-0">
+                            {item.symbol.slice(0, 2)}
+                          </div>
+                          <div className="truncate">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-[#111827] text-xs">
+                                {item.symbol}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#F3F4F6] text-[#6B7280] font-mono font-medium">
+                                {item.instrument_type === "INDEX" ? "Index" : (item.exchange || "NSE")}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-[#6B7280] block truncate max-w-[220px]">
+                              {item.name}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Real Price & Change Preview */}
+                        <div className="text-right shrink-0">
+                          {hasPrice ? (
+                            <>
+                              <div className="font-mono font-bold text-xs text-[#111827] tabular-nums">
+                                ₹{item.price?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                              </div>
+                              <div
+                                className={`text-[10px] font-semibold tabular-nums flex items-center justify-end gap-0.5 ${
+                                  isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                                }`}
+                              >
+                                {isPos ? "+" : ""}
+                                {item.change_percent?.toFixed(2)}%
+                              </div>
+                            </>
+                          ) : (
+                            <ArrowRight className="w-3.5 h-3.5 text-[#9CA3AF]" />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* Autocomplete Dropdown Menu */}
-        {isOpen && (
-          <div
-            ref={dropdownRef}
-            className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden text-xs max-h-96 overflow-y-auto"
+        {/* 3. Right: Paper Trading Badge, Notifications, Virtual Balance, Profile */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Paper Trading Indicator Badge (Clickable modal) */}
+          <button
+            onClick={() => setIsPaperModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#00A86B] text-xs font-bold hover:bg-[#D1FAE5] transition-colors"
+            title="Click to view Paper Trading details"
           >
-            {isLoading && (
-              <div className="p-3 text-center text-slate-400 flex items-center justify-center gap-2">
-                <div className="w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                <span>Searching instruments master...</span>
-              </div>
-            )}
+            <span className="w-2 h-2 rounded-full bg-[#00A86B] animate-pulse" />
+            <span className="hidden sm:inline">PAPER TRADING</span>
+            <span className="sm:hidden">PAPER</span>
+          </button>
 
-            {!isLoading && results.length === 0 && searchQuery && (
-              <div className="p-4 text-center text-slate-400">
-                No matching instruments found for &quot;{searchQuery}&quot;. Press Enter to search anyway.
-              </div>
-            )}
+          {/* Virtual Balance Display */}
+          <button
+            onClick={() => setIsPaperModalOpen(true)}
+            className="hidden md:flex flex-col items-end px-2.5 py-0.5 rounded-lg hover:bg-[#F7F8FA] transition-colors"
+            title="Available Virtual Margin"
+          >
+            <span className="text-[10px] font-medium text-[#6B7280] leading-none">
+              Virtual Balance
+            </span>
+            <span className="text-xs font-bold font-mono text-[#111827] tabular-nums">
+              ₹{wallet ? Number(wallet.available_balance).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "1,00,000.00"}
+            </span>
+          </button>
 
-            {!isLoading && results.length > 0 && (
-              <div className="py-1">
-                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Instruments ({results.length})
+          {/* Notifications Dropdown */}
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={() => setIsNotifOpen(!isNotifOpen)}
+              className="p-2 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#F7F8FA] relative transition-colors"
+              aria-label="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#EF4444]" />
+              )}
+            </button>
+
+            {isNotifOpen && (
+              <div className="absolute right-0 mt-2 w-80 bg-white border border-[#E5E7EB] rounded-xl shadow-dropdown z-50 overflow-hidden text-xs">
+                <div className="p-3 border-b border-[#E5E7EB] flex items-center justify-between bg-[#F7F8FA]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-[#111827]">Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-[#EEF2FF] text-[#4F46E5] font-bold text-[10px]">
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="text-[11px] text-[#4F46E5] hover:underline font-semibold"
+                    >
+                      Mark all read
+                    </button>
+                  )}
                 </div>
-                {results.map((item, idx) => (
-                  <div
-                    key={item.instrument_key || item.symbol}
-                    onClick={() => handleSelect(item)}
-                    className={`px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-colors ${
-                      idx === selectedIndex ? "bg-indigo-50/70 text-indigo-900" : "hover:bg-slate-50 text-slate-800"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-xs font-mono shrink-0">
-                        {item.symbol.slice(0, 2)}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900 text-xs">{item.symbol}</span>
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 font-mono font-medium">
-                            {item.exchange}
-                          </span>
-                          {item.instrument_type && (
-                            <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-50 text-indigo-600 font-mono font-semibold">
-                              {item.instrument_type}
-                            </span>
+
+                <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                  {notifications.length === 0 ? (
+                    <div className="p-6 text-center text-[#6B7280]">
+                      <Bell className="w-6 h-6 mx-auto mb-2 text-[#9CA3AF]" />
+                      <p className="font-medium text-xs">No notifications yet</p>
+                      <p className="text-[10px] text-[#9CA3AF] mt-0.5">
+                        Order fills and alerts will appear here.
+                      </p>
+                    </div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        onClick={() => handleMarkOneRead(notif.id)}
+                        className={`p-3 flex items-start gap-2.5 hover:bg-[#F7F8FA] cursor-pointer transition-colors ${
+                          !notif.is_read ? "bg-[#F9FAFB]" : ""
+                        }`}
+                      >
+                        <div className="mt-0.5 shrink-0">
+                          {notif.notification_type === "SUCCESS" ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#00A86B]" />
+                          ) : notif.notification_type === "WARNING" ? (
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                          ) : (
+                            <Info className="w-3.5 h-3.5 text-[#4F46E5]" />
                           )}
                         </div>
-                        <span className="text-[11px] text-slate-400 block truncate max-w-xs">
-                          {item.name}
-                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-[#111827] text-xs leading-tight">
+                            {notif.title}
+                          </p>
+                          <p className="text-[#6B7280] text-[11px] mt-0.5 line-clamp-2">
+                            {notif.message}
+                          </p>
+                          <span className="text-[9.5px] text-[#9CA3AF] font-mono mt-1 block">
+                            {new Date(notif.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        </div>
+                        {!notif.is_read && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#4F46E5] shrink-0 mt-1" />
+                        )}
                       </div>
-                    </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                  </div>
-                ))}
+                    ))
+                  )}
+                </div>
+
+                <div className="p-2 border-t border-[#E5E7EB] bg-[#F7F8FA] text-center">
+                  <Link
+                    href="/orders"
+                    onClick={() => setIsNotifOpen(false)}
+                    className="text-[11px] text-[#4F46E5] font-semibold hover:underline"
+                  >
+                    View order execution history →
+                  </Link>
+                </div>
               </div>
             )}
           </div>
-        )}
-      </div>
 
-      {/* 3. Right: Quick Navigation & Profile */}
-      <div className="flex items-center gap-1 sm:gap-2 lg:gap-5 shrink-0">
-        <nav className="hidden xl:flex items-center gap-5 text-[13px] font-medium text-slate-600">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-1.5 hover:text-slate-900 transition-colors"
-          >
-            <LineChart className="w-4 h-4 text-slate-500" />
-            <span>Markets</span>
-          </Link>
+          <div className="h-5 w-[1px] bg-[#E5E7EB]" />
 
-          <Link
-            href="/watchlist"
-            className="flex items-center gap-1.5 hover:text-slate-900 transition-colors"
-          >
-            <Star className="w-4 h-4 text-slate-500" />
-            <span>Watchlist</span>
-          </Link>
+          {/* Profile Dropdown */}
+          <div className="relative" ref={profileRef}>
+            <button
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center gap-1.5 pl-1.5 py-1 rounded-full hover:bg-[#F7F8FA] transition-colors"
+            >
+              <div className="w-7 h-7 rounded-full bg-[#4F46E5] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                TX
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-[#9CA3AF]" />
+            </button>
 
-          <Link
-            href="/orders"
-            className="flex items-center gap-1.5 hover:text-slate-900 transition-colors"
-          >
-            <FileText className="w-4 h-4 text-slate-500" />
-            <span>Orders</span>
-          </Link>
+            {isProfileOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E5E7EB] rounded-xl shadow-dropdown z-50 py-1 text-xs">
+                <div className="px-3.5 py-2.5 border-b border-[#E5E7EB]">
+                  <p className="font-bold text-[#111827]">TradeX Trader</p>
+                  <p className="text-[11px] text-[#6B7280] font-mono">Paper Account Active</p>
+                </div>
 
-          <Link
-            href="/portfolio"
-            className="flex items-center gap-1.5 hover:text-slate-900 transition-colors"
-          >
-            <PieChart className="w-4 h-4 text-slate-500" />
-            <span>Holdings</span>
-          </Link>
+                <Link
+                  href="/portfolio"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                >
+                  <WalletIcon className="w-3.5 h-3.5 text-[#6B7280]" />
+                  <span>Portfolio Holdings</span>
+                </Link>
 
-          <Link
-            href="/admin/monitoring"
-            className="flex items-center gap-1.5 hover:text-slate-900 transition-colors"
-          >
-            <Activity className="w-4 h-4 text-slate-500" />
-            <span>Monitoring</span>
-          </Link>
-        </nav>
+                <Link
+                  href="/orders"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                >
+                  <Activity className="w-3.5 h-3.5 text-[#6B7280]" />
+                  <span>Order Book</span>
+                </Link>
 
-        <div className="hidden xl:block h-5 w-[1px] bg-slate-200" />
+                <Link
+                  href="/admin/monitoring"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#6B7280]" />
+                  <span>System Monitoring</span>
+                </Link>
 
-        {/* User Profile Pill */}
-        <Link
-          href="/admin"
-          className="flex items-center gap-2 pl-1 sm:pl-2 py-1 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
-        >
-          <div className="w-7 h-7 rounded-full bg-[#7C3AED] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-            PS
+                <div className="border-t border-[#E5E7EB] my-1" />
+
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 w-full px-3.5 py-2 text-[#EF4444] hover:bg-rose-50 text-left font-medium"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-[#EF4444]" />
+                  <span>Log out</span>
+                </button>
+              </div>
+            )}
           </div>
-          <span className="text-[13px] font-semibold text-slate-800 hidden md:inline">
-            Prakhar
-          </span>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" />
-        </Link>
-      </div>
-    </header>
+        </div>
+      </header>
+
+      {/* Paper Trading Information Modal */}
+      {isPaperModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl select-none">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-50 text-[#00A86B]">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-[#111827]">Paper Trading Mode</h3>
+                  <p className="text-[11px] text-[#6B7280]">Simulated virtual risk-free environment</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPaperModalOpen(false)}
+                className="text-[#9CA3AF] hover:text-[#111827]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#6B7280]">Available Virtual Balance:</span>
+                <span className="font-mono font-bold text-[#111827] tabular-nums">
+                  ₹{wallet ? Number(wallet.available_balance).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "1,00,000.00"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#6B7280]">Total Virtual Balance:</span>
+                <span className="font-mono font-medium text-[#111827] tabular-nums">
+                  ₹{wallet ? Number(wallet.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "1,00,000.00"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#6B7280]">Locked Limit Margin:</span>
+                <span className="font-mono text-[#6B7280] tabular-nums">
+                  ₹{wallet ? Number(wallet.locked_balance).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "0.00"}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#6B7280] leading-relaxed">
+              Real money is not involved. All orders execute against your virtual TradeX balance with real-time market price benchmarks and simulated regulatory charges.
+            </p>
+
+            <button
+              onClick={() => setIsPaperModalOpen(false)}
+              className="w-full py-2 rounded-xl bg-[#4F46E5] text-white font-bold text-xs hover:bg-[#4338CA] transition-colors"
+            >
+              Continue Trading
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

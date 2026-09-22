@@ -3,20 +3,19 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api-client";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ChartContainer } from "@/components/ui/chart-container";
-import { OrderPadModal } from "@/components/trading/order-pad-modal";
+import { OrderPad, OrderPadModal } from "@/components/trading/order-pad-modal";
 import { useMarketWebSocket, WsPriceUpdate } from "@/lib/market-ws";
 import { normalizeStockSymbol } from "@/lib/utils";
 import {
   Bookmark,
-  TrendingUp,
   ArrowLeft,
   AlertCircle,
-  ShieldCheck,
-  RefreshCw,
   ExternalLink,
+  ShieldCheck,
+  TrendingUp,
+  TrendingDown,
+  Check,
 } from "lucide-react";
 
 interface StockQuote {
@@ -46,16 +45,19 @@ export default function StockDetailPage() {
   const [stock, setStock] = useState<any>(null);
   const [quote, setQuote] = useState<StockQuote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [orderModalOpen, setOrderModalOpen] = useState(false);
-  const [orderSide, setOrderSide] = useState<"BUY" | "SELL">("BUY");
   const [inWatchlist, setInWatchlist] = useState(false);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // Mobile order pad modal trigger
+  const [mobileOrderModalOpen, setMobileOrderModalOpen] = useState(false);
+  const [mobileOrderSide, setMobileOrderSide] = useState<"BUY" | "SELL">("BUY");
 
   const loadStockAndQuote = useCallback(async () => {
     setIsLoading(true);
     setAuthError(null);
     try {
-      // 1. Fetch Stock metadata from DB using normalized symbol
+      // 1. Fetch Stock profile from DB
       try {
         const stockData = await apiRequest(`/api/v1/stocks/${encodeURIComponent(symbol)}`);
         setStock(stockData);
@@ -76,15 +78,27 @@ export default function StockDetailPage() {
         const quoteData = await apiRequest<StockQuote>(`/api/v1/market/quote/${encodeURIComponent(symbol)}`);
         setQuote(quoteData);
       } catch (err: any) {
-        if (err.code === "UPSTOX_AUTH_REQUIRED" || err.code === "UNAUTHORIZED") {
-          setAuthError(err.message || "Market data connection requires re-authentication.");
+        if (err.code === "UPSTOX_AUTH_REQUIRED") {
+          setAuthError(err.message || "Market data connection requires re-authorization.");
         }
+      }
+
+      // 3. Check if in user's watchlists
+      try {
+        const watchlists = await apiRequest<any[]>("/api/v1/watchlists");
+        if (watchlists && watchlists.length > 0) {
+          const found = watchlists.some((w) =>
+            w.items?.some((i: any) => i.symbol?.toUpperCase() === symbol.toUpperCase() || i.stock?.symbol?.toUpperCase() === symbol.toUpperCase())
+          );
+          setInWatchlist(found);
+        }
+      } catch {
+        // Ignore
       }
     } finally {
       setIsLoading(false);
     }
   }, [symbol]);
-
 
   useEffect(() => {
     loadStockAndQuote();
@@ -116,9 +130,31 @@ export default function StockDetailPage() {
     });
   });
 
-  const handleOrder = (side: "BUY" | "SELL") => {
-    setOrderSide(side);
-    setOrderModalOpen(true);
+  const toggleWatchlist = async () => {
+    setWatchlistLoading(true);
+    try {
+      const watchlists = await apiRequest<any[]>("/api/v1/watchlists");
+      if (watchlists && watchlists.length > 0) {
+        const targetWl = watchlists[0];
+        if (inWatchlist) {
+          const item = targetWl.items?.find((i: any) => i.symbol?.toUpperCase() === symbol.toUpperCase() || i.stock?.symbol?.toUpperCase() === symbol.toUpperCase());
+          if (item) {
+            await apiRequest(`/api/v1/watchlists/${targetWl.id}/items/${item.id}`, { method: "DELETE" });
+            setInWatchlist(false);
+          }
+        } else {
+          await apiRequest(`/api/v1/watchlists/${targetWl.id}/items`, {
+            method: "POST",
+            body: JSON.stringify({ stock_id: stock?.id || symbol }),
+          });
+          setInWatchlist(true);
+        }
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setWatchlistLoading(false);
+    }
   };
 
   const numLtp = quote?.ltp ? Number(quote.ltp) : null;
@@ -127,20 +163,18 @@ export default function StockDetailPage() {
   const isPositive = (numChange ?? 0) >= 0;
 
   return (
-    <div className="space-y-5 select-none">
+    <div className="space-y-5 select-none pb-24 lg:pb-8">
       {/* Upstox Re-Authentication Alert Banner if Token Expired */}
       {authError && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-amber-100 text-amber-700">
-              <AlertCircle className="w-5 h-5" />
-            </div>
+        <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
             <div>
               <h4 className="text-xs font-bold text-amber-900">
-                Market Data Connection Requires Authorization
+                Market Data Authorization Required
               </h4>
-              <p className="text-[11px] text-amber-700 mt-0.5">
-                Upstox API token is missing or expired. Connect your Upstox account to stream live real-time feeds.
+              <p className="text-[11px] text-amber-700">
+                Upstox market tick stream token has expired. Connect Upstox to resume real-time feeds.
               </p>
             </div>
           </div>
@@ -148,182 +182,214 @@ export default function StockDetailPage() {
             href="/api/v1/upstox/auth/login"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-colors shrink-0"
           >
             <span>Authorize Upstox</span>
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-3 h-3" />
           </a>
         </div>
       )}
 
-      {/* Navigation Breadcrumb & Back */}
+      {/* Navigation Breadcrumb */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.back()}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6B7280] hover:text-[#111827] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Markets</span>
+          <span>Markets / Instruments</span>
         </button>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-            Paper Trading Active
-          </span>
+        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#00A86B] text-[11px] font-bold">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
+          <span>Paper Execution Active</span>
         </div>
       </div>
 
-      {/* Stock Main Header */}
-      <div className="bg-white border border-slate-200/90 p-5 rounded-2xl shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center font-extrabold text-slate-700 text-lg font-mono shrink-0 shadow-xs">
+      {/* Main Stock Header Bar */}
+      <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] flex items-center justify-center font-bold text-[#111827] text-base font-mono shrink-0">
             {symbol.slice(0, 2)}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">{symbol}</h1>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 font-mono font-bold">
-                {stock?.exchange_code || "NSE EQ"}
+              <h1 className="text-xl font-bold tracking-tight text-[#111827] leading-none">
+                {symbol}
+              </h1>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-[#F7F8FA] text-[#6B7280] border border-[#E5E7EB] font-mono font-bold">
+                {stock?.exchange_code || "NSE"}
               </span>
-              <Badge variant={quote?.status === "LIVE" ? "success" : "unconfigured"}>
-                {quote?.status === "LIVE" ? "MARKET LIVE" : (quote?.status || "CONNECTED")}
-              </Badge>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">{stock?.name || `${symbol} Equities Ltd`}</p>
-
-            {/* Price Section */}
-            <div className="flex items-baseline gap-3 mt-3 font-mono">
-              <span className="text-3xl font-black text-slate-900 tracking-tight">
-                {numLtp !== null
-                  ? `₹${numLtp.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                  : "₹ --"}
+              <span className="text-[10.5px] px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#00A86B] font-bold">
+                ● LIVE
               </span>
-              {numChange !== null && (
-                <span
-                  className={`text-sm font-bold flex items-center gap-1 ${
-                    isPositive ? "text-emerald-600" : "text-rose-600"
-                  }`}
-                >
-                  <span>
-                    {isPositive ? "+" : ""}
-                    {numChange.toFixed(2)} ({isPositive ? "+" : ""}
-                    {numChangePct?.toFixed(2)}%)
-                  </span>
-                </span>
-              )}
             </div>
+            <p className="text-xs text-[#6B7280] mt-1">
+              {stock?.name || `${symbol} Equities Ltd`}
+            </p>
           </div>
         </div>
 
-        {/* Action Buttons: Order Pad Triggers */}
-        <div className="flex items-center gap-2.5 self-start md:self-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setInWatchlist(!inWatchlist)}
-            className={`text-xs font-semibold border-slate-200 ${
-              inWatchlist ? "text-indigo-600 bg-indigo-50 border-indigo-200" : "text-slate-700 hover:bg-slate-50"
+        {/* Live LTP & Price Movements */}
+        <div className="flex items-center gap-6">
+          <div className="text-left md:text-right font-mono">
+            <div className="text-2xl font-black text-[#111827] tracking-tight tabular-nums">
+              {numLtp !== null
+                ? `₹${numLtp.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : "₹ --"}
+            </div>
+            {numChange !== null && (
+              <div
+                className={`text-xs font-bold tabular-nums flex items-center md:justify-end gap-1 ${
+                  isPositive ? "text-[#00A86B]" : "text-[#EF4444]"
+                }`}
+              >
+                <span>
+                  {isPositive ? "+" : ""}
+                  {numChange.toFixed(2)} ({isPositive ? "+" : ""}
+                  {numChangePct?.toFixed(2)}%)
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Add to Watchlist Button */}
+          <button
+            onClick={toggleWatchlist}
+            disabled={watchlistLoading}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+              inWatchlist
+                ? "bg-[#EEF2FF] border-[#C7D2FE] text-[#4F46E5]"
+                : "bg-white border-[#E5E7EB] text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
             }`}
           >
-            <Bookmark className="w-3.5 h-3.5 mr-1.5" />
-            {inWatchlist ? "In Watchlist" : "Watchlist"}
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={() => handleOrder("BUY")}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 shadow-xs transition-colors"
-          >
-            BUY (PAPER)
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={() => handleOrder("SELL")}
-            className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2 shadow-xs transition-colors"
-          >
-            SELL (PAPER)
-          </Button>
+            {inWatchlist ? <Check className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+            <span>{inWatchlist ? "Watchlisted" : "Watchlist"}</span>
+          </button>
         </div>
       </div>
 
-      {/* Interactive TradingView Lightweight Chart */}
-      <ChartContainer symbol={symbol} />
+      {/* Main Trading Area: 2-Column Workstation Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column (8 cols): Candlestick Chart & Key Statistics */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Professional TradingView Lightweight Chart */}
+          <ChartContainer symbol={symbol} />
 
-      {/* Stock Statistics Grid */}
-      <div className="bg-white border border-slate-200/90 p-5 rounded-2xl space-y-4 shadow-card">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 className="text-sm font-bold text-slate-900">Key Trading Statistics &amp; Fundamentals</h3>
-          <span className="text-xs text-slate-400 font-mono">Real-time Upstox Normalized Feed</span>
+          {/* Key Trading Statistics & Fundamentals */}
+          <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-2.5">
+              <h3 className="text-xs font-bold text-[#111827] uppercase tracking-wider">
+                Trading Statistics
+              </h3>
+              <span className="text-[11px] text-[#6B7280] font-mono">
+                Normalized Real Market Data
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3 bg-[#F7F8FA] rounded-lg border border-[#E5E7EB]">
+                <span className="text-[#6B7280] text-[11px] block">Open</span>
+                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                  {quote?.open ? `₹${Number(quote.open).toFixed(2)}` : "₹ --"}
+                </span>
+              </div>
+
+              <div className="p-3 bg-[#F7F8FA] rounded-lg border border-[#E5E7EB]">
+                <span className="text-[#6B7280] text-[11px] block">Previous Close</span>
+                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                  {quote?.previous_close ? `₹${Number(quote.previous_close).toFixed(2)}` : "₹ --"}
+                </span>
+              </div>
+
+              <div className="p-3 bg-[#F7F8FA] rounded-lg border border-[#E5E7EB]">
+                <span className="text-[#6B7280] text-[11px] block">Day High</span>
+                <span className="font-mono font-bold text-[#00A86B] text-sm mt-0.5 block tabular-nums">
+                  {quote?.high ? `₹${Number(quote.high).toFixed(2)}` : "₹ --"}
+                </span>
+              </div>
+
+              <div className="p-3 bg-[#F7F8FA] rounded-lg border border-[#E5E7EB]">
+                <span className="text-[#6B7280] text-[11px] block">Day Low</span>
+                <span className="font-mono font-bold text-[#EF4444] text-sm mt-0.5 block tabular-nums">
+                  {quote?.low ? `₹${Number(quote.low).toFixed(2)}` : "₹ --"}
+                </span>
+              </div>
+
+              <div className="p-3 bg-[#F7F8FA] rounded-lg border border-[#E5E7EB]">
+                <span className="text-[#6B7280] text-[11px] block">52-Week High</span>
+                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                  {quote?.year_high ? `₹${Number(quote.year_high).toFixed(2)}` : "₹ --"}
+                </span>
+              </div>
+
+              <div className="p-3 bg-[#F7F8FA] rounded-lg border border-[#E5E7EB]">
+                <span className="text-[#6B7280] text-[11px] block">52-Week Low</span>
+                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                  {quote?.year_low ? `₹${Number(quote.year_low).toFixed(2)}` : "₹ --"}
+                </span>
+              </div>
+
+              <div className="p-3 bg-[#F7F8FA] rounded-lg border border-[#E5E7EB]">
+                <span className="text-[#6B7280] text-[11px] block">Volume</span>
+                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                  {quote?.volume ? Number(quote.volume).toLocaleString("en-IN") : "--"}
+                </span>
+              </div>
+
+              <div className="p-3 bg-[#F7F8FA] rounded-lg border border-[#E5E7EB]">
+                <span className="text-[#6B7280] text-[11px] block">Instrument Key</span>
+                <span className="font-mono font-semibold text-[#4B5563] text-[11px] mt-0.5 block truncate">
+                  {quote?.instrument_key || stock?.instrument_key || "NSE"}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
-            <span className="text-slate-500 text-[11px] block">Open Price</span>
-            <span className="font-mono font-bold text-slate-800 text-sm mt-0.5 block">
-              {quote?.open ? `₹${Number(quote.open).toFixed(2)}` : "₹ --"}
-            </span>
-          </div>
-
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
-            <span className="text-slate-500 text-[11px] block">Previous Close</span>
-            <span className="font-mono font-bold text-slate-800 text-sm mt-0.5 block">
-              {quote?.previous_close ? `₹${Number(quote.previous_close).toFixed(2)}` : "₹ --"}
-            </span>
-          </div>
-
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
-            <span className="text-slate-500 text-[11px] block">Day High</span>
-            <span className="font-mono font-bold text-emerald-700 text-sm mt-0.5 block">
-              {quote?.high ? `₹${Number(quote.high).toFixed(2)}` : "₹ --"}
-            </span>
-          </div>
-
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
-            <span className="text-slate-500 text-[11px] block">Day Low</span>
-            <span className="font-mono font-bold text-rose-700 text-sm mt-0.5 block">
-              {quote?.low ? `₹${Number(quote.low).toFixed(2)}` : "₹ --"}
-            </span>
-          </div>
-
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
-            <span className="text-slate-500 text-[11px] block">52-Week High</span>
-            <span className="font-mono font-bold text-slate-800 text-sm mt-0.5 block">
-              {quote?.year_high ? `₹${Number(quote.year_high).toFixed(2)}` : "₹ --"}
-            </span>
-          </div>
-
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
-            <span className="text-slate-500 text-[11px] block">52-Week Low</span>
-            <span className="font-mono font-bold text-slate-800 text-sm mt-0.5 block">
-              {quote?.year_low ? `₹${Number(quote.year_low).toFixed(2)}` : "₹ --"}
-            </span>
-          </div>
-
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
-            <span className="text-slate-500 text-[11px] block">Volume</span>
-            <span className="font-mono font-bold text-slate-800 text-sm mt-0.5 block">
-              {quote?.volume ? Number(quote.volume).toLocaleString("en-IN") : "--"}
-            </span>
-          </div>
-
-          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100">
-            <span className="text-slate-500 text-[11px] block">Instrument Key</span>
-            <span className="font-mono font-semibold text-slate-700 text-[11px] mt-0.5 block truncate">
-              {quote?.instrument_key || stock?.instrument_key || "NSE_EQ"}
-            </span>
-          </div>
+        {/* Right Column (4 cols): Sticky Buy / Sell Order Pad */}
+        <div className="hidden lg:block lg:col-span-4 sticky top-20">
+          <OrderPad
+            stockId={stock?.id || symbol}
+            symbol={symbol}
+            stockName={stock?.name || symbol}
+            defaultSide="BUY"
+            onOrderPlaced={loadStockAndQuote}
+            embedded={true}
+          />
         </div>
       </div>
 
-      {/* Order Pad Modal */}
+      {/* Mobile Sticky Order Action Bar */}
+      <div className="lg:hidden fixed bottom-14 left-0 right-0 z-30 bg-white border-t border-[#E5E7EB] p-3 flex gap-2 shadow-lg">
+        <button
+          onClick={() => {
+            setMobileOrderSide("BUY");
+            setMobileOrderModalOpen(true);
+          }}
+          className="flex-1 py-2.5 rounded-xl bg-[#00A86B] text-white font-bold text-xs shadow-xs"
+        >
+          BUY (PAPER)
+        </button>
+        <button
+          onClick={() => {
+            setMobileOrderSide("SELL");
+            setMobileOrderModalOpen(true);
+          }}
+          className="flex-1 py-2.5 rounded-xl bg-[#EF4444] text-white font-bold text-xs shadow-xs"
+        >
+          SELL (PAPER)
+        </button>
+      </div>
+
+      {/* Mobile Order Pad Modal */}
       <OrderPadModal
-        isOpen={orderModalOpen}
-        onClose={() => setOrderModalOpen(false)}
+        isOpen={mobileOrderModalOpen}
+        onClose={() => setMobileOrderModalOpen(false)}
         stockId={stock?.id || symbol}
         symbol={symbol}
         stockName={stock?.name || symbol}
-        defaultSide={orderSide}
+        defaultSide={mobileOrderSide}
         onOrderPlaced={loadStockAndQuote}
       />
     </div>

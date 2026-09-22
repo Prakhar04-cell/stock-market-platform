@@ -3,6 +3,7 @@ from app.api.v1.admin import router as admin_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.market import router as market_router
 from app.api.v1.market_ws import router as market_ws_router
+from app.api.v1.notifications import router as notifications_router
 from app.api.v1.orders import router as orders_router
 from app.api.v1.portfolio import router as portfolio_router
 from app.api.v1.stocks import router as stocks_router
@@ -21,5 +22,7 @@ api_router.include_router(watchlists_router)
 api_router.include_router(stocks_router)
 api_router.include_router(orders_router)
 api_router.include_router(portfolio_router)
+api_router.include_router(notifications_router)
 api_router.include_router(admin_router)
+
 
