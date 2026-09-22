@@ -29,3 +29,30 @@ export function formatDateTime(dateStr: string | null | undefined): string {
     return dateStr;
   }
 }
+
+/**
+ * Safely normalizes stock/index symbols.
+ * Decodes URL-encoded characters (e.g. "NIFTY%2050" -> "NIFTY 50") exactly once.
+ * Trims whitespace and preserves canonical uppercase symbols.
+ * Does NOT alter Upstox instrument keys (e.g. "NSE_INDEX|Nifty 50").
+ */
+export function normalizeStockSymbol(symbol: string | null | undefined): string {
+  if (!symbol) return "";
+  let decoded = symbol.trim();
+  if (decoded.includes("%")) {
+    try {
+      decoded = decodeURIComponent(decoded);
+    } catch {
+      // Keep raw string if decoding fails
+    }
+  }
+  decoded = decoded.trim();
+
+  // If it's an instrument key with pipe, preserve segment casing
+  if (decoded.includes("|")) {
+    return decoded;
+  }
+
+  return decoded.toUpperCase();
+}
+

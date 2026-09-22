@@ -25,26 +25,32 @@ async def market_websocket_endpoint(websocket: WebSocket):
         while True:
             text_data = await websocket.receive_text()
             try:
+                from urllib.parse import unquote
+
                 msg = json.loads(text_data)
                 action = msg.get("action")
-                symbols = msg.get("symbols", [])
-                if isinstance(symbols, str):
-                    symbols = [symbols]
+                raw_symbols = msg.get("symbols") or msg.get("keys") or []
+                if isinstance(raw_symbols, str):
+                    raw_symbols = [raw_symbols]
+                symbols = [unquote(s).strip() for s in raw_symbols if s and unquote(s).strip()]
 
                 if action == "subscribe" and symbols:
                     await market_ws_manager.subscribe(websocket, symbols)
                     await websocket.send_json({
                         "type": "subscribed",
                         "symbols": symbols,
+                        "keys": symbols,
                     })
                 elif action == "unsubscribe" and symbols:
                     await market_ws_manager.unsubscribe(websocket, symbols)
                     await websocket.send_json({
                         "type": "unsubscribed",
                         "symbols": symbols,
+                        "keys": symbols,
                     })
                 elif action == "ping":
                     await websocket.send_json({"type": "pong"})
+
             except json.JSONDecodeError:
                 await websocket.send_json({
                     "type": "error",

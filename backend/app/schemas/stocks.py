@@ -18,11 +18,12 @@ class StockResponse(StockBase):
     id: str
     exchange_code: str
     market_data_status: str = "NOT_CONFIGURED"
-    market_data_message: str = "Waiting for market data provider"
+    market_data_message: Optional[str] = "Waiting for market data provider"
     ltp: Optional[Decimal] = None
     day_change: Optional[Decimal] = None
     day_change_percent: Optional[Decimal] = None
     model_config = ConfigDict(from_attributes=True)
+
 
 
 class StockDetailResponse(StockResponse):

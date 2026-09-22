@@ -3,8 +3,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { apiRequest } from "@/lib/api-client";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, normalizeStockSymbol } from "@/lib/utils";
 import { MetricCard } from "@/components/ui/metric-card";
+
 import { Badge } from "@/components/ui/badge";
 import { ChartContainer } from "@/components/ui/chart-container";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -254,10 +255,14 @@ export default function PortfolioPage() {
                 return (
                   <TableRow key={h.id || h.symbol}>
                     <TableCell className="font-bold text-slate-900">
-                      <Link href={`/stocks/${h.symbol}`} className="hover:text-indigo-600">
-                        {h.symbol}
+                      <Link
+                        href={`/stocks/${encodeURIComponent(normalizeStockSymbol(h.symbol))}`}
+                        className="hover:text-indigo-600"
+                      >
+                        {normalizeStockSymbol(h.symbol)}
                       </Link>
                     </TableCell>
+
                     <TableCell className="text-right font-mono font-medium text-slate-800">
                       {h.quantity}
                     </TableCell>

@@ -131,7 +131,7 @@ async def seed_initial_data():
                         )
                     )
 
-            # 5. Seed Core Market Indices in Instrument table
+            # 5. Seed Core Market Indices in Stock and Instrument tables
             indices_data = [
                 ("NIFTY 50", "NIFTY", "NSE_INDEX|Nifty 50", "NIFTY 50 Index", "NSE", "NSE_INDEX", "INDEX"),
                 ("BANKNIFTY", "BANKNIFTY", "NSE_INDEX|Nifty Bank", "NIFTY Bank Index", "NSE", "NSE_INDEX", "INDEX"),
@@ -140,6 +140,28 @@ async def seed_initial_data():
                 ("SENSEX", "SENSEX", "BSE_INDEX|SENSEX", "BSE SENSEX Index", "BSE", "BSE_INDEX", "INDEX"),
             ]
             for sym, tsym, ikey, name, exch_code, seg, itype in indices_data:
+                exch = nse if exch_code == "NSE" else bse
+
+                # Ensure in Stock table so it resolves as a tradable paper asset
+                s_stmt = select(Stock).where(Stock.symbol == sym)
+                stock_obj = (await db.execute(s_stmt)).scalar_one_or_none()
+                if not stock_obj:
+                    stock_obj = Stock(
+                        exchange_id=exch.id,
+                        symbol=sym,
+                        instrument_key=ikey,
+                        name=name,
+                        sector="Index",
+                        is_tradable=True,
+                        lot_size=1,
+                        tick_size=Decimal("0.05"),
+                    )
+                    db.add(stock_obj)
+                else:
+                    if not stock_obj.instrument_key:
+                        stock_obj.instrument_key = ikey
+
+                # Ensure in Instrument master table
                 inst_stmt = select(Instrument).where(Instrument.instrument_key == ikey)
                 if not (await db.execute(inst_stmt)).scalar_one_or_none():
                     db.add(
@@ -160,6 +182,7 @@ async def seed_initial_data():
             logger.info("TradeX initial foundation & Phase 2 instrument data successfully verified/seeded.")
     except Exception as e:
         logger.warning(f"Database seed skipped or failed (possibly tables not created yet): {e}")
+
 
 
 @asynccontextmanager

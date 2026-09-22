@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChartContainer } from "@/components/ui/chart-container";
 import { OrderPadModal } from "@/components/trading/order-pad-modal";
 import { useMarketWebSocket, WsPriceUpdate } from "@/lib/market-ws";
+import { normalizeStockSymbol } from "@/lib/utils";
 import {
   Bookmark,
   TrendingUp,
@@ -39,7 +40,8 @@ interface StockQuote {
 export default function StockDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const symbol = (params?.symbol as string)?.toUpperCase() || "RELIANCE";
+  const rawParam = params?.symbol as string;
+  const symbol = normalizeStockSymbol(rawParam) || "RELIANCE";
 
   const [stock, setStock] = useState<any>(null);
   const [quote, setQuote] = useState<StockQuote | null>(null);
@@ -53,23 +55,25 @@ export default function StockDetailPage() {
     setIsLoading(true);
     setAuthError(null);
     try {
-      // 1. Fetch Stock metadata from DB
+      // 1. Fetch Stock metadata from DB using normalized symbol
       try {
-        const stockData = await apiRequest(`/api/v1/stocks/${symbol}`);
+        const stockData = await apiRequest(`/api/v1/stocks/${encodeURIComponent(symbol)}`);
         setStock(stockData);
       } catch {
         setStock({
           id: symbol,
           symbol: symbol,
-          name: `${symbol} Equities Ltd`,
+          name: symbol.includes("INDEX") || symbol.includes("NIFTY") || symbol.includes("SENSEX")
+            ? `${symbol} Index`
+            : `${symbol} Equities Ltd`,
           exchange_code: "NSE",
-          sector: "Equity",
+          sector: symbol.includes("INDEX") || symbol.includes("NIFTY") || symbol.includes("SENSEX") ? "Index" : "Equity",
         });
       }
 
       // 2. Fetch live normalized quote
       try {
-        const quoteData = await apiRequest<StockQuote>(`/api/v1/market/quote/${symbol}`);
+        const quoteData = await apiRequest<StockQuote>(`/api/v1/market/quote/${encodeURIComponent(symbol)}`);
         setQuote(quoteData);
       } catch (err: any) {
         if (err.code === "UPSTOX_AUTH_REQUIRED" || err.code === "UNAUTHORIZED") {
@@ -80,6 +84,7 @@ export default function StockDetailPage() {
       setIsLoading(false);
     }
   }, [symbol]);
+
 
   useEffect(() => {
     loadStockAndQuote();

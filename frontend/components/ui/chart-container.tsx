@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { cn } from "@/lib/utils";
-import { LineChart, Radio } from "lucide-react";
-import { Badge } from "./badge";
+import { cn, normalizeStockSymbol } from "@/lib/utils";
+import { LineChart } from "lucide-react";
 import { TradingViewChart } from "./tradingview-chart";
 import { useMarketWebSocket } from "@/lib/market-ws";
 
@@ -21,6 +20,7 @@ export function ChartContainer({
   isPortfolio = false,
   height = 380,
 }: ChartContainerProps) {
+  const cleanSymbol = normalizeStockSymbol(symbol);
   const [activeInterval, setActiveInterval] = useState("1D");
   const intervals = [
     { label: "1m", value: "1m" },
@@ -32,7 +32,7 @@ export function ChartContainer({
     { label: "1M", value: "1M" },
   ];
 
-  const { connectionState } = useMarketWebSocket(symbol);
+  const { connectionState } = useMarketWebSocket(cleanSymbol);
 
   return (
     <div className={cn("rounded-2xl border border-slate-200/90 bg-white p-5 flex flex-col shadow-card", className)}>
@@ -45,7 +45,7 @@ export function ChartContainer({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-slate-900 leading-tight">
-                {isPortfolio ? "Portfolio Trajectory" : `${symbol} Real-Time Chart`}
+                {isPortfolio ? "Portfolio Trajectory" : `${cleanSymbol} Real-Time Chart`}
               </span>
               <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">
                 NSE
@@ -55,7 +55,11 @@ export function ChartContainer({
               TradingView Lightweight Charts v4
             </span>
           </div>
-          <div className="flex items-center gap-1.5 ml-2">
+          <div className="flex items-center gap-1.5 ml-2" title={
+            connectionState === "CONNECTED"
+              ? "Live Upstox market tick stream active"
+              : "Backend market feed healthy, frontend stream disconnected"
+          }>
             <span
               className={cn(
                 "w-2 h-2 rounded-full",
@@ -63,11 +67,19 @@ export function ChartContainer({
                   ? "bg-emerald-500 animate-pulse"
                   : connectionState === "CONNECTING"
                   ? "bg-amber-500 animate-ping"
+                  : connectionState === "ERROR"
+                  ? "bg-rose-500"
                   : "bg-slate-300"
               )}
             />
             <span className="text-[10px] font-semibold text-slate-500">
-              {connectionState === "CONNECTED" ? "LIVE STREAM" : connectionState}
+              {connectionState === "CONNECTED"
+                ? "LIVE STREAM"
+                : connectionState === "CONNECTING"
+                ? "CONNECTING"
+                : connectionState === "ERROR"
+                ? "STREAM ERROR"
+                : "FEED DISCONNECTED"}
             </span>
           </div>
         </div>
@@ -94,7 +106,7 @@ export function ChartContainer({
       {/* Chart Canvas Area */}
       <div className="relative mt-3 rounded-xl overflow-hidden border border-slate-100">
         <TradingViewChart
-          symbol={symbol}
+          symbol={cleanSymbol}
           interval={activeInterval}
           height={height}
         />

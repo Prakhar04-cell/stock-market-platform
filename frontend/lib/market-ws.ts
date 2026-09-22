@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { API_BASE_URL } from "./api-client";
+import { normalizeStockSymbol } from "./utils";
 
 export interface WsPriceUpdate {
   type: string;
@@ -17,11 +18,12 @@ export interface WsPriceUpdate {
   source: string;
 }
 
-export type ConnectionState = "CONNECTING" | "CONNECTED" | "DISCONNECTED";
+export type ConnectionState = "CONNECTING" | "CONNECTED" | "DISCONNECTED" | "ERROR";
 
 function getWsUrl(): string {
-  const base = API_BASE_URL.replace(/^http/, "ws");
-  return `${base}/api/v1/ws/market`;
+  const protocol = API_BASE_URL.startsWith("https://") ? "wss://" : "ws://";
+  const host = API_BASE_URL.replace(/^https?:\/\//, "");
+  return `${protocol}${host}/api/v1/ws/market`;
 }
 
 class MarketWsManager {
@@ -33,6 +35,7 @@ class MarketWsManager {
   private reconnectTimer: NodeJS.Timeout | null = null;
   private reconnectAttempts = 0;
   private maxReconnectDelay = 10000;
+  private verifiedConnection = false;
 
   public getState(): ConnectionState {
     return this.connectionState;
@@ -73,22 +76,59 @@ class MarketWsManager {
 
       this.ws.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data);
-          if (data.type === "price_update" && data.instrument_key) {
-            const listeners = this.subscribers.get(data.instrument_key);
-            if (listeners) {
-              listeners.forEach((fn) => fn(data));
+          const raw = JSON.parse(event.data);
+
+          // Handle subscription confirmation or ping/pong
+          if (raw.type === "subscribed" || raw.type === "pong") {
+            this.setState("CONNECTED");
+            return;
+          }
+
+          // Backend quote messages arrive as { type: "quote", data: { ... } }
+          // or fallback top-level fields: { type: "price_update", instrument_key, ... }
+          const payload = (raw.type === "quote" && raw.data) ? raw.data : raw;
+
+          if (payload && (payload.instrument_key || payload.symbol)) {
+            const rawLtp = payload.ltp;
+            const numLtp = typeof rawLtp === "string" ? parseFloat(rawLtp) : Number(rawLtp || 0);
+
+            const update: WsPriceUpdate = {
+              type: "price_update",
+              instrument_key: payload.instrument_key || "",
+              symbol: normalizeStockSymbol(payload.symbol || ""),
+              ltp: numLtp,
+              open: payload.open !== undefined ? Number(payload.open) : undefined,
+              high: payload.high !== undefined ? Number(payload.high) : undefined,
+              low: payload.low !== undefined ? Number(payload.low) : undefined,
+              close: payload.close !== undefined ? Number(payload.close) : undefined,
+              change: payload.change !== undefined ? Number(payload.change) : undefined,
+              change_percent: payload.change_percent !== undefined ? Number(payload.change_percent) : undefined,
+              volume: payload.volume !== undefined ? Number(payload.volume) : undefined,
+              timestamp: payload.timestamp || new Date().toISOString(),
+              source: payload.source || "upstox",
+            };
+
+            // Notify subscribers for both symbol variants and instrument key
+            const targetKeys = new Set<string>();
+            if (update.instrument_key) {
+              targetKeys.add(update.instrument_key);
+              targetKeys.add(update.instrument_key.toUpperCase());
             }
-            // Also notify by symbol if available
-            if (data.symbol) {
-              const symListeners = this.subscribers.get(data.symbol.toUpperCase());
-              if (symListeners) {
-                symListeners.forEach((fn) => fn(data));
+            if (update.symbol) {
+              targetKeys.add(update.symbol);
+              targetKeys.add(update.symbol.toUpperCase());
+            }
+
+            targetKeys.forEach((key) => {
+              const listeners = this.subscribers.get(key);
+              if (listeners) {
+                listeners.forEach((fn) => fn(update));
               }
-            }
+            });
+
           }
         } catch {
-          // Non-json or heartbeat message
+          // Non-json or binary heartbeat
         }
       };
 
@@ -98,10 +138,11 @@ class MarketWsManager {
       };
 
       this.ws.onerror = () => {
+        this.setState("ERROR");
         this.ws?.close();
       };
     } catch {
-      this.setState("DISCONNECTED");
+      this.setState("ERROR");
       this.scheduleReconnect();
     }
   }
@@ -118,12 +159,22 @@ class MarketWsManager {
 
   private sendSubscription(action: "subscribe" | "unsubscribe", keys: string[]) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN && keys.length > 0) {
-      this.ws.send(JSON.stringify({ action, keys }));
+      const normalizedKeys = keys.map(normalizeStockSymbol).filter(Boolean);
+      // Send both 'symbols' (expected by backend) and 'keys' for full compatibility
+      this.ws.send(
+        JSON.stringify({
+          action,
+          symbols: normalizedKeys,
+          keys: normalizedKeys,
+        })
+      );
     }
   }
 
   public subscribe(keyOrSymbol: string, callback: (update: WsPriceUpdate) => void) {
-    const key = keyOrSymbol.trim();
+    const key = normalizeStockSymbol(keyOrSymbol);
+    if (!key) return () => {};
+
     if (!this.subscribers.has(key)) {
       this.subscribers.set(key, new Set());
     }
@@ -157,24 +208,29 @@ export function useMarketWebSocket(keyOrSymbol?: string, onUpdate?: (update: WsP
   const [connectionState, setConnectionState] = useState<ConnectionState>(marketWs.getState());
   const [lastUpdate, setLastUpdate] = useState<WsPriceUpdate | null>(null);
 
+  // Store onUpdate in ref to prevent hook re-triggering and subscription thrashing
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
+
+  const normalizedKey = keyOrSymbol ? normalizeStockSymbol(keyOrSymbol) : undefined;
+
   useEffect(() => {
     const unsubState = marketWs.addStateListener(setConnectionState);
     return unsubState;
   }, []);
 
   useEffect(() => {
-    if (!keyOrSymbol) return;
+    if (!normalizedKey) return;
 
     const handlePrice = (update: WsPriceUpdate) => {
       setLastUpdate(update);
-      if (onUpdate) {
-        onUpdate(update);
-      }
+      onUpdateRef.current?.(update);
     };
 
-    const unsubscribe = marketWs.subscribe(keyOrSymbol, handlePrice);
+    const unsubscribe = marketWs.subscribe(normalizedKey, handlePrice);
     return unsubscribe;
-  }, [keyOrSymbol, onUpdate]);
+  }, [normalizedKey]);
 
   return { connectionState, lastUpdate };
 }
+

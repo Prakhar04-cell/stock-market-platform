@@ -2,13 +2,15 @@ import logging
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Optional
-from sqlalchemy import desc, select
+from urllib.parse import unquote
+from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import AsyncSessionLocal
 from app.core.exceptions import ResourceConflictError, ResourceNotFoundError, TradeXException
-from app.models.market import Stock
+from app.models.market import Exchange, Instrument, Stock
+
 from app.models.system import Notification
 from app.models.trading import Holding, Order, OrderExecution
 from app.models.wallet import LedgerEntry, TradeCharge, Wallet
@@ -66,11 +68,50 @@ class PaperExecutionService:
             should_close_db = True
 
         try:
-            # 1. Fetch Stock
-            stock_stmt = select(Stock).where(Stock.id == stock_id)
+            # 1. Fetch Stock by ID, symbol, or instrument key
+            clean_stock_id = unquote(stock_id).strip()
+            stock_stmt = select(Stock).where(
+                or_(
+                    Stock.id == stock_id,
+                    Stock.id == clean_stock_id,
+                    Stock.symbol == clean_stock_id.upper(),
+                    Stock.symbol.ilike(clean_stock_id),
+                    Stock.instrument_key == clean_stock_id,
+                )
+            )
             stock = (await db.execute(stock_stmt)).scalar_one_or_none()
+
+            # If not yet in Stock table, check Instrument master table and auto-link/create
             if not stock:
-                raise ResourceNotFoundError(resource="Stock", identifier=stock_id)
+                inst_stmt = select(Instrument).where(
+                    or_(
+                        Instrument.symbol == clean_stock_id.upper(),
+                        Instrument.trading_symbol == clean_stock_id.upper(),
+                        Instrument.instrument_key == clean_stock_id,
+                    )
+                )
+                inst = (await db.execute(inst_stmt)).scalars().first()
+                if inst:
+                    exch_stmt = select(Exchange).where(Exchange.code == (inst.exchange or "NSE"))
+                    exch = (await db.execute(exch_stmt)).scalar_one_or_none()
+                    if not exch:
+                        exch = (await db.execute(select(Exchange).limit(1))).scalar_one_or_none()
+                    if exch:
+                        stock = Stock(
+                            exchange_id=exch.id,
+                            symbol=inst.symbol or clean_stock_id.upper(),
+                            instrument_key=inst.instrument_key,
+                            name=inst.name or f"{clean_stock_id.upper()} Index",
+                            sector="Index" if (inst.segment == "INDEX" or inst.instrument_type == "INDEX") else "Equity",
+                            is_tradable=True,
+                            lot_size=inst.lot_size or 1,
+                            tick_size=inst.tick_size or Decimal("0.05"),
+                        )
+                        db.add(stock)
+                        await db.flush()
+
+            if not stock:
+                raise ResourceNotFoundError(resource="Stock", identifier=clean_stock_id)
 
             # 2. Fetch User Virtual Wallet
             wallet_stmt = select(Wallet).where(Wallet.user_id == user_id)
@@ -78,12 +119,13 @@ class PaperExecutionService:
             if not wallet:
                 raise ResourceNotFoundError(resource="Wallet", identifier=user_id)
 
-            # 3. Fetch User Holding (if SELL)
+            # 3. Fetch User Holding (if SELL) using canonical stock.id
             holding: Optional[Holding] = None
             if side.upper() == "SELL":
-                h_stmt = select(Holding).where(Holding.user_id == user_id, Holding.stock_id == stock_id)
+                h_stmt = select(Holding).where(Holding.user_id == user_id, Holding.stock_id == stock.id)
                 holding = (await db.execute(h_stmt)).scalar_one_or_none()
                 risk_service.validate_sell_holdings(holding, quantity, stock.symbol)
+
 
             # 4. Fetch real-time market quote
             market_quote = await quote_service.get_quote(stock.symbol)

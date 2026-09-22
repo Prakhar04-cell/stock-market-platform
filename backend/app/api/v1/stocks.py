@@ -43,8 +43,10 @@ async def list_stocks(
     stmt = select(Stock).options(selectinload(Stock.exchange))
 
     if search:
-        term = f"%{search.strip().upper()}%"
-        stmt = stmt.where(or_(Stock.symbol.ilike(term), Stock.name.ilike(term)))
+        from urllib.parse import unquote
+        clean_search = unquote(search).strip()
+        term = f"%{clean_search.upper()}%"
+        stmt = stmt.where(or_(Stock.symbol.ilike(term), Stock.name.ilike(f"%{clean_search}%")))
 
     if exchange:
         stmt = stmt.join(Stock.exchange).where(Exchange.code == exchange.upper())
@@ -62,24 +64,69 @@ async def get_stock_by_symbol(
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve stock profile, company information, and live market statistics."""
+    from decimal import Decimal
+    from urllib.parse import unquote
+    from app.models.market import Instrument
     from app.services.market_data.quote_service import quote_service
 
-    sym = symbol.strip().upper()
+    clean_raw = unquote(symbol).strip()
+    sym = clean_raw.upper()
+
     stmt = (
         select(Stock)
         .options(selectinload(Stock.exchange))
-        .where(Stock.symbol == sym)
+        .where(
+            or_(
+                Stock.symbol == sym,
+                Stock.symbol.ilike(clean_raw),
+                Stock.instrument_key == clean_raw,
+                Stock.id == clean_raw,
+            )
+        )
     )
     res = await db.execute(stmt)
     stock = res.scalar_one_or_none()
 
+    # If not yet in Stock table, check Instrument master and auto-link/create
     if not stock:
-        raise ResourceNotFoundError(resource="Stock", identifier=sym)
+        inst_stmt = select(Instrument).where(
+            or_(
+                Instrument.symbol == sym,
+                Instrument.trading_symbol == sym,
+                Instrument.instrument_key == clean_raw,
+            )
+        )
+        inst = (await db.execute(inst_stmt)).scalars().first()
+        if inst:
+            exch_stmt = select(Exchange).where(Exchange.code == (inst.exchange or "NSE"))
+            exch = (await db.execute(exch_stmt)).scalar_one_or_none()
+            if not exch:
+                exch = (await db.execute(select(Exchange).limit(1))).scalar_one_or_none()
 
-    quote = await quote_service.get_quote(sym)
+            if exch:
+                stock = Stock(
+                    exchange_id=exch.id,
+                    symbol=inst.symbol or sym,
+                    instrument_key=inst.instrument_key,
+                    name=inst.name or f"{sym} Index",
+                    sector="Index" if (inst.segment == "INDEX" or inst.instrument_type == "INDEX") else "Equity",
+                    is_tradable=True,
+                    lot_size=inst.lot_size or 1,
+                    tick_size=inst.tick_size or Decimal("0.05"),
+                )
+                db.add(stock)
+                await db.commit()
+                stmt = select(Stock).options(selectinload(Stock.exchange)).where(Stock.id == stock.id)
+                stock = (await db.execute(stmt)).scalar_one_or_none()
+
+    if not stock:
+        raise ResourceNotFoundError(resource="Stock", identifier=clean_raw)
+
+    quote = await quote_service.get_quote(stock.symbol)
+
     if quote:
         market_status = quote.status
-        market_msg = None
+        market_msg = f"Live market feed active ({quote.status})"
         ltp = quote.ltp
         day_chg = quote.change
         day_chg_pct = quote.change_percent

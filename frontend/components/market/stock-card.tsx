@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, Eye, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { normalizeStockSymbol } from "@/lib/utils";
 
 export interface StockCardProps {
   symbol: string;
@@ -24,11 +25,12 @@ export function StockCard({
   change = "--",
   changePercent = "--",
   isPositive,
-  sparkline,
+  sparkline = [],
   onTrade,
   onView,
 }: StockCardProps) {
-  const isUp = isPositive === true;
+  const cleanSymbol = normalizeStockSymbol(symbol);
+  const isUp = isPositive !== undefined ? isPositive : (typeof change === "number" ? change >= 0 : true);
   const isDown = isPositive === false;
 
   // Render smooth mini SVG sparkline
@@ -74,14 +76,14 @@ export function StockCard({
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200/60 font-mono">
-            {symbol.slice(0, 2)}
+            {cleanSymbol.slice(0, 2)}
           </div>
           <div className="min-w-0 flex-1">
             <Link
-              href={`/stocks/${symbol}`}
+              href={`/stocks/${encodeURIComponent(cleanSymbol)}`}
               className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors block truncate"
             >
-              {symbol}
+              {cleanSymbol}
             </Link>
             <p className="text-[11px] text-slate-500 truncate line-clamp-1" title={name}>
               {name}
@@ -112,7 +114,7 @@ export function StockCard({
       {/* Bottom row: Compact Actions */}
       <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
         <Link
-          href={`/stocks/${symbol}`}
+          href={`/stocks/${encodeURIComponent(cleanSymbol)}`}
           className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1"
         >
           <Eye className="w-3 h-3 text-slate-400" />
@@ -121,13 +123,13 @@ export function StockCard({
 
         <div className="flex items-center gap-1.5">
           <button
-            onClick={() => onTrade ? onTrade(symbol, "BUY") : null}
+            onClick={() => onTrade ? onTrade(cleanSymbol, "BUY") : null}
             className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
           >
             BUY
           </button>
           <button
-            onClick={() => onTrade ? onTrade(symbol, "SELL") : null}
+            onClick={() => onTrade ? onTrade(cleanSymbol, "SELL") : null}
             className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors"
           >
             SELL
@@ -137,3 +139,4 @@ export function StockCard({
     </div>
   );
 }
+

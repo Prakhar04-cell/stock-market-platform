@@ -14,6 +14,7 @@ import {
 } from "lightweight-charts";
 import { apiRequest } from "@/lib/api-client";
 import { marketWs, WsPriceUpdate } from "@/lib/market-ws";
+import { normalizeStockSymbol } from "@/lib/utils";
 import { AlertCircle, RefreshCw } from "lucide-react";
 
 export interface TradingViewChartProps {
@@ -38,6 +39,7 @@ export function TradingViewChart({
   height = 360,
   className = "",
 }: TradingViewChartProps) {
+  const cleanSymbol = normalizeStockSymbol(symbol);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -53,7 +55,7 @@ export function TradingViewChart({
     setError(null);
     try {
       const data = await apiRequest<RawCandle[]>(
-        `/api/v1/market/candles/${encodeURIComponent(symbol)}?interval=${interval}`
+        `/api/v1/market/candles/${encodeURIComponent(cleanSymbol)}?interval=${interval}`
       );
 
       if (!data || data.length === 0) {
@@ -61,6 +63,7 @@ export function TradingViewChart({
         setIsLoading(false);
         return;
       }
+
 
       // Format and sort candles ascending by timestamp
       const formattedCandles: CandlestickData<Time>[] = [];
@@ -124,7 +127,8 @@ export function TradingViewChart({
     } finally {
       setIsLoading(false);
     }
-  }, [symbol, interval]);
+  }, [cleanSymbol, interval]);
+
 
   // Initialize Lightweight Chart
   useEffect(() => {
@@ -229,7 +233,7 @@ export function TradingViewChart({
 
   // Live WebSocket Tick Subscription
   useEffect(() => {
-    if (!symbol) return;
+    if (!cleanSymbol) return;
 
     const handleTick = (update: WsPriceUpdate) => {
       if (!candleSeriesRef.current || !lastBarRef.current) return;
@@ -260,9 +264,9 @@ export function TradingViewChart({
       }
     };
 
-    const unsub = marketWs.subscribe(symbol, handleTick);
+    const unsub = marketWs.subscribe(cleanSymbol, handleTick);
     return unsub;
-  }, [symbol]);
+  }, [cleanSymbol]);
 
   return (
     <div className={`relative w-full ${className}`} style={{ height }}>
@@ -284,10 +288,12 @@ export function TradingViewChart({
             <AlertCircle className="w-5 h-5" />
           </div>
           <h4 className="text-xs font-bold text-slate-800">
-            {error || "Market Data Disconnected"}
+            {error || "Market Data Feed Standby"}
           </h4>
           <p className="text-[11px] text-slate-500 max-w-sm mt-1 mb-3">
-            Real market candles stream from Upstox. When the provider session is disconnected or after trading hours, historical bars will display once authenticated.
+            {error
+              ? error
+              : `Real market candles stream from Upstox. When markets are closed or after trading hours, historical bars for ${cleanSymbol} will display once cached.`}
           </p>
           <button
             onClick={fetchAndSetCandles}
@@ -300,4 +306,5 @@ export function TradingViewChart({
       )}
     </div>
   );
+
 }

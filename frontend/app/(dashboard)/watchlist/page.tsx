@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { OrderPadModal } from "@/components/trading/order-pad-modal";
 import { ProviderStatusBanner } from "@/components/trading/provider-status-banner";
+import { normalizeStockSymbol } from "@/lib/utils";
+
 import {
   Bookmark,
   Plus,
@@ -279,10 +281,10 @@ export default function WatchlistPage() {
                       </div>
                       <div>
                         <Link
-                          href={`/stocks/${stock?.symbol}`}
+                          href={`/stocks/${encodeURIComponent(normalizeStockSymbol(stock?.symbol))}`}
                           className="font-bold text-slate-900 hover:text-indigo-600 transition-colors block leading-tight"
                         >
-                          {stock?.symbol}
+                          {normalizeStockSymbol(stock?.symbol)}
                         </Link>
                         <span className="text-[11px] text-slate-500 block truncate max-w-xs">
                           {stock?.name}
@@ -316,12 +318,13 @@ export default function WatchlistPage() {
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       <Link
-                        href={`/stocks/${stock?.symbol}`}
+                        href={`/stocks/${encodeURIComponent(normalizeStockSymbol(stock?.symbol))}`}
                         className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </Link>
+
                       <button
                         onClick={() => openOrder(stock, "BUY")}
                         className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-[10px] font-bold transition-colors"

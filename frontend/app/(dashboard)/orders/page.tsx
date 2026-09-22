@@ -3,8 +3,9 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { apiRequest } from "@/lib/api-client";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { formatCurrency, formatDateTime, normalizeStockSymbol } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+
 import { Badge } from "@/components/ui/badge";
 import { Tabs } from "@/components/ui/tabs";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -114,10 +115,14 @@ export default function OrdersPage() {
             {filteredOrders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell className="font-bold text-slate-900">
-                  <Link href={`/stocks/${order.symbol || "STOCK"}`} className="hover:text-indigo-600">
-                    {order.symbol || "STOCK"}
+                  <Link
+                    href={`/stocks/${encodeURIComponent(normalizeStockSymbol(order.symbol || "STOCK"))}`}
+                    className="hover:text-indigo-600"
+                  >
+                    {normalizeStockSymbol(order.symbol || "STOCK")}
                   </Link>
                 </TableCell>
+
                 <TableCell>
                   <span
                     className={`px-2 py-0.5 rounded text-[11px] font-bold ${

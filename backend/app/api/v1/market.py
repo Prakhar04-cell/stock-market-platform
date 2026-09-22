@@ -2,6 +2,7 @@ import logging
 from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, Query, status
 
+from urllib.parse import unquote
 from app.core.exceptions import ResourceNotFoundError, TradeXException
 from app.services.market_data.candle_service import candle_service
 from app.services.market_data.instrument_service import instrument_service
@@ -20,7 +21,7 @@ async def get_quote(symbol: str):
     Retrieves real-time normalized quote for a symbol (e.g. RELIANCE, TCS, NIFTY 50).
     Normalized into standard TradeX model.
     """
-    sym = symbol.strip().upper()
+    sym = unquote(symbol).strip().upper()
     quote = await quote_service.get_quote(sym)
     if not quote:
         raise ResourceNotFoundError(resource="MarketQuote", identifier=sym)
@@ -32,7 +33,7 @@ async def get_batch_quotes(
     symbols: str = Query(..., description="Comma-separated list of symbols (e.g. RELIANCE,TCS,INFY)"),
 ):
     """Batch fetch real market quotes for multiple symbols."""
-    sym_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
+    sym_list = [unquote(s).strip().upper() for s in symbols.split(",") if s.strip()]
     if not sym_list:
         return {}
     return await quote_service.get_quotes(sym_list)
@@ -48,7 +49,7 @@ async def get_candles(
     """
     Retrieves normalized candlestick OHLCV data for TradingView Lightweight Charts.
     """
-    sym = symbol.strip().upper()
+    sym = unquote(symbol).strip().upper()
     return await candle_service.get_candles(
         symbol_or_key=sym,
         interval=interval,
@@ -68,11 +69,13 @@ async def search_instruments(
     Global instrument search for top search bar and autocomplete.
     Supports stocks, indices, futures, options, MCX.
     """
+    clean_query = unquote(query).strip()
     return await instrument_service.search_instruments(
-        query=query,
+        query=clean_query,
         exchange=exchange,
         limit=limit,
     )
+
 
 
 @router.get("/ticker", summary="Get configured top indices ticker data")

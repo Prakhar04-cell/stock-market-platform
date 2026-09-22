@@ -65,38 +65,46 @@ class InstrumentService:
         """Resolves an Upstox instrument key to its trading symbol with fast memory caching."""
         if not instrument_key:
             return ""
-        if instrument_key in self._reverse_cache:
-            return self._reverse_cache[instrument_key]
+        from urllib.parse import unquote
+        clean_key = unquote(instrument_key).strip()
+        if clean_key in self._reverse_cache:
+            return self._reverse_cache[clean_key]
 
         # Check DB
-        inst = await self.get_instrument_by_key(instrument_key)
+        inst = await self.get_instrument_by_key(clean_key)
         if inst and inst.symbol:
-            self._reverse_cache[instrument_key] = inst.symbol
+            self._reverse_cache[clean_key] = inst.symbol
             return inst.symbol
 
         # Fallback: extract last segment
-        fallback = instrument_key.split("|")[-1] if "|" in instrument_key else instrument_key
-        self._reverse_cache[instrument_key] = fallback
+        fallback = clean_key.split("|")[-1] if "|" in clean_key else clean_key
+        self._reverse_cache[clean_key] = fallback
         return fallback
+
 
     async def resolve_instrument_key(self, symbol_or_key: str) -> str:
         """
         Resolves any symbol, trading symbol, or key to its Upstox instrument key.
         e.g. 'RELIANCE' -> 'NSE_EQ|INE002A01018'
              'NIFTY 50' -> 'NSE_INDEX|Nifty 50'
+             'NIFTY%2050' -> 'NSE_INDEX|Nifty 50'
              'NSE_EQ|INE002A01018' -> 'NSE_EQ|INE002A01018'
         """
         if not symbol_or_key:
             return ""
 
-        clean = symbol_or_key.strip().upper()
-        if "|" in clean:
+        from urllib.parse import unquote
+        raw_clean = unquote(symbol_or_key).strip()
+        if "|" in raw_clean:
             # Already an instrument key
-            return clean
+            return raw_clean
+
+        clean = raw_clean.upper()
 
         # 1. Check well-known static dictionary
         if clean in WELL_KNOWN_INSTRUMENT_KEYS:
             return WELL_KNOWN_INSTRUMENT_KEYS[clean]
+
 
         # 2. Check Redis cache
         redis_key = f"instrument:{clean}"
@@ -156,12 +164,14 @@ class InstrumentService:
         Search across symbol, company name, trading symbol, instrument key.
         Supports NSE, BSE, indices, derivatives.
         """
-        q = query.strip()
+        from urllib.parse import unquote
+        q = unquote(query).strip()
         if not q:
             return []
 
         term = f"%{q}%"
         term_upper = f"%{q.upper()}%"
+
 
         results: List[InstrumentData] = []
         async with AsyncSessionLocal() as db:

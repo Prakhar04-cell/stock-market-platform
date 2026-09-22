@@ -5,7 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, normalizeStockSymbol } from "@/lib/utils";
 import { apiRequest } from "@/lib/api-client";
 import { useMarketWebSocket, WsPriceUpdate } from "@/lib/market-ws";
 import {
@@ -36,6 +36,7 @@ export function OrderPadModal({
   defaultSide = "BUY",
   onOrderPlaced,
 }: OrderPadModalProps) {
+  const cleanSymbol = normalizeStockSymbol(symbol);
   const [side, setSide] = useState<"BUY" | "SELL">(defaultSide);
   const [orderType, setOrderType] = useState<"MARKET" | "LIMIT" | "STOP" | "STOP_LIMIT">("MARKET");
   const [quantity, setQuantity] = useState("1");
@@ -54,13 +55,13 @@ export function OrderPadModal({
 
   // Fetch live market quote for symbol when modal opens
   useEffect(() => {
-    if (!isOpen || !symbol) return;
+    if (!isOpen || !cleanSymbol) return;
     setSuccessMessage(null);
     setErrorMessage(null);
 
     async function fetchQuote() {
       try {
-        const quote = await apiRequest(`/api/v1/market/quote/${encodeURIComponent(symbol)}`);
+        const quote = await apiRequest(`/api/v1/market/quote/${encodeURIComponent(cleanSymbol)}`);
         if (quote && quote.ltp) {
           const numLtp = typeof quote.ltp === "string" ? parseFloat(quote.ltp) : quote.ltp;
           setLtp(numLtp);
@@ -72,10 +73,10 @@ export function OrderPadModal({
     }
 
     fetchQuote();
-  }, [isOpen, symbol]);
+  }, [isOpen, cleanSymbol]);
 
   // Subscribe to live websocket updates while modal is open
-  useMarketWebSocket(isOpen ? symbol : undefined, (update: WsPriceUpdate) => {
+  useMarketWebSocket(isOpen ? cleanSymbol : undefined, (update: WsPriceUpdate) => {
     const val = typeof update.ltp === "string" ? parseFloat(update.ltp) : update.ltp;
     if (val) {
       setLtp(val);
@@ -84,6 +85,7 @@ export function OrderPadModal({
       }
     }
   });
+
 
   const numQty = Math.max(1, parseFloat(quantity) || 1);
   const effectivePrice = orderType === "MARKET" ? (ltp || parseFloat(price) || 0) : (parseFloat(price) || 0);
@@ -131,8 +133,14 @@ export function OrderPadModal({
     setSuccessMessage(null);
 
     try {
+      // Ensure targetStockId resolves cleanly to stockId or cleanSymbol
+      let targetStockId = stockId;
+      if (!targetStockId || targetStockId.includes("%") || targetStockId === symbol) {
+        targetStockId = cleanSymbol;
+      }
+
       const payload: any = {
-        stock_id: stockId,
+        stock_id: targetStockId,
         order_type: orderType,
         side: side,
         quantity: numQty,
@@ -151,9 +159,9 @@ export function OrderPadModal({
       });
 
       if (res.status === "FILLED") {
-        setSuccessMessage(`Order Executed! ${side} ${numQty} ${symbol} filled at ₹${parseFloat(res.average_execution_price || effectivePrice).toFixed(2)}.`);
+        setSuccessMessage(`Order Executed! ${side} ${numQty} ${cleanSymbol} filled at ₹${parseFloat(res.average_execution_price || effectivePrice).toFixed(2)}.`);
       } else {
-        setSuccessMessage(`Order Placed! Limit ${side} ${numQty} ${symbol} @ ₹${price} is now ${res.status}.`);
+        setSuccessMessage(`Order Placed! Limit ${side} ${numQty} ${cleanSymbol} @ ₹${price} is now ${res.status}.`);
       }
 
       if (onOrderPlaced) {
@@ -175,9 +183,10 @@ export function OrderPadModal({
       isOpen={isOpen}
       onClose={onClose}
       title={`${side} Order Pad`}
-      description={`${symbol} • ${stockName}`}
+      description={`${cleanSymbol} • ${stockName}`}
       className="max-w-md bg-white text-slate-900 border border-slate-200 shadow-dropdown"
     >
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Paper Trading Banner */}
         <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-200/80 flex items-center justify-between">

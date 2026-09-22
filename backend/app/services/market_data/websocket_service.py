@@ -61,9 +61,11 @@ class MarketWebSocketManager:
                 quote = await quote_service.get_quote(clean)
                 if quote:
                     try:
+                        quote_dict = json.loads(quote.model_dump_json())
                         await websocket.send_json({
                             "type": "quote",
-                            "data": json.loads(quote.model_dump_json()),
+                            "data": quote_dict,
+                            **quote_dict,
                         })
                     except Exception:
                         pass
@@ -100,10 +102,13 @@ class MarketWebSocketManager:
         if not target_sockets:
             return
 
+        quote_dict = json.loads(quote.model_dump_json())
         message = {
             "type": "quote",
-            "data": json.loads(quote.model_dump_json()),
+            "data": quote_dict,
+            **quote_dict,
         }
+
 
         stale_sockets = []
         for ws in target_sockets:
