@@ -74,10 +74,10 @@ export default function WatchlistPage() {
       }
 
       // Batch-fetch real quotes for all symbols across watchlists
-      const allSymbols = Array.from(
+      const allSymbols: string[] = Array.from(
         new Set(
           (data || []).flatMap((w) =>
-            w.items.map((i) => i.symbol || i.stock?.symbol).filter(Boolean)
+            w.items.map((i) => i.symbol || i.stock?.symbol).filter((s): s is string => Boolean(s))
           )
         )
       );
@@ -121,7 +121,10 @@ export default function WatchlistPage() {
   useEffect(() => {
     if (!activeWatchlist?.items || activeWatchlist.items.length === 0) return;
 
-    const symbols = activeWatchlist.items.map((i) => i.symbol || i.stock?.symbol).filter(Boolean);
+    const symbols: string[] = activeWatchlist.items
+      .map((i) => i.symbol || i.stock?.symbol)
+      .filter((s): s is string => Boolean(s));
+
     const unsubs = symbols.map((sym) =>
       marketWs.subscribe(sym, (update: WsPriceUpdate) => {
         const val = typeof update.ltp === "string" ? parseFloat(update.ltp) : update.ltp;
