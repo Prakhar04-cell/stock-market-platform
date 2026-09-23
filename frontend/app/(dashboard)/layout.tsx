@@ -23,7 +23,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Scrollable Dashboard Viewport */}
         <main className="flex-1 min-w-0 p-4 sm:p-5 lg:p-6 pb-20 md:pb-8 overflow-x-hidden flex flex-col">
-          <div className="max-w-[1560px] mx-auto w-full flex-1">
+          <div className="max-w-[1400px] mx-auto w-full flex-1">
             {children}
           </div>
         </main>

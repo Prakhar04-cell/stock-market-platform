@@ -41,12 +41,10 @@ export function Sidebar() {
   }, []);
 
   const traderNav = [
-    { name: "Explore", href: "/explore", icon: LayoutDashboard },
-    { name: "Stocks", href: "/stocks/NIFTY%2050", icon: LineChart },
-    { name: "Terminal", href: "/terminal", icon: Cpu },
+    { name: "Terminal", href: "/terminal", icon: Cpu, badge: "Live" },
+    { name: "Portfolio & PnL", href: "/portfolio", icon: Briefcase },
+    { name: "Order Book", href: "/orders", icon: Layers },
     { name: "Watchlist", href: "/watchlist", icon: Bookmark },
-    { name: "Orders", href: "/orders", icon: Layers },
-    { name: "Portfolio", href: "/portfolio", icon: Briefcase },
   ];
 
   const adminNav = [
@@ -79,19 +77,26 @@ export function Sidebar() {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all group",
+                    "flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium transition-all group",
                     isActive
                       ? "bg-[#EEF2FF] text-[#4F46E5] font-semibold"
                       : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
                   )}
                 >
-                  <Icon
-                    className={cn(
-                      "w-4 h-4 shrink-0 transition-colors",
-                      isActive ? "text-[#4F46E5]" : "text-[#9CA3AF] group-hover:text-[#4B5563]"
-                    )}
-                  />
-                  <span>{item.name}</span>
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      className={cn(
+                        "w-4 h-4 shrink-0 transition-colors",
+                        isActive ? "text-[#4F46E5]" : "text-[#9CA3AF] group-hover:text-[#4B5563]"
+                      )}
+                    />
+                    <span>{item.name}</span>
+                  </div>
+                  {item.badge && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-indigo-100 text-[#4F46E5]">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

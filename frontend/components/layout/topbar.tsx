@@ -486,7 +486,7 @@ export function Topbar() {
                 isMarketConnected ? "bg-[#00A86B] animate-pulse" : "bg-slate-400"
               }`}
             />
-            <span>{isMarketConnected ? "LIVE" : "FEED STANDBY"}</span>
+            <span>{isMarketConnected ? "● LIVE MARKET FEED" : "○ FEED STANDBY"}</span>
           </div>
 
           {/* Paper Trading Indicator Badge (Clickable modal) */}

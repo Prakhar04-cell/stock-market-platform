@@ -48,35 +48,38 @@ class QuoteService:
             clean = sym.strip().upper()
             ikey = await instrument_service.resolve_instrument_key(clean)
             key_to_symbol_map[ikey] = clean
+            ikey_colon = ikey.replace("|", ":")
+            key_to_symbol_map[ikey_colon] = clean
 
             # Check in-memory tier
-            if clean in self._memory_cache:
-                exp, quote = self._memory_cache[clean]
-                if now < exp:
-                    results[clean] = quote
-                    results[ikey] = quote
-                    continue
-            if ikey in self._memory_cache:
-                exp, quote = self._memory_cache[ikey]
-                if now < exp:
-                    results[clean] = quote
-                    results[ikey] = quote
-                    continue
-
-            missing_keys.append(ikey)
+            found = False
+            for cache_k in (clean, ikey, ikey_colon):
+                if cache_k in self._memory_cache:
+                    exp, quote = self._memory_cache[cache_k]
+                    if now < exp:
+                        results[clean] = quote
+                        results[ikey] = quote
+                        results[ikey_colon] = quote
+                        if quote.symbol:
+                            results[quote.symbol.upper()] = quote
+                        found = True
+                        break
+            if not found:
+                missing_keys.append(ikey)
 
         if not missing_keys:
             return results
 
         # 2. Check Redis cache for remaining misses
-
+        redis_misses: List[str] = []
         redis = await get_redis()
-        if redis:
+        unique_missing = list(dict.fromkeys(missing_keys))
+        if redis and unique_missing:
             try:
-                redis_keys = [f"market:quote:{k}" for k in key_to_symbol_map.keys()]
+                redis_keys = [f"market:quote:{k}" for k in unique_missing]
                 cached_values = await redis.mget(redis_keys)
-                for ikey, val in zip(key_to_symbol_map.keys(), cached_values):
-                    orig_sym = key_to_symbol_map[ikey]
+                for ikey, val in zip(unique_missing, cached_values):
+                    orig_sym = key_to_symbol_map.get(ikey, ikey)
                     if val:
                         raw = json.loads(val)
                         quote = self._deserialize_quote(raw)
@@ -86,18 +89,24 @@ class QuoteService:
                             quote.status = "STALE"
                         results[ikey] = quote
                         results[orig_sym] = quote
+                        if quote.symbol:
+                            results[quote.symbol.upper()] = quote
+                        # Populate in-memory cache as well
+                        exp = time.time() + self.CACHE_TTL_SECONDS
+                        self._memory_cache[ikey] = (exp, quote)
+                        self._memory_cache[orig_sym] = (exp, quote)
                     else:
-                        missing_keys.append(ikey)
+                        redis_misses.append(ikey)
             except Exception as e:
                 logger.debug(f"Redis mget quotes failed: {e}")
-                missing_keys = list(key_to_symbol_map.keys())
+                redis_misses = unique_missing
         else:
-            missing_keys = list(key_to_symbol_map.keys())
+            redis_misses = unique_missing
 
         # 3. Batch fetch missing quotes from Upstox Provider
-        if missing_keys:
+        if redis_misses:
             try:
-                fetched_quotes = await upstox_provider.get_quotes(missing_keys)
+                fetched_quotes = await upstox_provider.get_quotes(redis_misses)
                 for ikey, quote in fetched_quotes.items():
                     ikey_pipe = ikey.replace(":", "|")
                     orig_sym = key_to_symbol_map.get(ikey_pipe, key_to_symbol_map.get(ikey, quote.symbol.upper()))
@@ -105,20 +114,27 @@ class QuoteService:
                     results[ikey_pipe] = quote
                     results[orig_sym] = quote
                     results[quote.symbol.upper()] = quote
-                    await self.cache_quote(quote)
+                    await self.cache_quote(quote, extra_alias=orig_sym)
             except UpstoxAuthRequiredError as e:
                 logger.info(f"Upstox provider authentication required: {e}")
             except Exception as e:
-                logger.warning(f"Failed to fetch quotes from provider for {missing_keys}: {e}")
+                logger.warning(f"Failed to fetch quotes from provider for {redis_misses}: {e}")
 
         return results
 
-    async def cache_quote(self, quote: MarketQuote) -> None:
-        """Stores a normalized quote in memory and Redis."""
+    async def cache_quote(self, quote: MarketQuote, extra_alias: Optional[str] = None) -> None:
+        """Stores a normalized quote in memory and Redis with symbol aliases."""
         # 1. Update in-memory cache
         exp = time.time() + self.CACHE_TTL_SECONDS
-        self._memory_cache[quote.symbol.upper()] = (exp, quote)
-        self._memory_cache[quote.instrument_key] = (exp, quote)
+        sym_upper = quote.symbol.upper()
+        ikey = quote.instrument_key
+        ikey_colon = ikey.replace("|", ":")
+
+        self._memory_cache[sym_upper] = (exp, quote)
+        self._memory_cache[ikey] = (exp, quote)
+        self._memory_cache[ikey_colon] = (exp, quote)
+        if extra_alias:
+            self._memory_cache[extra_alias.upper()] = (exp, quote)
 
         # 2. Update Redis
         redis = await get_redis()
@@ -144,8 +160,10 @@ class QuoteService:
                 "status": quote.status,
             }
             dumped = json.dumps(payload)
-            await redis.set(f"market:quote:{quote.instrument_key}", dumped, ex=self.CACHE_TTL_SECONDS)
-            await redis.set(f"market:quote:{quote.symbol.upper()}", dumped, ex=self.CACHE_TTL_SECONDS)
+            await redis.set(f"market:quote:{ikey}", dumped, ex=self.CACHE_TTL_SECONDS)
+            await redis.set(f"market:quote:{sym_upper}", dumped, ex=self.CACHE_TTL_SECONDS)
+            if extra_alias:
+                await redis.set(f"market:quote:{extra_alias.upper()}", dumped, ex=self.CACHE_TTL_SECONDS)
         except Exception as e:
             logger.debug(f"Failed to cache quote in Redis: {e}")
 

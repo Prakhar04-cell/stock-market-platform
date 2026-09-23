@@ -9,25 +9,19 @@ import {
   Activity,
   ArrowRight,
   Sparkles,
-  Zap,
   BarChart3,
-  Layers,
   ShieldCheck,
   Briefcase,
-  Calendar,
-  Compass,
-  FileText,
   Clock,
   ExternalLink,
   ChevronRight,
   Info,
-  SlidersHorizontal,
   Flame,
-  Search,
   X,
+  RotateCcw,
 } from "lucide-react";
 import { apiRequest } from "@/lib/api-client";
-import { formatCurrency, formatPercent, normalizeStockSymbol } from "@/lib/utils";
+import { normalizeStockSymbol } from "@/lib/utils";
 import { useMarketWebSocket } from "@/lib/market-ws";
 import { getRecentlyViewed, RecentlyViewedItem } from "@/lib/recently-viewed";
 import { OrderPadModal } from "@/components/trading/order-pad-modal";
@@ -58,39 +52,46 @@ interface PortfolioSummary {
 export default function ExplorePage() {
   const router = useRouter();
 
-  // 1. Recently Viewed state
+  // 1. WebSocket Live Stream state
+  const { connectionState } = useMarketWebSocket();
+  const isMarketConnected = connectionState === "CONNECTED";
+
+  // 2. Recently Viewed state
   const [recentlyViewed, setRecentlyViewed] = useState<RecentlyViewedItem[]>([]);
   const [recentQuotes, setRecentQuotes] = useState<Record<string, QuoteItem>>({});
 
-  // 2. Most Traded Stocks state
+  // 3. Most Traded Stocks state
   const mostTradedSymbols = useMemo(
     () => ["RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK", "SBIN"],
     []
   );
   const [mostTradedQuotes, setMostTradedQuotes] = useState<Record<string, QuoteItem>>({});
+  const [isLoadingMostTraded, setIsLoadingMostTraded] = useState(true);
+  const [mostTradedError, setMostTradedError] = useState<string | null>(null);
 
-  // 3. Top Movers state (Gainers, Losers, Volume Shockers)
+  // 4. Top Movers state (Gainers, Losers, Volume Shockers)
   const [moversTab, setMoversTab] = useState<"GAINERS" | "LOSERS" | "VOLUME">("GAINERS");
   const [gainers, setGainers] = useState<QuoteItem[]>([]);
   const [losers, setLosers] = useState<QuoteItem[]>([]);
   const [volumeShockers, setVolumeShockers] = useState<QuoteItem[]>([]);
   const [isLoadingMovers, setIsLoadingMovers] = useState(true);
+  const [moversError, setMoversError] = useState<string | null>(null);
 
-  // 4. Portfolio Summary (Your Investments)
+  // 5. Portfolio Summary (Your Investments)
   const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null);
   const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(true);
 
-  // 5. Order Pad Modal State for Quick Trading
+  // 6. Order Pad Modal State for Quick Trading
   const [orderModalStock, setOrderModalStock] = useState<{
     symbol: string;
     stockId: string;
     side: "BUY" | "SELL";
   } | null>(null);
 
-  // 6. Controlled "Coming Soon" notification for unsupported features
+  // 7. Controlled "Coming Soon" notification for unsupported features
   const [comingSoonFeature, setComingSoonFeature] = useState<string | null>(null);
 
-  // Load Recently Viewed from localStorage
+  // Load Recently Viewed from localStorage and fetch quotes
   const loadRecent = useCallback(async () => {
     const list = getRecentlyViewed();
     setRecentlyViewed(list);
@@ -104,26 +105,40 @@ export default function ExplorePage() {
         if (quotes) {
           const map: Record<string, QuoteItem> = {};
           Object.entries(quotes).forEach(([key, q]: [string, any]) => {
-            if (q && q.ltp !== undefined && q.ltp !== null) {
-              map[key] = {
-                symbol: q.symbol || key,
-                ltp: Number(q.ltp),
-                change: q.change !== null ? Number(q.change) : 0,
-                change_percent: q.change_percent !== null ? Number(q.change_percent) : 0,
+            const ltpVal =
+              q?.ltp !== undefined && q?.ltp !== null
+                ? Number(q.ltp)
+                : q?.price !== undefined
+                ? Number(q.price)
+                : undefined;
+            if (ltpVal !== undefined && !isNaN(ltpVal)) {
+              const sym = (q.symbol || key).toUpperCase();
+              const quoteObj: QuoteItem = {
+                symbol: sym,
+                ltp: ltpVal,
+                change: q.change !== null && q.change !== undefined ? Number(q.change) : 0,
+                change_percent:
+                  q.change_percent !== null && q.change_percent !== undefined
+                    ? Number(q.change_percent)
+                    : 0,
                 volume: q.volume ? Number(q.volume) : 0,
               };
+              map[sym] = quoteObj;
+              map[key.toUpperCase()] = quoteObj;
             }
           });
           setRecentQuotes(map);
         }
       } catch {
-        // Ignore
+        // Silently preserve empty quotes to render "Quote unavailable"
       }
     }
   }, []);
 
   // Load Most Traded Quotes
   const loadMostTraded = useCallback(async () => {
+    setIsLoadingMostTraded(true);
+    setMostTradedError(null);
     try {
       const symbolsParam = mostTradedSymbols.join(",");
       const quotes = await apiRequest<Record<string, any>>(
@@ -132,64 +147,66 @@ export default function ExplorePage() {
       if (quotes) {
         const map: Record<string, QuoteItem> = {};
         Object.entries(quotes).forEach(([key, q]: [string, any]) => {
-          if (q && q.ltp !== undefined && q.ltp !== null) {
-            map[key] = {
-              symbol: q.symbol || key,
-              ltp: Number(q.ltp),
-              change: q.change !== null ? Number(q.change) : 0,
-              change_percent: q.change_percent !== null ? Number(q.change_percent) : 0,
+          const ltpVal =
+            q?.ltp !== undefined && q?.ltp !== null
+              ? Number(q.ltp)
+              : q?.price !== undefined
+              ? Number(q.price)
+              : undefined;
+          if (ltpVal !== undefined && !isNaN(ltpVal)) {
+            const sym = (q.symbol || key).toUpperCase();
+            const quoteObj: QuoteItem = {
+              symbol: sym,
+              ltp: ltpVal,
+              change: q.change !== null && q.change !== undefined ? Number(q.change) : 0,
+              change_percent:
+                q.change_percent !== null && q.change_percent !== undefined
+                  ? Number(q.change_percent)
+                  : 0,
               volume: q.volume ? Number(q.volume) : 0,
             };
+            map[sym] = quoteObj;
+            map[key.toUpperCase()] = quoteObj;
           }
         });
         setMostTradedQuotes(map);
       }
-    } catch {
-      // Ignore
+    } catch (err: any) {
+      setMostTradedError(err?.message || "Unable to load market data");
+    } finally {
+      setIsLoadingMostTraded(false);
     }
   }, [mostTradedSymbols]);
 
-  // Load Movers (Gainers, Losers, Volume) from backend
+  // Load Movers (Gainers, Losers, Volume Shockers) from backend
   const loadMovers = useCallback(async () => {
     setIsLoadingMovers(true);
+    setMoversError(null);
     try {
       const res = await apiRequest<{
         gainers: any[];
         losers: any[];
-        volume_shockers: any[];
+        most_active?: any[];
+        volume_shockers?: any[];
+        status?: string;
       }>("/api/v1/market/movers?limit=6");
 
       if (res) {
-        setGainers(
-          (res.gainers || []).map((i) => ({
-            symbol: i.symbol,
-            ltp: Number(i.ltp || 0),
-            change: Number(i.change || 0),
-            change_percent: Number(i.change_percent || 0),
-            volume: Number(i.volume || 0),
-          }))
-        );
-        setLosers(
-          (res.losers || []).map((i) => ({
-            symbol: i.symbol,
-            ltp: Number(i.ltp || 0),
-            change: Number(i.change || 0),
-            change_percent: Number(i.change_percent || 0),
-            volume: Number(i.volume || 0),
-          }))
-        );
-        setVolumeShockers(
-          (res.volume_shockers || []).map((i) => ({
-            symbol: i.symbol,
-            ltp: Number(i.ltp || 0),
-            change: Number(i.change || 0),
-            change_percent: Number(i.change_percent || 0),
-            volume: Number(i.volume || 0),
-          }))
-        );
+        const mapItem = (i: any): QuoteItem => ({
+          symbol: (i.symbol || "").toUpperCase(),
+          ltp: Number(i.ltp ?? i.price ?? 0),
+          change: Number(i.change ?? 0),
+          change_percent: Number(i.change_percent ?? 0),
+          volume: Number(i.volume ?? 0),
+        });
+
+        setGainers((res.gainers || []).map(mapItem));
+        setLosers((res.losers || []).map(mapItem));
+        const activeList = res.most_active || res.volume_shockers || [];
+        setVolumeShockers(activeList.map(mapItem));
       }
-    } catch {
-      // Fallback
+    } catch (err: any) {
+      setMoversError(err?.message || "Unable to load market movers");
     } finally {
       setIsLoadingMovers(false);
     }
@@ -229,7 +246,7 @@ export default function ExplorePage() {
   // Real-time WebSocket updates for most traded symbols
   useMarketWebSocket(undefined, (update) => {
     if (update && update.symbol && update.ltp) {
-      const sym = normalizeStockSymbol(update.symbol);
+      const sym = normalizeStockSymbol(update.symbol).toUpperCase();
       const val = typeof update.ltp === "string" ? parseFloat(update.ltp) : update.ltp;
       const chg = typeof update.change === "string" ? parseFloat(update.change) : update.change;
       const chgPct =
@@ -238,18 +255,18 @@ export default function ExplorePage() {
           : update.change_percent;
 
       setMostTradedQuotes((prev) => {
-        if (prev[sym]) {
-          return {
-            ...prev,
-            [sym]: {
-              ...prev[sym],
-              ltp: val,
-              change: chg !== undefined ? chg : prev[sym].change,
-              change_percent: chgPct !== undefined ? chgPct : prev[sym].change_percent,
-            },
-          };
-        }
-        return prev;
+        const existing = prev[sym];
+        const updatedObj: QuoteItem = {
+          symbol: sym,
+          ltp: val,
+          change: chg !== undefined ? chg : existing?.change,
+          change_percent: chgPct !== undefined ? chgPct : existing?.change_percent,
+          volume: existing?.volume,
+        };
+        return {
+          ...prev,
+          [sym]: updatedObj,
+        };
       });
     }
   });
@@ -261,7 +278,7 @@ export default function ExplorePage() {
     return volumeShockers;
   }, [moversTab, gainers, losers, volumeShockers]);
 
-  // Sectors data with real Upstox index benchmark
+  // Sectors data benchmark
   const sectors = [
     { name: "NIFTY IT", gainers: 8, losers: 2, change: 1.45 },
     { name: "NIFTY BANK", gainers: 7, losers: 5, change: 0.38 },
@@ -271,34 +288,44 @@ export default function ExplorePage() {
     { name: "NIFTY FMCG", gainers: 6, losers: 9, change: -0.42 },
   ];
 
-  // Products & Tools items
+  // Products & Tools audited items (Open / Coming soon / Open Terminal)
   const productsAndTools = [
-    { id: "ipo", name: "IPO", status: "Upcoming", available: false },
-    { id: "bonds", name: "Bonds & Fixed Income", status: "Coming soon", available: false },
+    { id: "screener", name: "Intraday Screener", status: "Open", available: true, href: "/terminal" },
+    { id: "terminal", name: "Trading Terminal", status: "Open Terminal", available: true, href: "/terminal" },
     { id: "etfs", name: "ETFs Marketplace", status: "Explore", available: true, href: "#etfs" },
-    { id: "screener", name: "Intraday Screener", status: "Active", available: true, href: "/terminal" },
+    { id: "bonds", name: "Bonds & Fixed Income", status: "Coming soon", available: false },
+    { id: "ipo", name: "IPO", status: "Coming soon", available: false },
     { id: "sip", name: "Stocks SIP", status: "Coming soon", available: false },
-    { id: "mtf", name: "MTF Stocks (4x Margin)", status: "Active", available: true, href: "/stocks/RELIANCE" },
+    { id: "mtf", name: "MTF Stocks", status: "Coming soon", available: false },
     { id: "events", name: "Events Calendar", status: "Coming soon", available: false },
-    { id: "terminal", name: "Trading Terminal", status: "Pro", available: true, href: "/terminal" },
   ];
 
   return (
-    <div className="space-y-8 select-none">
+    <div className="max-w-[1360px] mx-auto w-full space-y-6 sm:space-y-7 select-none">
       {/* 1. Explore Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5E7EB]">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black tracking-tight text-[#111827]">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-[28px] font-black tracking-tight text-[#111827]">
               Explore Markets
             </h1>
-            <span className="px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#00A86B] text-[11px] font-bold border border-[#A7F3D0] flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
-              Live Upstox Feed
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1.5 transition-colors ${
+                isMarketConnected
+                  ? "bg-[#ECFDF5] text-[#00A86B] border-[#A7F3D0]"
+                  : "bg-[#F7F8FA] text-[#6B7280] border-[#E5E7EB]"
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isMarketConnected ? "bg-[#00A86B] animate-pulse" : "bg-slate-400"
+                }`}
+              />
+              <span>{isMarketConnected ? "● LIVE MARKET FEED" : "○ FEED DISCONNECTED"}</span>
             </span>
           </div>
           <p className="text-xs text-[#6B7280] mt-0.5">
-            Discover active equities, sector trends, technical screens, and paper trading opportunities.
+            Discover active equities, real-time market movers, sector breadth, and paper trading opportunities.
           </p>
         </div>
 
@@ -313,50 +340,50 @@ export default function ExplorePage() {
         </div>
       </div>
 
-      {/* 2. Main Two-Column Layout (Left: Discovery Hub, Right: Investments & Tools) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (8 cols): Discovery & Market Sections */}
-        <div className="lg:col-span-8 space-y-8">
+      {/* 2. Main Two-Column Layout (Left: 70% Discovery, Right: 30% Investments & Tools) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
+        {/* Left Column (8 cols ~ 68-70%): Discovery & Market Sections */}
+        <div className="lg:col-span-8 space-y-6 sm:space-y-7">
           {/* Section: Recently Viewed Instruments */}
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-[#4F46E5]" />
-                <h2 className="text-sm font-bold text-[#111827] tracking-tight">
+                <h2 className="text-base font-bold text-[#111827] tracking-tight">
                   Recently Viewed
                 </h2>
               </div>
-              <span className="text-[11px] text-[#6B7280]">
+              <span className="text-xs text-[#6B7280]">
                 {recentlyViewed.length > 0 ? `${recentlyViewed.length} tracked` : "0 tracked"}
               </span>
             </div>
 
             {recentlyViewed.length === 0 ? (
-              <div className="p-4 rounded-xl border border-dashed border-[#E5E7EB] bg-white text-center text-xs text-[#6B7280]">
-                <p>No recently viewed stocks.</p>
+              <div className="p-3.5 rounded-xl border border-dashed border-[#E5E7EB] bg-white text-center text-xs text-[#6B7280]">
+                <p className="font-medium text-[#374151]">No recently viewed stocks.</p>
                 <p className="text-[11px] text-[#9CA3AF] mt-0.5">
-                  Search or click any instrument below to keep it in your quick access strip.
+                  Click any instrument below to keep it in your quick access strip.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {recentlyViewed.map((item) => {
-                  const quote = recentQuotes[item.symbol];
-                  const hasPrice = quote && quote.ltp !== undefined;
+                  const quote = recentQuotes[item.symbol] || recentQuotes[item.symbol.toUpperCase()];
+                  const hasPrice = quote && quote.ltp !== undefined && quote.ltp > 0;
                   const isPos = (quote?.change_percent ?? 0) >= 0;
 
                   return (
-                    <Link
+                    <div
                       key={item.symbol}
-                      href={`/stocks/${encodeURIComponent(item.symbol)}`}
-                      className="p-3 bg-white border border-[#E5E7EB] rounded-xl hover:border-[#4F46E5] hover:shadow-card transition-all group block"
+                      onClick={() => router.push(`/stocks/${encodeURIComponent(item.symbol)}`)}
+                      className="p-3 bg-white border border-[#E5E7EB] rounded-xl hover:border-[#4F46E5] hover:shadow-xs transition-all group block cursor-pointer"
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="w-6 h-6 rounded-md bg-[#F3F4F6] border border-[#E5E7EB] flex items-center justify-center font-bold text-[10px] text-[#374151] font-mono">
                           {item.symbol.slice(0, 2)}
                         </div>
                         <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-slate-100 text-[#6B7280] font-mono">
-                          {item.exchange}
+                          {item.exchange || "NSE"}
                         </span>
                       </div>
                       <div className="font-bold text-xs text-[#111827] truncate group-hover:text-[#4F46E5] transition-colors">
@@ -364,123 +391,169 @@ export default function ExplorePage() {
                       </div>
                       <div className="mt-1">
                         {hasPrice ? (
-                          <div className="flex items-baseline justify-between">
-                            <span className="font-mono text-xs font-bold text-[#111827] tabular-nums">
-                              ₹{quote.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                            </span>
-                            <span
-                              className={`text-[10px] font-semibold font-mono tabular-nums ${
+                          <div>
+                            <div className="font-mono text-xs font-bold text-[#111827] tabular-nums">
+                              ₹{quote.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
+                            <div
+                              className={`text-[10.5px] font-semibold font-mono tabular-nums ${
                                 isPos ? "text-[#00A86B]" : "text-[#EF4444]"
                               }`}
                             >
-                              {isPos ? "+" : ""}
-                              {quote.change_percent?.toFixed(2)}%
-                            </span>
+                              {isPos ? "+" : ""}{quote.change !== undefined ? quote.change.toFixed(2) : "0.00"}{" "}
+                              ({isPos ? "+" : ""}{quote.change_percent !== undefined ? quote.change_percent.toFixed(2) : "0.00"}%)
+                            </div>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-[#9CA3AF]">Tap to view quote</span>
+                          <span className="text-[11px] text-[#9CA3AF] font-normal">
+                            Quote unavailable
+                          </span>
                         )}
                       </div>
-                    </Link>
+                    </div>
                   );
                 })}
               </div>
             )}
           </div>
 
-          {/* Section: Most Traded Stocks (Horizontal Cards) */}
+          {/* Section: Most Traded Stocks (Compact 3-column Grid) */}
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2">
                 <Flame className="w-4 h-4 text-amber-500" />
-                <h2 className="text-sm font-bold text-[#111827] tracking-tight">
+                <h2 className="text-base font-bold text-[#111827] tracking-tight">
                   Most Traded Stocks
                 </h2>
               </div>
-              <span className="text-[11px] text-[#6B7280] font-medium">Real-time quotes</span>
+              <span className="text-xs text-[#6B7280] font-medium">Real-time quotes</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {mostTradedSymbols.map((sym) => {
-                const q = mostTradedQuotes[sym];
-                const hasPrice = q && q.ltp !== undefined;
-                const isPos = (q?.change_percent ?? 0) >= 0;
-
-                return (
+            {isLoadingMostTraded ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {mostTradedSymbols.map((sym) => (
                   <div
                     key={sym}
-                    className="p-3.5 bg-white border border-[#E5E7EB] rounded-xl hover:border-[#4F46E5] hover:shadow-card transition-all flex flex-col justify-between group"
+                    className="p-3.5 bg-white border border-[#E5E7EB] rounded-xl animate-pulse space-y-2.5"
                   >
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] flex items-center justify-center font-bold text-xs text-[#111827] font-mono">
-                            {sym.slice(0, 2)}
-                          </div>
-                          <div>
-                            <Link
-                              href={`/stocks/${encodeURIComponent(sym)}`}
-                              className="font-bold text-xs text-[#111827] group-hover:text-[#4F46E5] transition-colors block"
-                            >
-                              {sym}
-                            </Link>
-                            <span className="text-[10px] text-[#6B7280]">NSE Equities</span>
-                          </div>
-                        </div>
-
-                        {/* Quick Paper Action Buttons */}
-                        <div className="flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() =>
-                              setOrderModalStock({ symbol: sym, stockId: sym, side: "BUY" })
-                            }
-                            className="px-2 py-0.5 rounded bg-emerald-50 text-[#00A86B] text-[10.5px] font-bold hover:bg-emerald-100 transition-colors"
-                          >
-                            BUY
-                          </button>
-                          <button
-                            onClick={() =>
-                              setOrderModalStock({ symbol: sym, stockId: sym, side: "SELL" })
-                            }
-                            className="px-2 py-0.5 rounded bg-rose-50 text-[#EF4444] text-[10.5px] font-bold hover:bg-rose-100 transition-colors"
-                          >
-                            SELL
-                          </button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-slate-200" />
+                        <div className="space-y-1">
+                          <div className="w-16 h-3 bg-slate-200 rounded" />
+                          <div className="w-12 h-2.5 bg-slate-100 rounded" />
                         </div>
                       </div>
-
-                      <div className="flex items-baseline justify-between pt-1 border-t border-slate-50">
-                        <span className="font-mono text-sm font-bold text-[#111827] tabular-nums">
-                          {hasPrice
-                            ? `₹${q.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
-                            : "Fetching..."}
-                        </span>
-                        {hasPrice && (
-                          <span
-                            className={`text-xs font-bold font-mono tabular-nums flex items-center gap-0.5 ${
-                              isPos ? "text-[#00A86B]" : "text-[#EF4444]"
-                            }`}
-                          >
-                            {isPos ? "+" : ""}
-                            {q.change_percent?.toFixed(2)}%
-                          </span>
-                        )}
+                      <div className="flex gap-1">
+                        <div className="w-9 h-4 bg-slate-100 rounded" />
+                        <div className="w-9 h-4 bg-slate-100 rounded" />
                       </div>
                     </div>
+                    <div className="pt-2 border-t border-slate-100 space-y-1">
+                      <div className="w-20 h-4 bg-slate-200 rounded" />
+                      <div className="w-16 h-3 bg-slate-100 rounded" />
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            ) : mostTradedError ? (
+              <div className="p-4 bg-white border border-[#E5E7EB] rounded-xl text-center space-y-2">
+                <p className="text-xs text-[#6B7280] font-medium">{mostTradedError}</p>
+                <button
+                  onClick={loadMostTraded}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#EEF2FF] text-[#4F46E5] text-xs font-bold rounded-lg hover:bg-indigo-100 transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Retry</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {mostTradedSymbols.map((sym) => {
+                  const q = mostTradedQuotes[sym] || mostTradedQuotes[sym.toUpperCase()];
+                  const hasPrice = q && q.ltp !== undefined && q.ltp > 0;
+                  const isPos = (q?.change_percent ?? 0) >= 0;
+
+                  return (
+                    <div
+                      key={sym}
+                      onClick={() => router.push(`/stocks/${encodeURIComponent(sym)}`)}
+                      className="p-3.5 bg-white border border-[#E5E7EB] rounded-xl hover:border-[#4F46E5] hover:shadow-xs transition-all flex flex-col justify-between group cursor-pointer"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] flex items-center justify-center font-bold text-xs text-[#111827] font-mono">
+                              {sym.slice(0, 2)}
+                            </div>
+                            <div>
+                              <span className="font-bold text-sm text-[#111827] group-hover:text-[#4F46E5] transition-colors block leading-tight">
+                                {sym}
+                              </span>
+                              <span className="text-[10px] text-[#6B7280]">NSE Equities</span>
+                            </div>
+                          </div>
+
+                          {/* Quick Paper Trading BUY/SELL Action Buttons */}
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOrderModalStock({ symbol: sym, stockId: sym, side: "BUY" });
+                              }}
+                              className="px-2 py-0.5 rounded bg-emerald-50 text-[#00A86B] text-[10.5px] font-bold hover:bg-emerald-100 transition-colors"
+                            >
+                              BUY
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOrderModalStock({ symbol: sym, stockId: sym, side: "SELL" });
+                              }}
+                              className="px-2 py-0.5 rounded bg-rose-50 text-[#EF4444] text-[10.5px] font-bold hover:bg-rose-100 transition-colors"
+                            >
+                              SELL
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-100">
+                          {hasPrice ? (
+                            <div>
+                              <div className="font-mono text-base font-bold text-[#111827] tabular-nums">
+                                ₹{q.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </div>
+                              <div
+                                className={`text-xs font-semibold font-mono tabular-nums ${
+                                  isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                                }`}
+                              >
+                                {isPos ? "+" : ""}{q.change !== undefined ? q.change.toFixed(2) : "0.00"}{" "}
+                                ({isPos ? "+" : ""}{q.change_percent !== undefined ? q.change_percent.toFixed(2) : "0.00"}%)
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-[#9CA3AF] font-normal">
+                              Quote unavailable
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Section: Top Movers Today (Gainers, Losers, Volume Shockers) */}
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
-                <h2 className="text-sm font-bold text-[#111827] tracking-tight">
+                <h2 className="text-base font-bold text-[#111827] tracking-tight">
                   Top Movers Today
                 </h2>
-                <p className="text-[11px] text-[#6B7280]">
+                <p className="text-xs text-[#6B7280]">
                   Live performance benchmarks from active market constituents.
                 </p>
               </div>
@@ -520,15 +593,26 @@ export default function ExplorePage() {
               </div>
             </div>
 
-            {/* Movers Table */}
+            {/* Movers Content */}
             {isLoadingMovers ? (
               <div className="py-8 text-center text-xs text-[#6B7280] flex items-center justify-center gap-2">
                 <div className="w-4 h-4 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
                 <span>Computing active market movers...</span>
               </div>
+            ) : moversError ? (
+              <div className="py-6 text-center text-xs text-[#6B7280] space-y-2">
+                <p>{moversError}</p>
+                <button
+                  onClick={loadMovers}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#EEF2FF] text-[#4F46E5] text-xs font-bold rounded-lg hover:bg-indigo-100 transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Retry</span>
+                </button>
+              </div>
             ) : activeMoversList.length === 0 ? (
               <div className="p-6 text-center text-xs text-[#6B7280]">
-                Market movers data initializing from stream.
+                No market movers available
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -550,12 +634,12 @@ export default function ExplorePage() {
                             {item.symbol}
                           </span>
                           <span className="text-[10px] text-[#6B7280] font-mono">
-                            Vol: {(item.volume || 12400).toLocaleString("en-IN")}
+                            {item.volume ? `Vol: ${item.volume.toLocaleString("en-IN")}` : "NSE Equities"}
                           </span>
                         </div>
                       </div>
 
-                      {/* Sparkline Visual Simulation */}
+                      {/* Mini Trend Ratio Line */}
                       <div className="hidden sm:flex items-center justify-center w-24 h-5 opacity-70">
                         <div
                           className={`w-full h-[2px] rounded ${
@@ -566,7 +650,7 @@ export default function ExplorePage() {
 
                       <div className="text-right shrink-0">
                         <div className="font-mono text-xs font-bold text-[#111827] tabular-nums">
-                          ₹{item.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          ₹{item.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div
                           className={`text-[10.5px] font-bold font-mono tabular-nums ${
@@ -584,18 +668,18 @@ export default function ExplorePage() {
             )}
           </div>
 
-          {/* Section: Sectors Trending Today (Gainers/Losers Ratio Bar) */}
+          {/* Section: Sectors Trending Today */}
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-sm font-bold text-[#111827] tracking-tight">
+                <h2 className="text-base font-bold text-[#111827] tracking-tight">
                   Sectors Trending Today
                 </h2>
-                <p className="text-[11px] text-[#6B7280]">
+                <p className="text-xs text-[#6B7280]">
                   Breadth analysis across major National Stock Exchange industry sectors.
                 </p>
               </div>
-              <span className="text-[11px] text-[#4F46E5] font-semibold">1D Performance</span>
+              <span className="text-xs text-[#4F46E5] font-semibold">1D Performance</span>
             </div>
 
             <div className="space-y-3">
@@ -640,18 +724,18 @@ export default function ExplorePage() {
             </div>
           </div>
 
-          {/* Section: Most Bought ETFs & Exchange Traded Funds */}
+          {/* Section: Most Bought ETFs */}
           <div id="etfs" className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-sm font-bold text-[#111827] tracking-tight">
+                <h2 className="text-base font-bold text-[#111827] tracking-tight">
                   Most Bought ETFs
                 </h2>
-                <p className="text-[11px] text-[#6B7280]">
+                <p className="text-xs text-[#6B7280]">
                   Low-cost index tracking funds and commodities.
                 </p>
               </div>
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-[#6B7280] font-medium">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-[#6B7280] font-medium">
                 Equity &amp; Bullion
               </span>
             </div>
@@ -691,19 +775,19 @@ export default function ExplorePage() {
             </div>
           </div>
 
-          {/* Section: Popular Bonds & Fixed Income (Honest Architecture) */}
+          {/* Section: Popular Bonds & Fixed Income */}
           <div id="bonds" className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="text-sm font-bold text-[#111827] tracking-tight">
+                <h2 className="text-base font-bold text-[#111827] tracking-tight">
                   Popular Bonds &amp; Fixed Income
                 </h2>
-                <p className="text-[11px] text-[#6B7280]">
+                <p className="text-xs text-[#6B7280]">
                   Sovereign and high-rated corporate debt securities.
                 </p>
               </div>
-              <span className="text-[10.5px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 font-semibold border border-amber-200">
-                Coming Soon
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-600 font-semibold border border-amber-200">
+                Coming soon
               </span>
             </div>
 
@@ -718,18 +802,18 @@ export default function ExplorePage() {
             </div>
           </div>
 
-          {/* Section: Stocks in News (Honest Architecture) */}
+          {/* Section: Stocks in News & Disclosures */}
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="text-sm font-bold text-[#111827] tracking-tight">
+                <h2 className="text-base font-bold text-[#111827] tracking-tight">
                   Stocks in News &amp; Corporate Actions
                 </h2>
-                <p className="text-[11px] text-[#6B7280]">
+                <p className="text-xs text-[#6B7280]">
                   Real-time regulatory disclosures and market developments.
                 </p>
               </div>
-              <span className="text-[10.5px] px-2 py-0.5 rounded-full bg-slate-100 text-[#6B7280] font-medium">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-[#6B7280] font-medium">
                 BSE / NSE Disclosures
               </span>
             </div>
@@ -744,13 +828,13 @@ export default function ExplorePage() {
             </div>
           </div>
 
-          {/* Section: Commodities & Mutual Funds / NFO (Honest Architecture) */}
+          {/* Section: Commodities & Mutual Funds / NFO */}
           <div id="commodities" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 bg-white border border-[#E5E7EB] rounded-2xl shadow-xs">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-bold text-xs text-[#111827]">Commodities</span>
                 <span className="text-[10px] text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded-full">
-                  MCX Integration Soon
+                  Coming soon
                 </span>
               </div>
               <p className="text-[11px] text-[#6B7280]">
@@ -762,7 +846,7 @@ export default function ExplorePage() {
               <div className="flex items-center justify-between mb-2">
                 <span className="font-bold text-xs text-[#111827]">Mutual Funds &amp; NFO</span>
                 <span className="text-[10px] text-[#4F46E5] font-semibold bg-indigo-50 px-2 py-0.5 rounded-full">
-                  BSE Star MF Coming Soon
+                  Coming soon
                 </span>
               </div>
               <p className="text-[11px] text-[#6B7280]">
@@ -772,18 +856,18 @@ export default function ExplorePage() {
           </div>
         </div>
 
-        {/* Right Column (4 cols): Investments Widget, Products & Tools, Trading Screens */}
-        <div className="lg:col-span-4 space-y-6">
+        {/* Right Column (4 cols ~ 30%): Investments Widget, Products & Tools, Trading Screens */}
+        <div className="lg:col-span-4 space-y-5 lg:space-y-6">
           {/* 1. Your Investments Widget */}
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
+            <div className="flex items-center justify-between mb-3.5">
               <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-[#4F46E5]" />
                 <h3 className="font-bold text-sm text-[#111827]">Your Investments</h3>
               </div>
               <Link
                 href="/portfolio"
-                className="text-[11px] text-[#4F46E5] font-semibold hover:underline flex items-center gap-0.5"
+                className="text-xs text-[#4F46E5] font-semibold hover:underline flex items-center gap-0.5"
               >
                 <span>Holdings</span>
                 <ChevronRight className="w-3 h-3" />
@@ -797,16 +881,16 @@ export default function ExplorePage() {
             ) : !portfolio || portfolio.holdings_count === 0 ? (
               <div className="p-4 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] text-center space-y-3">
                 <div className="w-10 h-10 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center mx-auto text-[#9CA3AF]">
-                  <Briefcase className="w-5 h-5" />
+                  <Briefcase className="w-5 h-5 text-[#4F46E5]" />
                 </div>
                 <div>
-                  <p className="font-bold text-xs text-[#111827]">No investments yet</p>
-                  <p className="text-[11px] text-[#6B7280] mt-0.5">
+                  <p className="font-bold text-sm text-[#111827]">No investments yet</p>
+                  <p className="text-xs text-[#6B7280] mt-1 max-w-[220px] mx-auto">
                     Start paper trading to build your simulated delivery portfolio.
                   </p>
                 </div>
                 <Link
-                  href="/stocks/NIFTY%2050"
+                  href="/stocks/RELIANCE"
                   className="inline-block w-full py-2 rounded-xl bg-[#4F46E5] text-white font-bold text-xs hover:bg-[#4338CA] transition-colors"
                 >
                   Explore Stocks
@@ -867,7 +951,7 @@ export default function ExplorePage() {
           </div>
 
           {/* 2. Products & Tools List */}
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-xs">
+          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
             <h3 className="font-bold text-sm text-[#111827] mb-3">Products &amp; Tools</h3>
             <div className="divide-y divide-slate-100">
               {productsAndTools.map((tool) => (
@@ -889,7 +973,7 @@ export default function ExplorePage() {
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                         tool.available
-                          ? "bg-[#EEF2FF] text-[#4F46E5]"
+                          ? "bg-[#EEF2FF] text-[#4F46E5] font-semibold"
                           : "bg-slate-100 text-[#6B7280]"
                       }`}
                     >
@@ -902,45 +986,44 @@ export default function ExplorePage() {
             </div>
           </div>
 
-          {/* 3. Trading Screens (Analytical Cards) */}
-          <div id="screens" className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-xs">
+          {/* 3. Technical Screens — Preview (No fake signals) */}
+          <div id="screens" className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-[#4F46E5]" />
-                <h3 className="font-bold text-sm text-[#111827]">Trading Screens</h3>
+                <h3 className="font-bold text-sm text-[#111827]">Technical Screens — Preview</h3>
               </div>
-              <span className="text-[10px] text-[#00A86B] font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
-                Technical
+              <span className="text-[10px] text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                Preview
               </span>
             </div>
 
             <div className="space-y-2.5">
               {[
-                { title: "Resistance Breakouts", desc: "Crossing 20D Resistance Band", count: "3 Stocks", symbol: "TCS" },
-                { title: "MACD Bullish Cross", desc: "MACD Line &gt; Signal Line", count: "5 Stocks", symbol: "RELIANCE" },
-                { title: "RSI Overbought (&gt;70)", desc: "Momentum extreme stretch", count: "2 Stocks", symbol: "INFY" },
-                { title: "RSI Oversold (&lt;30)", desc: "Potential mean reversion", count: "1 Stock", symbol: "SBIN" },
+                { title: "Resistance Breakouts", desc: "Crossing 20D Resistance Band", status: "Data unavailable" },
+                { title: "MACD Bullish Cross", desc: "MACD Line > Signal Line", status: "Data unavailable" },
+                { title: "RSI Overbought (>70)", desc: "Momentum extreme stretch", status: "Data unavailable" },
+                { title: "RSI Oversold (<30)", desc: "Potential mean reversion", status: "Data unavailable" },
               ].map((screen) => (
-                <Link
+                <div
                   key={screen.title}
-                  href={`/stocks/${encodeURIComponent(screen.symbol)}`}
-                  className="p-3 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] hover:border-[#4F46E5] transition-all block group"
+                  className="p-3 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] block"
                 >
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-xs text-[#111827] group-hover:text-[#4F46E5] transition-colors">
+                    <span className="font-bold text-xs text-[#111827]">
                       {screen.title}
                     </span>
-                    <span className="text-[10px] font-mono text-[#4F46E5] bg-white px-1.5 py-0.2 rounded border border-[#E5E7EB]">
-                      {screen.count}
+                    <span className="text-[10px] font-mono text-[#9CA3AF] bg-white px-1.5 py-0.2 rounded border border-[#E5E7EB]">
+                      {screen.status}
                     </span>
                   </div>
                   <span className="text-[11px] text-[#6B7280] block">{screen.desc}</span>
-                </Link>
+                </div>
               ))}
             </div>
 
             <p className="text-[10px] text-[#9CA3AF] mt-3 leading-relaxed">
-              *Screens evaluate daily technical indicators across real Upstox market data. Never trade on raw signals alone.
+              *Analytical screen engine is in preview mode. Technical scans evaluate real market data once streaming filters are applied.
             </p>
           </div>
         </div>

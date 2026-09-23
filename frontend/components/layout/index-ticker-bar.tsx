@@ -100,10 +100,10 @@ export function IndexTickerBar() {
   const isLive = connectionState === "CONNECTED";
 
   return (
-    <div className="w-full bg-white border-b border-[#E5E7EB] px-4 sm:px-6 py-1.5 flex items-center gap-3 sm:gap-6 text-xs overflow-x-auto select-none no-scrollbar shadow-[0_1px_1px_rgba(0,0,0,0.01)]">
-      {/* 1. Live Indicator Badge */}
+    <div className="w-full h-9 sm:h-10 bg-white border-b border-[#E5E7EB] px-4 sm:px-6 flex items-center gap-3 sm:gap-6 text-xs overflow-x-auto select-none no-scrollbar shadow-[0_1px_1px_rgba(0,0,0,0.01)]">
+      {/* 1. Global Market Feed Indicator Badge */}
       <div
-        className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-bold shrink-0 border transition-colors ${
+        className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 border transition-colors ${
           isLive
             ? "bg-[#ECFDF5] border-[#A7F3D0] text-[#00A86B]"
             : "bg-[#F7F8FA] border-[#E5E7EB] text-[#6B7280]"
@@ -115,34 +115,34 @@ export function IndexTickerBar() {
             isLive ? "bg-[#00A86B] animate-pulse" : "bg-[#9CA3AF]"
           }`}
         />
-        <span>{isLive ? "● LIVE" : "○ FEED DISCONNECTED"}</span>
+        <span>{isLive ? "● LIVE MARKET FEED" : "○ FEED DISCONNECTED"}</span>
       </div>
 
       <div className="h-3.5 w-[1px] bg-[#E5E7EB] shrink-0" />
 
       {/* 2. Horizontal Index Ribbons */}
-      <div className="flex items-center gap-4 sm:gap-7 shrink-0 font-mono">
+      <div className="flex items-center gap-4 sm:gap-6 shrink-0 font-mono text-[13px]">
         {indices.map((idx) => {
-          const hasValue = idx.value !== null && idx.value !== undefined;
+          const hasValue = idx.value !== null && idx.value !== undefined && idx.status !== "UNAVAILABLE";
           const isPos = idx.is_positive;
 
           return (
             <Link
               key={idx.symbol}
               href={`/stocks/${encodeURIComponent(idx.symbol)}`}
-              className="flex items-center gap-2 group hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 group hover:opacity-85 transition-opacity"
             >
-              <span className="font-sans font-semibold text-[#374151] text-xs group-hover:text-[#111827]">
+              <span className="font-sans font-semibold text-[#374151] text-xs sm:text-[13px] group-hover:text-[#111827]">
                 {idx.name}
               </span>
 
               {hasValue ? (
                 <div className="flex items-baseline gap-1.5">
-                  <span className="font-bold text-[#111827] text-xs tabular-nums">
+                  <span className="font-bold text-[#111827] text-xs sm:text-[13px] tabular-nums">
                     ₹{idx.value?.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                   <span
-                    className={`text-[11px] font-semibold tabular-nums ${
+                    className={`text-[11px] sm:text-xs font-semibold tabular-nums ${
                       isPos ? "text-[#00A86B]" : "text-[#EF4444]"
                     }`}
                   >
@@ -152,9 +152,14 @@ export function IndexTickerBar() {
                     {idx.change_percent !== null ? idx.change_percent.toFixed(2) : "0.00"}%)
                   </span>
                 </div>
+              ) : idx.status === "LOADING" ? (
+                <div className="flex items-center gap-1.5 animate-pulse">
+                  <div className="w-12 h-3.5 bg-slate-200 rounded" />
+                  <div className="w-10 h-3 bg-slate-100 rounded" />
+                </div>
               ) : (
-                <span className="text-[#9CA3AF] text-[11px] font-sans">
-                  {idx.status === "LOADING" ? "Connecting..." : "Unavailable"}
+                <span className="text-[#9CA3AF] text-[11px] font-sans font-normal">
+                  Data unavailable
                 </span>
               )}
             </Link>

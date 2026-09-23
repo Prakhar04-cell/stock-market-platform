@@ -84,13 +84,26 @@ async def get_index_ticker():
     Returns real values for configured headline indices:
     NIFTY 50, SENSEX, BANKNIFTY, MIDCPNIFTY, FINNIFTY.
     """
-    indices = ["NIFTY 50", "SENSEX", "BANKNIFTY", "MIDCPNIFTY", "FINNIFTY"]
-    quotes = await quote_service.get_quotes(indices)
+    indices_config = [
+        {"name": "NIFTY 50", "aliases": ["NIFTY 50", "NSE_INDEX|Nifty 50", "NIFTY50", "NIFTY"]},
+        {"name": "SENSEX", "aliases": ["SENSEX", "BSE_INDEX|SENSEX"]},
+        {"name": "BANKNIFTY", "aliases": ["BANKNIFTY", "NIFTY BANK", "NSE_INDEX|Nifty Bank"]},
+        {"name": "MIDCPNIFTY", "aliases": ["MIDCPNIFTY", "NIFTY MID SELECT", "NSE_INDEX|NIFTY MID SELECT"]},
+        {"name": "FINNIFTY", "aliases": ["FINNIFTY", "NIFTY FIN SERVICE", "NSE_INDEX|Nifty Fin Service"]},
+    ]
+    query_symbols = [cfg["name"] for cfg in indices_config]
+    quotes = await quote_service.get_quotes(query_symbols)
 
     results = []
-    for idx_name in indices:
-        q = quotes.get(idx_name)
-        if q:
+    for cfg in indices_config:
+        idx_name = cfg["name"]
+        q = None
+        for alias in cfg["aliases"]:
+            q = quotes.get(alias) or quotes.get(alias.upper())
+            if q:
+                break
+
+        if q and q.ltp and q.ltp > 0:
             results.append({
                 "name": idx_name,
                 "symbol": q.symbol,
@@ -146,6 +159,7 @@ async def get_market_movers():
                 "name": q.symbol,
                 "exchange": q.exchange or "NSE",
                 "price": float(q.ltp),
+                "ltp": float(q.ltp),
                 "change": chg,
                 "change_percent": chg_pct,
                 "is_positive": chg >= 0,
@@ -164,6 +178,7 @@ async def get_market_movers():
         "gainers": gainers,
         "losers": losers,
         "most_active": most_active,
+        "volume_shockers": most_active,
         "total_tracked": len(items),
         "provider": "upstox",
         "status": "LIVE" if items else "UNAVAILABLE",
