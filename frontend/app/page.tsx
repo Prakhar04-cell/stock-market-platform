@@ -25,9 +25,10 @@ export default function LandingPage() {
         </div>
 
         <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-slate-600">
-          <Link href="/dashboard" className="hover:text-indigo-600 transition-colors">Trading Terminal</Link>
-          <Link href="/admin" className="hover:text-indigo-600 transition-colors">Governance Portal</Link>
-          <Link href="/admin/monitoring" className="hover:text-indigo-600 transition-colors">System Diagnostics</Link>
+          <Link href="/explore" className="hover:text-indigo-600 transition-colors">Explore Markets</Link>
+          <Link href="/terminal" className="hover:text-indigo-600 transition-colors">Trading Terminal</Link>
+          <Link href="/portfolio" className="hover:text-indigo-600 transition-colors">Portfolio</Link>
+          <Link href="/admin/monitoring" className="hover:text-indigo-600 transition-colors">Diagnostics</Link>
         </nav>
 
         <div className="flex items-center gap-3">

@@ -17,6 +17,15 @@ export function formatCurrency(amount: number | string | null | undefined, curre
   }).format(num);
 }
 
+export function formatPercent(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || isNaN(Number(value))) {
+    return "—";
+  }
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  const sign = num > 0 ? "+" : "";
+  return `${sign}${num.toFixed(2)}%`;
+}
+
 export function formatDateTime(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
   try {

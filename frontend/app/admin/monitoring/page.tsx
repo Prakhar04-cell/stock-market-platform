@@ -356,11 +356,19 @@ export default function AdminMonitoringPage() {
             </span>
           </div>
 
-          <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1 md:col-span-2">
+          <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
+            <span className="text-[11px] text-slate-500 font-medium block">Sentry Monitoring</span>
+            <span className="font-bold text-emerald-700 flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#00A86B]" />
+              ACTIVE (ENABLED)
+            </span>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl space-y-1">
             <span className="text-[11px] text-slate-500 font-medium block">Paper Trading Engine</span>
             <span className="font-bold text-emerald-700 flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              {monitoringData?.metrics?.paper_trading_engine_status ?? "ACTIVE (PAPER EXECUTION ONLY)"}
+              <ShieldCheck className="w-3.5 h-3.5 text-[#00A86B]" />
+              {monitoringData?.metrics?.paper_trading_engine_status ?? "ACTIVE (PAPER ONLY)"}
             </span>
           </div>
         </div>

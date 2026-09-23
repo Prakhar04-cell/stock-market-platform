@@ -41,8 +41,9 @@ export function Sidebar() {
   }, []);
 
   const traderNav = [
-    { name: "Home", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Markets", href: "/stocks/NIFTY%2050", icon: LineChart },
+    { name: "Explore", href: "/explore", icon: LayoutDashboard },
+    { name: "Stocks", href: "/stocks/NIFTY%2050", icon: LineChart },
+    { name: "Terminal", href: "/terminal", icon: Cpu },
     { name: "Watchlist", href: "/watchlist", icon: Bookmark },
     { name: "Orders", href: "/orders", icon: Layers },
     { name: "Portfolio", href: "/portfolio", icon: Briefcase },

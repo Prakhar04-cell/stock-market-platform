@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { IndexTickerBar } from "@/components/layout/index-ticker-bar";
+import { Footer } from "@/components/layout/footer";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,12 +22,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar />
 
         {/* Scrollable Dashboard Viewport */}
-        <main className="flex-1 min-w-0 p-4 sm:p-5 lg:p-6 pb-20 md:pb-8 overflow-x-hidden">
-          <div className="max-w-[1560px] mx-auto">
+        <main className="flex-1 min-w-0 p-4 sm:p-5 lg:p-6 pb-20 md:pb-8 overflow-x-hidden flex flex-col">
+          <div className="max-w-[1560px] mx-auto w-full flex-1">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Comprehensive Fintech Footer */}
+      <Footer />
 
       {/* Mobile Bottom Navigation */}
       <BottomNav />

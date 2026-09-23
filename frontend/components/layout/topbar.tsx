@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Search,
   Bell,
@@ -20,6 +20,9 @@ import {
   User as UserIcon,
   Wallet as WalletIcon,
   Check,
+  Terminal as TerminalIcon,
+  Layers,
+  Sparkles,
 } from "lucide-react";
 import { apiRequest } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
@@ -54,9 +57,19 @@ interface WalletData {
 
 export function Topbar() {
   const router = useRouter();
+  const pathname = usePathname();
+  const [currentTab, setCurrentTab] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setCurrentTab(params.get("tab"));
+    }
+  }, [pathname]);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchCategory, setSearchCategory] = useState<"ALL" | "STOCKS" | "INDICES" | "ETFS" | "COMMODITIES">("ALL");
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -80,7 +93,6 @@ export function Topbar() {
   // Profile dropdown state
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
-  const [userEmail, setUserEmail] = useState<string>("Trader");
 
   // Load wallet balance
   const loadWallet = useCallback(async () => {
@@ -116,10 +128,13 @@ export function Topbar() {
     return () => clearInterval(interval);
   }, [loadWallet, loadNotifications]);
 
-  // Global hotkey '/' to focus search
+  // Global hotkeys '/' and 'Ctrl+K' / 'Cmd+K' to focus search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "/" && document.activeElement !== searchInputRef.current) {
+      if (
+        (e.key === "/" && document.activeElement !== searchInputRef.current) ||
+        ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")
+      ) {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
@@ -140,9 +155,18 @@ export function Topbar() {
       setIsLoading(true);
       try {
         const data = await apiRequest<SearchResultItem[]>(
-          `/api/v1/market/instruments/search?query=${encodeURIComponent(searchQuery.trim())}&limit=6`
+          `/api/v1/market/instruments/search?query=${encodeURIComponent(searchQuery.trim())}&limit=8`
         );
-        const list = data || [];
+        let list = data || [];
+
+        // Filter by category if selected
+        if (searchCategory === "STOCKS") {
+          list = list.filter((item) => item.instrument_type !== "INDEX" && !item.symbol.includes("BEES"));
+        } else if (searchCategory === "INDICES") {
+          list = list.filter((item) => item.instrument_type === "INDEX");
+        } else if (searchCategory === "ETFS") {
+          list = list.filter((item) => item.symbol.includes("BEES") || item.name.toLowerCase().includes("etf"));
+        }
 
         // Enrich with real live prices where possible
         if (list.length > 0) {
@@ -174,7 +198,7 @@ export function Topbar() {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, searchCategory]);
 
   // Click outside listener for dropdowns
   useEffect(() => {
@@ -256,11 +280,21 @@ export function Topbar() {
 
   const isMarketConnected = connectionState === "CONNECTED";
 
+  // Navigation Items
+  const navTabs = [
+    { name: "Stocks", href: "/stocks/NIFTY%2050", isActive: pathname.startsWith("/stocks") },
+    { name: "Explore", href: "/explore", isActive: pathname === "/explore" },
+    { name: "Holdings", href: "/portfolio", isActive: pathname === "/portfolio" && currentTab !== "positions" },
+    { name: "Positions", href: "/portfolio?tab=positions", isActive: pathname === "/portfolio" && currentTab === "positions" },
+    { name: "Orders", href: "/orders", isActive: pathname === "/orders" },
+    { name: "Watchlist", href: "/watchlist", isActive: pathname === "/watchlist" },
+  ];
+
   return (
     <>
       <header className="h-14 bg-white border-b border-[#E5E7EB] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 select-none shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
-        {/* 1. Left: Brand Logo & Market Status Badge */}
-        <div className="flex items-center gap-4 shrink-0">
+        {/* 1. Left: Brand Logo & Main Navigation Tabs */}
+        <div className="flex items-center gap-6 shrink-0">
           <Link href="/dashboard" className="flex items-center gap-2 group">
             <div className="w-8 h-8 rounded-lg bg-[#4F46E5] flex items-center justify-center text-white shadow-xs group-hover:bg-[#4338CA] transition-colors">
               <span className="font-extrabold text-sm tracking-tight">TX</span>
@@ -270,25 +304,35 @@ export function Topbar() {
                 Trade<span className="text-[#4F46E5]">X</span>
               </span>
               <span className="text-[9.5px] text-[#6B7280] font-medium tracking-wide">
-                Trading Platform
+                Terminal
               </span>
             </div>
           </Link>
 
-          {/* Market Status Pill */}
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F7F8FA] border border-[#E5E7EB] text-[#4B5563]">
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                isMarketConnected ? "bg-[#00A86B] animate-pulse" : "bg-slate-400"
-              }`}
-            />
-            <span>{isMarketConnected ? "Live Feed" : "Feed Standby"}</span>
-          </div>
+          {/* Top Desktop Navigation Links with Active Indicators */}
+          <nav className="hidden xl:flex items-center space-x-1">
+            {navTabs.map((tab) => (
+              <Link
+                key={tab.name}
+                href={tab.href}
+                className={`relative px-3 py-4 text-[13px] font-medium transition-colors flex items-center ${
+                  tab.isActive
+                    ? "text-[#111827] font-semibold"
+                    : "text-[#6B7280] hover:text-[#111827]"
+                }`}
+              >
+                <span>{tab.name}</span>
+                {tab.isActive && (
+                  <span className="absolute bottom-0 left-3 right-3 h-[2.5px] bg-[#4F46E5] rounded-t-full" />
+                )}
+              </Link>
+            ))}
+          </nav>
         </div>
 
-        {/* 2. Center: Global Search Bar */}
-        <div className="flex-1 max-w-lg mx-3 sm:mx-6 relative">
-          <div className="relative">
+        {/* 2. Center: Global Search Bar + Terminal Action Button */}
+        <div className="flex-1 max-w-lg mx-3 sm:mx-6 flex items-center gap-2 relative">
+          <div className="relative flex-1">
             <Search className="w-4 h-4 text-[#9CA3AF] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               ref={searchInputRef}
@@ -296,11 +340,11 @@ export function Topbar() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => {
-                if (results.length > 0) setIsOpen(true);
+                if (results.length > 0 || searchQuery.trim()) setIsOpen(true);
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Search stocks, indices, ETFs..."
-              className="w-full pl-9 pr-8 py-1.5 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#4F46E5] focus:bg-white focus:ring-2 focus:ring-[#EEF2FF] transition-all"
+              placeholder="Search stocks, indices, ETFs (Press /)"
+              className="w-full pl-9 pr-14 py-1.5 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#4F46E5] focus:bg-white focus:ring-2 focus:ring-[#EEF2FF] transition-all"
             />
             {searchQuery ? (
               <button
@@ -315,19 +359,50 @@ export function Topbar() {
               </button>
             ) : (
               <kbd className="hidden sm:inline-flex absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-white border border-[#E5E7EB] text-[10px] font-mono text-[#9CA3AF] pointer-events-none">
-                /
+                ⌘K
               </kbd>
             )}
           </div>
 
-          {/* Autocomplete Dropdown */}
+          {/* Dedicated Terminal Button */}
+          <Link
+            href="/terminal"
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all shrink-0 ${
+              pathname === "/terminal"
+                ? "bg-[#111827] text-white border-[#111827]"
+                : "bg-white text-[#111827] border-[#E5E7EB] hover:bg-[#F7F8FA] hover:border-[#D1D5DB]"
+            }`}
+            title="Open Dedicated Full-Screen Trading Terminal"
+          >
+            <TerminalIcon className="w-3.5 h-3.5 text-[#4F46E5]" />
+            <span>Terminal</span>
+          </Link>
+
+          {/* Autocomplete Dropdown with Category Tabs */}
           {isOpen && (
             <div
               ref={dropdownRef}
               className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-[#E5E7EB] rounded-xl shadow-dropdown z-50 overflow-hidden text-xs max-h-96 overflow-y-auto"
             >
+              {/* Category Pills */}
+              <div className="flex items-center gap-1 p-2 bg-[#F9FAFB] border-b border-[#E5E7EB] overflow-x-auto text-[11px]">
+                {(["ALL", "STOCKS", "INDICES", "ETFS"] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSearchCategory(cat)}
+                    className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                      searchCategory === cat
+                        ? "bg-[#4F46E5] text-white"
+                        : "text-[#6B7280] hover:text-[#111827] hover:bg-[#E5E7EB]"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
               {isLoading && (
-                <div className="p-3.5 text-center text-[#6B7280] flex items-center justify-center gap-2">
+                <div className="p-4 text-center text-[#6B7280] flex items-center justify-center gap-2">
                   <div className="w-3.5 h-3.5 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
                   <span>Searching instruments...</span>
                 </div>
@@ -335,15 +410,12 @@ export function Topbar() {
 
               {!isLoading && results.length === 0 && searchQuery && (
                 <div className="p-4 text-center text-[#6B7280]">
-                  No matching stocks found for &quot;{searchQuery}&quot;. Press Enter to view.
+                  No matching instruments found for &quot;{searchQuery}&quot;. Press Enter to view directly.
                 </div>
               )}
 
               {!isLoading && results.length > 0 && (
                 <div className="py-1">
-                  <div className="px-3.5 py-1.5 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">
-                    Instruments ({results.length})
-                  </div>
                   {results.map((item, idx) => {
                     const hasPrice = item.price !== undefined && item.price !== null;
                     const isPos = (item.change_percent ?? 0) >= 0;
@@ -405,8 +477,18 @@ export function Topbar() {
           )}
         </div>
 
-        {/* 3. Right: Paper Trading Badge, Notifications, Virtual Balance, Profile */}
+        {/* 3. Right: Paper Trading Badge, Notifications, Market Status, Profile */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Market Status Pill */}
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F7F8FA] border border-[#E5E7EB] text-[#4B5563]">
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                isMarketConnected ? "bg-[#00A86B] animate-pulse" : "bg-slate-400"
+              }`}
+            />
+            <span>{isMarketConnected ? "LIVE" : "FEED STANDBY"}</span>
+          </div>
+
           {/* Paper Trading Indicator Badge (Clickable modal) */}
           <button
             onClick={() => setIsPaperModalOpen(true)}
@@ -547,6 +629,15 @@ export function Topbar() {
                 </div>
 
                 <Link
+                  href="/explore"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#6B7280]" />
+                  <span>Explore Markets</span>
+                </Link>
+
+                <Link
                   href="/portfolio"
                   onClick={() => setIsProfileOpen(false)}
                   className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
@@ -562,6 +653,15 @@ export function Topbar() {
                 >
                   <Activity className="w-3.5 h-3.5 text-[#6B7280]" />
                   <span>Order Book</span>
+                </Link>
+
+                <Link
+                  href="/terminal"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                >
+                  <TerminalIcon className="w-3.5 h-3.5 text-[#4F46E5]" />
+                  <span className="font-medium text-[#4F46E5]">Trading Terminal</span>
                 </Link>
 
                 <Link
