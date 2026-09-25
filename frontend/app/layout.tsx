@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "TradeX | Modern Stock Market & Paper-Trading Platform",
+  title: "BullRun | Modern Indian Stock Market & Paper-Trading Platform",
   description:
-    "High-performance, institutional-grade paper trading platform foundation inspired by modern fintech usability principles.",
+    "Institutional-grade Indian stock market discovery and simulated paper trading platform inspired by modern fintech usability principles.",
 };
 
 export default function RootLayout({
@@ -13,10 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen bg-[#080C14] text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-black">
+    <html lang="en" className={inter.variable}>
+      <body className="min-h-screen bg-[#FFFFFF] text-[#111827] font-sans antialiased selection:bg-[#F97316]/20 selection:text-[#111827]">
         {children}
       </body>
     </html>
   );
 }
+

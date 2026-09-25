@@ -185,12 +185,12 @@ export default function PortfolioPage() {
             <h1 className="text-xl font-black text-[#111827] tracking-tight">
               Portfolio
             </h1>
-            <div className="flex items-center gap-1 bg-[#F7F8FA] p-0.5 rounded-xl border border-[#E5E7EB]">
+            <div className="flex items-center gap-1 bg-[#F8FAFC] p-1 rounded-[8px] border border-[#E5E7EB]">
               <button
                 onClick={() => handleTabChange("HOLDINGS")}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1 rounded-[6px] text-xs font-semibold transition-all ${
                   activeTab === "HOLDINGS"
-                    ? "bg-white text-[#111827] shadow-xs"
+                    ? "bg-white text-[#111827] font-bold shadow-xs border border-[#E5E7EB]"
                     : "text-[#6B7280] hover:text-[#111827]"
                 }`}
               >
@@ -198,9 +198,9 @@ export default function PortfolioPage() {
               </button>
               <button
                 onClick={() => handleTabChange("POSITIONS")}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1 rounded-[6px] text-xs font-semibold transition-all ${
                   activeTab === "POSITIONS"
-                    ? "bg-white text-[#111827] shadow-xs"
+                    ? "bg-white text-[#111827] font-bold shadow-xs border border-[#E5E7EB]"
                     : "text-[#6B7280] hover:text-[#111827]"
                 }`}
               >
@@ -214,14 +214,14 @@ export default function PortfolioPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#00A86B] text-[11px] font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] text-[11px] font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
             <span>Virtual Capital</span>
           </div>
 
           <button
             onClick={loadPortfolio}
-            className="p-1.5 rounded-lg border border-[#E5E7EB] text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+            className="p-1.5 rounded-[8px] border border-[#E5E7EB] text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
             title="Refresh Portfolio"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
@@ -241,38 +241,38 @@ export default function PortfolioPage() {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           {/* Total Value */}
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-2xl shadow-xs space-y-1.5">
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Total Value</span>
-            <div className="font-mono text-xl sm:text-2xl font-black text-[#111827] tabular-nums">
+            <div className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums">
               ₹{currentPortfolioVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <span className="text-[11px] text-[#6B7280] block">Holdings Value</span>
           </div>
 
           {/* Invested */}
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-2xl shadow-xs space-y-1.5">
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Invested</span>
-            <div className="font-mono text-xl sm:text-2xl font-black text-[#111827] tabular-nums">
+            <div className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums">
               ₹{invested.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <span className="text-[11px] text-[#6B7280] block">Book Value</span>
           </div>
 
           {/* Available Balance */}
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-2xl shadow-xs space-y-1.5">
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Available Cash</span>
-            <div className="font-mono text-xl sm:text-2xl font-black text-[#111827] tabular-nums">
+            <div className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums">
               ₹{availableCash.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <span className="text-[11px] text-[#6B7280] block">Virtual Margin</span>
           </div>
 
           {/* Today's / Unrealized P&L */}
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-2xl shadow-xs space-y-1.5">
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Unrealized P&amp;L</span>
             <div
-              className={`font-mono text-xl sm:text-2xl font-black tabular-nums ${
-                totalUnrealizedPnl >= 0 ? "text-[#00A86B]" : "text-[#EF4444]"
+              className={`font-mono text-xl sm:text-2xl font-bold tabular-nums ${
+                totalUnrealizedPnl >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"
               }`}
             >
               {totalUnrealizedPnl >= 0 ? "+" : "-"}₹
@@ -282,11 +282,11 @@ export default function PortfolioPage() {
           </div>
 
           {/* Overall P&L */}
-          <div className="bg-white border border-[#E5E7EB] p-4 rounded-2xl shadow-xs space-y-1.5 col-span-2 lg:col-span-1">
+          <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5 col-span-2 lg:col-span-1">
             <span className="text-xs font-semibold text-[#6B7280] block">Overall P&amp;L</span>
             <div
-              className={`font-mono text-xl sm:text-2xl font-black tabular-nums flex items-baseline gap-1.5 ${
-                isPnlPositive ? "text-[#00A86B]" : "text-[#EF4444]"
+              className={`font-mono text-xl sm:text-2xl font-bold tabular-nums flex items-baseline gap-1.5 ${
+                isPnlPositive ? "text-[#16A34A]" : "text-[#DC2626]"
               }`}
             >
               <span>
@@ -305,11 +305,11 @@ export default function PortfolioPage() {
 
       {/* 3. Tab Content Area */}
       {activeTab === "HOLDINGS" ? (
-        <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-xs overflow-hidden">
+        <div className="bg-white border border-[#E5E7EB] rounded-[10px] overflow-hidden">
           <div className="p-4 border-b border-[#E5E7EB] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-[#111827]">Holdings Overview</h2>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-[#6B7280] font-bold font-mono">
+              <span className="text-xs px-2 py-0.5 rounded-[4px] bg-[#F8FAFC] border border-[#E5E7EB] text-[#6B7280] font-bold font-mono">
                 {computedHoldings.length}
               </span>
             </div>
@@ -337,7 +337,7 @@ export default function PortfolioPage() {
                 action={
                   <Link
                     href="/explore"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-bold hover:bg-[#4338CA] shadow-xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] bg-[#F97316] text-white text-xs font-semibold hover:bg-[#EA580C] transition-colors"
                   >
                     <span>Explore Stocks</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
@@ -350,7 +350,7 @@ export default function PortfolioPage() {
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-[#F7F8FA] border-b border-[#E5E7EB] text-[#6B7280] text-[11px] font-semibold uppercase tracking-wider">
+                  <thead className="bg-[#F8FAFC] border-b border-[#E5E7EB] text-[#6B7280] text-[11px] font-semibold uppercase tracking-wider">
                     <tr>
                       <th className="py-3 px-4">Stock</th>
                       <th className="py-3 px-4 text-right">Qty</th>
@@ -368,11 +368,11 @@ export default function PortfolioPage() {
                       const isPos = h.computedPnl >= 0;
 
                       return (
-                        <tr key={h.id} className="hover:bg-[#F7F8FA] transition-colors">
+                        <tr key={h.id} className="hover:bg-[#F8FAFC] transition-colors">
                           <td className="py-3 px-4">
                             <Link
                               href={`/stocks/${encodeURIComponent(h.symbol)}`}
-                              className="font-bold text-xs text-[#111827] hover:text-[#4F46E5] transition-colors"
+                              className="font-bold text-xs text-[#111827] hover:text-[#F97316] transition-colors"
                             >
                               {h.symbol}
                             </Link>
@@ -403,7 +403,7 @@ export default function PortfolioPage() {
 
                           <td
                             className={`py-3 px-4 text-right font-mono font-bold tabular-nums ${
-                              isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                              isPos ? "text-[#16A34A]" : "text-[#DC2626]"
                             }`}
                           >
                             {isPos ? "+" : ""}₹
@@ -412,7 +412,7 @@ export default function PortfolioPage() {
 
                           <td
                             className={`py-3 px-4 text-right font-mono font-bold tabular-nums ${
-                              isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                              isPos ? "text-[#16A34A]" : "text-[#DC2626]"
                             }`}
                           >
                             {isPos ? "+" : ""}
@@ -423,13 +423,13 @@ export default function PortfolioPage() {
                             <div className="flex items-center justify-center gap-1.5">
                               <button
                                 onClick={() => handleQuickTrade(h.symbol, h.name || h.symbol, "BUY")}
-                                className="px-2.5 py-1 rounded-lg bg-[#ECFDF5] text-[#00A86B] border border-[#A7F3D0] text-[10.5px] font-bold hover:bg-[#D1FAE5] transition-colors"
+                                className="px-2.5 py-1 rounded-[6px] bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] text-[10.5px] font-bold hover:bg-[#DCFCE7] transition-colors"
                               >
                                 BUY
                               </button>
                               <button
                                 onClick={() => handleQuickTrade(h.symbol, h.name || h.symbol, "SELL")}
-                                className="px-2.5 py-1 rounded-lg bg-[#FEF2F2] text-[#EF4444] border border-[#FECACA] text-[10.5px] font-bold hover:bg-[#FEE2E2] transition-colors"
+                                className="px-2.5 py-1 rounded-[6px] bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] text-[10.5px] font-bold hover:bg-[#FEE2E2] transition-colors"
                               >
                                 SELL
                               </button>
@@ -462,7 +462,7 @@ export default function PortfolioPage() {
                           </span>
                           <span
                             className={`text-[10.5px] block font-bold ${
-                              isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                              isPos ? "text-[#16A34A]" : "text-[#DC2626]"
                             }`}
                           >
                             {isPos ? "+" : ""}
@@ -471,7 +471,7 @@ export default function PortfolioPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-[#F7F8FA] p-2.5 rounded-lg border border-[#E5E7EB]">
+                      <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-[#F8FAFC] p-2.5 rounded-[8px] border border-[#E5E7EB]">
                         <div>
                           <span className="text-[10px] text-[#6B7280] block font-sans">Invested</span>
                           <span className="font-bold text-[#111827]">
@@ -489,13 +489,13 @@ export default function PortfolioPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleQuickTrade(h.symbol, h.name || h.symbol, "BUY")}
-                          className="flex-1 py-1.5 rounded-lg bg-[#ECFDF5] text-[#00A86B] border border-[#A7F3D0] text-xs font-bold"
+                          className="flex-1 py-1.5 rounded-[8px] bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] text-xs font-bold"
                         >
                           BUY
                         </button>
                         <button
                           onClick={() => handleQuickTrade(h.symbol, h.name || h.symbol, "SELL")}
-                          className="flex-1 py-1.5 rounded-lg bg-[#FEF2F2] text-[#EF4444] border border-[#FECACA] text-xs font-bold"
+                          className="flex-1 py-1.5 rounded-[8px] bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] text-xs font-bold"
                         >
                           SELL
                         </button>
@@ -509,11 +509,11 @@ export default function PortfolioPage() {
         </div>
       ) : (
         /* POSITIONS TAB */
-        <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-xs overflow-hidden">
+        <div className="bg-white border border-[#E5E7EB] rounded-[10px] overflow-hidden">
           <div className="p-4 border-b border-[#E5E7EB] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-[#111827]">Open Intraday Positions</h2>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-[#6B7280] font-bold font-mono">
+              <span className="text-xs px-2 py-0.5 rounded-[4px] bg-[#F8FAFC] border border-[#E5E7EB] text-[#6B7280] font-bold font-mono">
                 0
               </span>
             </div>
@@ -530,7 +530,7 @@ export default function PortfolioPage() {
               action={
                 <Link
                   href="/terminal"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#111827] text-white text-xs font-bold hover:bg-[#1f2937] shadow-xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] bg-[#111827] text-white text-xs font-semibold hover:bg-[#1f2937] transition-colors"
                 >
                   <span>Open Trading Terminal</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />

@@ -162,11 +162,11 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Card 1: Total Portfolio Value */}
-            <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-xl shadow-xs space-y-2">
+            <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-[10px] space-y-2">
               <span className="text-xs font-semibold text-[#6B7280] block">
                 Portfolio Value
               </span>
-              <div className="font-mono text-xl sm:text-2xl font-black text-[#111827] tracking-tight tabular-nums">
+              <div className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tracking-tight tabular-nums">
                 ₹{portfolioVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
               <div className="text-[11px] text-[#6B7280]">
@@ -175,11 +175,11 @@ export default function DashboardPage() {
             </div>
 
             {/* Card 2: Invested Value */}
-            <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-xl shadow-xs space-y-2">
+            <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-[10px] space-y-2">
               <span className="text-xs font-semibold text-[#6B7280] block">
                 Invested Capital
               </span>
-              <div className="font-mono text-xl sm:text-2xl font-black text-[#111827] tracking-tight tabular-nums">
+              <div className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tracking-tight tabular-nums">
                 ₹{invested.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
               <div className="text-[11px] text-[#6B7280]">
@@ -188,13 +188,13 @@ export default function DashboardPage() {
             </div>
 
             {/* Card 3: Unrealized P&L */}
-            <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-xl shadow-xs space-y-2">
+            <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-[10px] space-y-2">
               <span className="text-xs font-semibold text-[#6B7280] block">
                 Unrealized P&amp;L
               </span>
               <div
-                className={`font-mono text-xl sm:text-2xl font-black tracking-tight tabular-nums ${
-                  unrealizedPnl >= 0 ? "text-[#00A86B]" : "text-[#EF4444]"
+                className={`font-mono text-xl sm:text-2xl font-bold tracking-tight tabular-nums ${
+                  unrealizedPnl >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"
                 }`}
               >
                 {unrealizedPnl >= 0 ? "+₹" : "-₹"}
@@ -206,13 +206,13 @@ export default function DashboardPage() {
             </div>
 
             {/* Card 4: Overall P&L */}
-            <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-xl shadow-xs space-y-2">
+            <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-[10px] space-y-2">
               <span className="text-xs font-semibold text-[#6B7280] block">
                 Overall Return
               </span>
               <div
-                className={`font-mono text-xl sm:text-2xl font-black tracking-tight tabular-nums flex items-baseline gap-1.5 ${
-                  isPnlPositive ? "text-[#00A86B]" : "text-[#EF4444]"
+                className={`font-mono text-xl sm:text-2xl font-bold tracking-tight tabular-nums flex items-baseline gap-1.5 ${
+                  isPnlPositive ? "text-[#16A34A]" : "text-[#DC2626]"
                 }`}
               >
                 <span>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
       {/* 2. Portfolio Performance Chart & Market Discovery Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left (2 cols): Portfolio Performance Chart */}
-        <div className="lg:col-span-2 bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs space-y-4">
+        <div className="lg:col-span-2 bg-white border border-[#E5E7EB] p-5 rounded-[10px] space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E5E7EB]">
             <div>
               <h2 className="text-sm font-bold text-[#111827]">
@@ -247,14 +247,14 @@ export default function DashboardPage() {
             </div>
 
             {/* Timeframe Controls */}
-            <div className="flex items-center gap-1 bg-[#F7F8FA] p-1 rounded-lg border border-[#E5E7EB]">
+            <div className="flex items-center gap-1 bg-[#F8FAFC] p-1 rounded-[8px] border border-[#E5E7EB]">
               {(["1D", "1W", "1M", "3M", "1Y", "ALL"] as const).map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setChartTimeframe(tf)}
-                  className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                  className={`px-2.5 py-1 text-xs font-semibold rounded-[6px] transition-all ${
                     chartTimeframe === tf
-                      ? "bg-white text-[#4F46E5] shadow-xs font-bold"
+                      ? "bg-white text-[#F97316] font-bold shadow-xs border border-[#E5E7EB]"
                       : "text-[#6B7280] hover:text-[#111827]"
                   }`}
                 >
@@ -270,11 +270,11 @@ export default function DashboardPage() {
               <div className="flex items-baseline justify-between font-mono">
                 <div>
                   <span className="text-xs text-[#6B7280]">Current Asset Value</span>
-                  <div className="text-2xl font-black text-[#111827] tabular-nums">
+                  <div className="text-2xl font-bold text-[#111827] tabular-nums">
                     ₹{portfolioVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </div>
                 </div>
-                <div className={`text-xs font-bold ${isPnlPositive ? "text-[#00A86B]" : "text-[#EF4444]"}`}>
+                <div className={`text-xs font-bold ${isPnlPositive ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
                   {isPnlPositive ? "+" : ""}
                   {pnlPercent.toFixed(2)}% Return
                 </div>
@@ -290,7 +290,7 @@ export default function DashboardPage() {
                   return (
                     <div key={h.id || i} className="flex-1 flex flex-col items-center gap-2 group">
                       <div
-                        className="w-full rounded-md bg-[#4F46E5] group-hover:bg-[#4338CA] transition-all"
+                        className="w-full rounded-[4px] bg-[#F97316] group-hover:bg-[#EA580C] transition-all"
                         style={{ height: `${heightPct}%` }}
                         title={`${h.symbol}: ₹${val.toFixed(2)}`}
                       />
@@ -302,7 +302,7 @@ export default function DashboardPage() {
                 })}
               </div>
 
-              <div className="flex justify-between pt-2 border-t border-slate-100 text-[11px] text-[#9CA3AF]">
+              <div className="flex justify-between pt-2 border-t border-[#E5E7EB] text-[11px] text-[#6B7280]">
                 <span>Allocation by Holding</span>
                 <span>Active Holdings: {portfolio.holdings.length}</span>
               </div>
@@ -316,7 +316,7 @@ export default function DashboardPage() {
                 action={
                   <Link
                     href="/stocks/RELIANCE"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-bold hover:bg-[#4338CA] shadow-xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] bg-[#F97316] text-white text-xs font-semibold hover:bg-[#EA580C] transition-colors"
                   >
                     <span>Explore Markets &amp; Trade</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
@@ -328,7 +328,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right (1 col): Market Discovery (Top Gainers, Losers, Most Active) */}
-        <div className="bg-white border border-[#E5E7EB] p-5 rounded-xl shadow-xs space-y-4">
+        <div className="bg-white border border-[#E5E7EB] p-5 rounded-[10px] space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
             <div>
               <h2 className="text-sm font-bold text-[#111827]">Market Discovery</h2>
@@ -337,12 +337,12 @@ export default function DashboardPage() {
           </div>
 
           {/* Subtabs: Top Gainers, Top Losers, Most Active */}
-          <div className="grid grid-cols-3 gap-1 bg-[#F7F8FA] p-1 rounded-lg border border-[#E5E7EB]">
+          <div className="grid grid-cols-3 gap-1 bg-[#F8FAFC] p-1 rounded-[8px] border border-[#E5E7EB]">
             <button
               onClick={() => setActiveMoverTab("GAINERS")}
-              className={`py-1 text-xs font-semibold rounded-md transition-all ${
+              className={`py-1 text-xs font-semibold rounded-[6px] transition-all ${
                 activeMoverTab === "GAINERS"
-                  ? "bg-white text-[#00A86B] font-bold shadow-xs"
+                  ? "bg-white text-[#16A34A] font-bold shadow-xs border border-[#E5E7EB]"
                   : "text-[#6B7280] hover:text-[#111827]"
               }`}
             >
@@ -350,9 +350,9 @@ export default function DashboardPage() {
             </button>
             <button
               onClick={() => setActiveMoverTab("LOSERS")}
-              className={`py-1 text-xs font-semibold rounded-md transition-all ${
+              className={`py-1 text-xs font-semibold rounded-[6px] transition-all ${
                 activeMoverTab === "LOSERS"
-                  ? "bg-white text-[#EF4444] font-bold shadow-xs"
+                  ? "bg-white text-[#DC2626] font-bold shadow-xs border border-[#E5E7EB]"
                   : "text-[#6B7280] hover:text-[#111827]"
               }`}
             >
@@ -360,9 +360,9 @@ export default function DashboardPage() {
             </button>
             <button
               onClick={() => setActiveMoverTab("ACTIVE")}
-              className={`py-1 text-xs font-semibold rounded-md transition-all ${
+              className={`py-1 text-xs font-semibold rounded-[6px] transition-all ${
                 activeMoverTab === "ACTIVE"
-                  ? "bg-white text-[#4F46E5] font-bold shadow-xs"
+                  ? "bg-white text-[#F97316] font-bold shadow-xs border border-[#E5E7EB]"
                   : "text-[#6B7280] hover:text-[#111827]"
               }`}
             >
@@ -374,30 +374,30 @@ export default function DashboardPage() {
           {isMoversLoading ? (
             <div className="space-y-3 py-2">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex justify-between items-center py-2 border-b border-slate-50">
-                  <div className="h-4 w-20 bg-slate-200/70 rounded animate-pulse" />
-                  <div className="h-4 w-16 bg-slate-200/70 rounded animate-pulse" />
+                <div key={i} className="flex justify-between items-center py-2 border-b border-[#E5E7EB]">
+                  <div className="h-4 w-20 bg-slate-100 rounded animate-pulse" />
+                  <div className="h-4 w-16 bg-slate-100 rounded animate-pulse" />
                 </div>
               ))}
             </div>
           ) : currentMoverList.length > 0 ? (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-[#E5E7EB]">
               {currentMoverList.map((item) => {
                 const isPos = item.change >= 0;
                 return (
                   <div
                     key={item.symbol}
-                    className="py-2.5 flex items-center justify-between hover:bg-[#F7F8FA] px-1 rounded-lg transition-colors group"
+                    className="py-2.5 flex items-center justify-between hover:bg-[#F8FAFC] px-1 rounded-[8px] transition-colors group"
                   >
                     <Link
                       href={`/stocks/${encodeURIComponent(item.symbol)}`}
                       className="flex items-center gap-2.5 min-w-0"
                     >
-                      <div className="w-7 h-7 rounded-md bg-[#F3F4F6] border border-[#E5E7EB] flex items-center justify-center font-bold text-[#374151] text-[11px] font-mono shrink-0">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center font-bold text-[#111827] text-[11px] font-mono shrink-0">
                         {item.symbol.slice(0, 2)}
                       </div>
                       <div className="truncate">
-                        <span className="font-bold text-xs text-[#111827] group-hover:text-[#4F46E5] transition-colors block">
+                        <span className="font-bold text-xs text-[#111827] group-hover:text-[#F97316] transition-colors block">
                           {item.symbol}
                         </span>
                         <span className="text-[10px] text-[#6B7280] block font-mono">
@@ -413,7 +413,7 @@ export default function DashboardPage() {
                         </div>
                         <div
                           className={`text-[10px] font-semibold tabular-nums ${
-                            isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                            isPos ? "text-[#16A34A]" : "text-[#DC2626]"
                           }`}
                         >
                           {isPos ? "+" : ""}
@@ -424,7 +424,7 @@ export default function DashboardPage() {
                       {/* Quick Buy Button */}
                       <button
                         onClick={() => handleQuickTrade(item.symbol, item.name, "BUY")}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded bg-[#ECFDF5] text-[#00A86B] border border-[#A7F3D0] text-[10px] font-bold hover:bg-[#D1FAE5]"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded-[6px] bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] text-[10px] font-bold hover:bg-[#DCFCE7]"
                       >
                         BUY
                       </button>
@@ -442,7 +442,7 @@ export default function DashboardPage() {
           <div className="pt-2 border-t border-[#E5E7EB] text-center">
             <Link
               href="/watchlist"
-              className="text-xs font-semibold text-[#4F46E5] hover:underline inline-flex items-center gap-1"
+              className="text-xs font-semibold text-[#F97316] hover:underline inline-flex items-center gap-1"
             >
               <span>Manage your personal watchlist</span>
               <ChevronRight className="w-3.5 h-3.5" />

@@ -301,54 +301,54 @@ export default function ExplorePage() {
   ];
 
   return (
-    <div className="max-w-[1360px] mx-auto w-full space-y-6 sm:space-y-7 select-none">
+    <div className="max-w-[1360px] mx-auto w-full space-y-6 select-none">
       {/* 1. Explore Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5E7EB]">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5E7EB]">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-[28px] font-black tracking-tight text-[#111827]">
-              Explore Markets
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-2xl sm:text-[30px] font-extrabold tracking-tight text-[#111827] leading-tight">
+              Explore Markets <span className="text-[#F97316]">With BullRun</span>
             </h1>
             <span
               className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1.5 transition-colors ${
                 isMarketConnected
-                  ? "bg-[#ECFDF5] text-[#00A86B] border-[#A7F3D0]"
-                  : "bg-[#F7F8FA] text-[#6B7280] border-[#E5E7EB]"
+                  ? "bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]"
+                  : "bg-[#F8FAFC] text-[#4B5563] border-[#E5E7EB]"
               }`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  isMarketConnected ? "bg-[#00A86B] animate-pulse" : "bg-slate-400"
+                  isMarketConnected ? "bg-[#16A34A] animate-pulse" : "bg-slate-400"
                 }`}
               />
-              <span>{isMarketConnected ? "● LIVE MARKET FEED" : "○ FEED DISCONNECTED"}</span>
+              <span>{isMarketConnected ? "● LIVE FEED" : "○ FEED DISCONNECTED"}</span>
             </span>
           </div>
-          <p className="text-xs text-[#6B7280] mt-0.5">
-            Discover active equities, real-time market movers, sector breadth, and paper trading opportunities.
+          <p className="text-xs text-[#4B5563] mt-1">
+            Discover active Indian equities, real-time market movers, sector breadth, and paper trading opportunities.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Link
             href="/terminal"
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#111827] text-white text-xs font-bold hover:bg-[#1f2937] transition-all shadow-xs"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[8px] bg-[#0F172A] text-white text-xs font-semibold hover:bg-[#1E293B] transition-all"
           >
-            <Activity className="w-3.5 h-3.5 text-[#4F46E5]" />
+            <Activity className="w-3.5 h-3.5 text-[#F97316]" />
             <span>Open Terminal</span>
           </Link>
         </div>
-      </div>
+      </header>
 
       {/* 2. Main Two-Column Layout (Left: 70% Discovery, Right: 30% Investments & Tools) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
         {/* Left Column (8 cols ~ 68-70%): Discovery & Market Sections */}
-        <div className="lg:col-span-8 space-y-6 sm:space-y-7">
+        <section aria-label="Market Discovery" className="lg:col-span-8 space-y-5 sm:space-y-6">
           {/* Section: Recently Viewed Instruments */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#4F46E5]" />
+                <Clock className="w-4 h-4 text-[#F97316]" />
                 <h2 className="text-base font-bold text-[#111827] tracking-tight">
                   Recently Viewed
                 </h2>
@@ -359,9 +359,9 @@ export default function ExplorePage() {
             </div>
 
             {recentlyViewed.length === 0 ? (
-              <div className="p-3.5 rounded-xl border border-dashed border-[#E5E7EB] bg-white text-center text-xs text-[#6B7280]">
-                <p className="font-medium text-[#374151]">No recently viewed stocks.</p>
-                <p className="text-[11px] text-[#9CA3AF] mt-0.5">
+              <div className="p-3.5 rounded-[10px] border border-dashed border-[#E5E7EB] bg-white text-center text-xs text-[#6B7280]">
+                <p className="font-semibold text-[#111827]">No recently viewed stocks.</p>
+                <p className="text-[11px] text-[#6B7280] mt-0.5">
                   Click any instrument below to keep it in your quick access strip.
                 </p>
               </div>
@@ -373,20 +373,20 @@ export default function ExplorePage() {
                   const isPos = (quote?.change_percent ?? 0) >= 0;
 
                   return (
-                    <div
+                    <article
                       key={item.symbol}
                       onClick={() => router.push(`/stocks/${encodeURIComponent(item.symbol)}`)}
-                      className="p-3 bg-white border border-[#E5E7EB] rounded-xl hover:border-[#4F46E5] hover:shadow-xs transition-all group block cursor-pointer"
+                      className="p-3 bg-white border border-[#E5E7EB] rounded-[10px] hover:border-[#F97316] transition-all group block cursor-pointer"
                     >
                       <div className="flex items-center justify-between mb-1.5">
-                        <div className="w-6 h-6 rounded-md bg-[#F3F4F6] border border-[#E5E7EB] flex items-center justify-center font-bold text-[10px] text-[#374151] font-mono">
+                        <div className="w-6 h-6 rounded-[6px] bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center font-bold text-[10px] text-[#111827] font-mono">
                           {item.symbol.slice(0, 2)}
                         </div>
-                        <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-slate-100 text-[#6B7280] font-mono">
+                        <span className="text-[9.5px] px-1.5 py-0.2 rounded-[4px] bg-[#F3F4F6] text-[#6B7280] font-mono">
                           {item.exchange || "NSE"}
                         </span>
                       </div>
-                      <div className="font-bold text-xs text-[#111827] truncate group-hover:text-[#4F46E5] transition-colors">
+                      <div className="font-bold text-xs text-[#111827] truncate group-hover:text-[#F97316] transition-colors">
                         {item.symbol}
                       </div>
                       <div className="mt-1">
@@ -397,7 +397,7 @@ export default function ExplorePage() {
                             </div>
                             <div
                               className={`text-[10.5px] font-semibold font-mono tabular-nums ${
-                                isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                                isPos ? "text-[#16A34A]" : "text-[#DC2626]"
                               }`}
                             >
                               {isPos ? "+" : ""}{quote.change !== undefined ? quote.change.toFixed(2) : "0.00"}{" "}
@@ -405,12 +405,12 @@ export default function ExplorePage() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-[11px] text-[#9CA3AF] font-normal">
-                            Quote unavailable
+                          <span className="text-[11px] text-[#6B7280] font-normal">
+                            Market data unavailable
                           </span>
                         )}
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
@@ -421,7 +421,7 @@ export default function ExplorePage() {
           <div>
             <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-amber-500" />
+                <Flame className="w-4 h-4 text-[#F97316]" />
                 <h2 className="text-base font-bold text-[#111827] tracking-tight">
                   Most Traded Stocks
                 </h2>
@@ -434,11 +434,11 @@ export default function ExplorePage() {
                 {mostTradedSymbols.map((sym) => (
                   <div
                     key={sym}
-                    className="p-3.5 bg-white border border-[#E5E7EB] rounded-xl animate-pulse space-y-2.5"
+                    className="p-3.5 bg-white border border-[#E5E7EB] rounded-[10px] animate-pulse space-y-2.5"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-slate-200" />
+                        <div className="w-7 h-7 rounded-[6px] bg-slate-200" />
                         <div className="space-y-1">
                           <div className="w-16 h-3 bg-slate-200 rounded" />
                           <div className="w-12 h-2.5 bg-slate-100 rounded" />
@@ -457,11 +457,11 @@ export default function ExplorePage() {
                 ))}
               </div>
             ) : mostTradedError ? (
-              <div className="p-4 bg-white border border-[#E5E7EB] rounded-xl text-center space-y-2">
+              <div className="p-4 bg-white border border-[#E5E7EB] rounded-[10px] text-center space-y-2">
                 <p className="text-xs text-[#6B7280] font-medium">{mostTradedError}</p>
                 <button
                   onClick={loadMostTraded}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#EEF2FF] text-[#4F46E5] text-xs font-bold rounded-lg hover:bg-indigo-100 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FFF7ED] text-[#EA580C] text-xs font-semibold rounded-[8px] hover:bg-[#FFEDD5] transition-colors"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>Retry</span>
@@ -475,19 +475,19 @@ export default function ExplorePage() {
                   const isPos = (q?.change_percent ?? 0) >= 0;
 
                   return (
-                    <div
+                    <article
                       key={sym}
                       onClick={() => router.push(`/stocks/${encodeURIComponent(sym)}`)}
-                      className="p-3.5 bg-white border border-[#E5E7EB] rounded-xl hover:border-[#4F46E5] hover:shadow-xs transition-all flex flex-col justify-between group cursor-pointer"
+                      className="p-3.5 bg-white border border-[#E5E7EB] rounded-[10px] hover:border-[#F97316] transition-all flex flex-col justify-between group cursor-pointer"
                     >
                       <div>
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] flex items-center justify-center font-bold text-xs text-[#111827] font-mono">
+                            <div className="w-7 h-7 rounded-[6px] bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center font-bold text-xs text-[#111827] font-mono">
                               {sym.slice(0, 2)}
                             </div>
                             <div>
-                              <span className="font-bold text-sm text-[#111827] group-hover:text-[#4F46E5] transition-colors block leading-tight">
+                              <span className="font-bold text-sm text-[#111827] group-hover:text-[#F97316] transition-colors block leading-tight">
                                 {sym}
                               </span>
                               <span className="text-[10px] text-[#6B7280]">NSE Equities</span>
@@ -501,7 +501,7 @@ export default function ExplorePage() {
                                 e.stopPropagation();
                                 setOrderModalStock({ symbol: sym, stockId: sym, side: "BUY" });
                               }}
-                              className="px-2 py-0.5 rounded bg-emerald-50 text-[#00A86B] text-[10.5px] font-bold hover:bg-emerald-100 transition-colors"
+                              className="px-2 py-0.5 rounded-[6px] bg-[#F0FDF4] text-[#16A34A] text-[10.5px] font-bold hover:bg-[#DCFCE7] transition-colors"
                             >
                               BUY
                             </button>
@@ -510,7 +510,7 @@ export default function ExplorePage() {
                                 e.stopPropagation();
                                 setOrderModalStock({ symbol: sym, stockId: sym, side: "SELL" });
                               }}
-                              className="px-2 py-0.5 rounded bg-rose-50 text-[#EF4444] text-[10.5px] font-bold hover:bg-rose-100 transition-colors"
+                              className="px-2 py-0.5 rounded-[6px] bg-[#FEF2F2] text-[#DC2626] text-[10.5px] font-bold hover:bg-[#FEE2E2] transition-colors"
                             >
                               SELL
                             </button>
@@ -525,7 +525,7 @@ export default function ExplorePage() {
                               </div>
                               <div
                                 className={`text-xs font-semibold font-mono tabular-nums ${
-                                  isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                                  isPos ? "text-[#16A34A]" : "text-[#DC2626]"
                                 }`}
                               >
                                 {isPos ? "+" : ""}{q.change !== undefined ? q.change.toFixed(2) : "0.00"}{" "}
@@ -533,13 +533,13 @@ export default function ExplorePage() {
                               </div>
                             </div>
                           ) : (
-                            <span className="text-xs text-[#9CA3AF] font-normal">
-                              Quote unavailable
+                            <span className="text-xs text-[#6B7280] font-normal">
+                              Market data unavailable
                             </span>
                           )}
                         </div>
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
@@ -547,7 +547,7 @@ export default function ExplorePage() {
           </div>
 
           {/* Section: Top Movers Today (Gainers, Losers, Volume Shockers) */}
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white border border-[#E5E7EB] rounded-[10px] p-4 sm:p-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-base font-bold text-[#111827] tracking-tight">
@@ -559,12 +559,12 @@ export default function ExplorePage() {
               </div>
 
               {/* Tabs */}
-              <div className="flex items-center gap-1 bg-[#F7F8FA] p-1 rounded-xl border border-[#E5E7EB] self-start sm:self-auto">
+              <div className="flex items-center gap-1 bg-[#F8FAFC] p-1 rounded-[8px] border border-[#E5E7EB] self-start sm:self-auto">
                 <button
                   onClick={() => setMoversTab("GAINERS")}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-3 py-1 rounded-[6px] text-xs font-bold transition-all ${
                     moversTab === "GAINERS"
-                      ? "bg-[#00A86B] text-white shadow-xs"
+                      ? "bg-[#16A34A] text-white shadow-none"
                       : "text-[#6B7280] hover:text-[#111827]"
                   }`}
                 >
@@ -572,9 +572,9 @@ export default function ExplorePage() {
                 </button>
                 <button
                   onClick={() => setMoversTab("LOSERS")}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-3 py-1 rounded-[6px] text-xs font-bold transition-all ${
                     moversTab === "LOSERS"
-                      ? "bg-[#EF4444] text-white shadow-xs"
+                      ? "bg-[#DC2626] text-white shadow-none"
                       : "text-[#6B7280] hover:text-[#111827]"
                   }`}
                 >
@@ -582,9 +582,9 @@ export default function ExplorePage() {
                 </button>
                 <button
                   onClick={() => setMoversTab("VOLUME")}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-3 py-1 rounded-[6px] text-xs font-bold transition-all ${
                     moversTab === "VOLUME"
-                      ? "bg-[#4F46E5] text-white shadow-xs"
+                      ? "bg-[#F97316] text-white shadow-none"
                       : "text-[#6B7280] hover:text-[#111827]"
                   }`}
                 >
@@ -596,7 +596,7 @@ export default function ExplorePage() {
             {/* Movers Content */}
             {isLoadingMovers ? (
               <div className="py-8 text-center text-xs text-[#6B7280] flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[#F97316] border-t-transparent rounded-full animate-spin" />
                 <span>Computing active market movers...</span>
               </div>
             ) : moversError ? (
@@ -604,7 +604,7 @@ export default function ExplorePage() {
                 <p>{moversError}</p>
                 <button
                   onClick={loadMovers}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#EEF2FF] text-[#4F46E5] text-xs font-bold rounded-lg hover:bg-indigo-100 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FFF7ED] text-[#EA580C] text-xs font-semibold rounded-[8px] hover:bg-[#FFEDD5] transition-colors"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>Retry</span>
@@ -620,13 +620,13 @@ export default function ExplorePage() {
                   const chgPct = item.change_percent ?? 0;
                   const isPos = chgPct >= 0;
                   return (
-                    <div
+                    <article
                       key={item.symbol}
-                      className="py-2.5 flex items-center justify-between hover:bg-[#F9FAFB] px-2 rounded-lg transition-colors cursor-pointer"
+                      className="py-2.5 flex items-center justify-between hover:bg-[#F8FAFC] px-2 rounded-[8px] transition-colors cursor-pointer"
                       onClick={() => router.push(`/stocks/${encodeURIComponent(item.symbol)}`)}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-7 h-7 rounded-md bg-[#F3F4F6] border border-[#E5E7EB] flex items-center justify-center font-bold text-xs text-[#374151] font-mono shrink-0">
+                        <div className="w-7 h-7 rounded-[6px] bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center font-bold text-xs text-[#374151] font-mono shrink-0">
                           {item.symbol.slice(0, 2)}
                         </div>
                         <div className="truncate">
@@ -643,7 +643,7 @@ export default function ExplorePage() {
                       <div className="hidden sm:flex items-center justify-center w-24 h-5 opacity-70">
                         <div
                           className={`w-full h-[2px] rounded ${
-                            isPos ? "bg-[#00A86B]" : "bg-[#EF4444]"
+                            isPos ? "bg-[#16A34A]" : "bg-[#DC2626]"
                           }`}
                         />
                       </div>
@@ -654,14 +654,14 @@ export default function ExplorePage() {
                         </div>
                         <div
                           className={`text-[10.5px] font-bold font-mono tabular-nums ${
-                            isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                            isPos ? "text-[#16A34A]" : "text-[#DC2626]"
                           }`}
                         >
                           {isPos ? "+" : ""}
                           {chgPct.toFixed(2)}%
                         </div>
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
@@ -669,7 +669,7 @@ export default function ExplorePage() {
           </div>
 
           {/* Section: Sectors Trending Today */}
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white border border-[#E5E7EB] rounded-[10px] p-4 sm:p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-base font-bold text-[#111827] tracking-tight">
@@ -679,7 +679,7 @@ export default function ExplorePage() {
                   Breadth analysis across major National Stock Exchange industry sectors.
                 </p>
               </div>
-              <span className="text-xs text-[#4F46E5] font-semibold">1D Performance</span>
+              <span className="text-xs text-[#F97316] font-bold">1D Performance</span>
             </div>
 
             <div className="space-y-3">
@@ -691,7 +691,7 @@ export default function ExplorePage() {
                 return (
                   <div
                     key={sec.name}
-                    className="p-3 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                    className="p-3 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                   >
                     <div className="w-36 shrink-0">
                       <span className="font-bold text-xs text-[#111827] block">{sec.name}</span>
@@ -704,14 +704,14 @@ export default function ExplorePage() {
                     <div className="flex-1 max-w-xs h-2 bg-rose-100 rounded-full overflow-hidden flex">
                       <div
                         style={{ width: `${gainerPct}%` }}
-                        className="bg-[#00A86B] h-full transition-all"
+                        className="bg-[#16A34A] h-full transition-all"
                       />
                     </div>
 
                     <div className="text-right sm:w-20 shrink-0">
                       <span
                         className={`text-xs font-bold font-mono tabular-nums ${
-                          isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                          isPos ? "text-[#16A34A]" : "text-[#DC2626]"
                         }`}
                       >
                         {isPos ? "+" : ""}
@@ -725,7 +725,7 @@ export default function ExplorePage() {
           </div>
 
           {/* Section: Most Bought ETFs */}
-          <div id="etfs" className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div id="etfs" className="bg-white border border-[#E5E7EB] rounded-[10px] p-4 sm:p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-base font-bold text-[#111827] tracking-tight">
@@ -735,7 +735,7 @@ export default function ExplorePage() {
                   Low-cost index tracking funds and commodities.
                 </p>
               </div>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-[#6B7280] font-medium">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280] font-semibold">
                 Equity &amp; Bullion
               </span>
             </div>
@@ -749,10 +749,10 @@ export default function ExplorePage() {
               ].map((etf) => (
                 <div
                   key={etf.symbol}
-                  className="p-3 rounded-xl border border-[#E5E7EB] bg-[#F7F8FA] flex items-center justify-between"
+                  className="p-3 rounded-[8px] border border-[#E5E7EB] bg-[#F8FAFC] flex items-center justify-between"
                 >
                   <div>
-                    <span className="text-[10px] text-[#4F46E5] font-semibold">{etf.cat}</span>
+                    <span className="text-[10px] text-[#F97316] font-bold">{etf.cat}</span>
                     <span className="font-bold text-xs text-[#111827] block">{etf.symbol}</span>
                     <span className="text-[10px] text-[#6B7280] truncate block max-w-[180px]">
                       {etf.name}
@@ -764,7 +764,7 @@ export default function ExplorePage() {
                     </span>
                     <span
                       className={`text-[10.5px] font-bold font-mono tabular-nums ${
-                        etf.chg >= 0 ? "text-[#00A86B]" : "text-[#EF4444]"
+                        etf.chg >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"
                       }`}
                     >
                       {etf.chg >= 0 ? "+" : ""}{etf.chg.toFixed(2)}%
@@ -776,7 +776,7 @@ export default function ExplorePage() {
           </div>
 
           {/* Section: Popular Bonds & Fixed Income */}
-          <div id="bonds" className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div id="bonds" className="bg-white border border-[#E5E7EB] rounded-[10px] p-4 sm:p-5">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h2 className="text-base font-bold text-[#111827] tracking-tight">
@@ -786,15 +786,15 @@ export default function ExplorePage() {
                   Sovereign and high-rated corporate debt securities.
                 </p>
               </div>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-600 font-semibold border border-amber-200">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#FFF7ED] text-[#EA580C] font-semibold border border-[#FDBA74]">
                 Coming soon
               </span>
             </div>
 
-            <div className="p-4 rounded-xl border border-dashed border-[#E5E7EB] bg-[#F9FAFB] text-center space-y-2">
-              <ShieldCheck className="w-8 h-8 text-[#4F46E5] mx-auto" />
+            <div className="p-4 rounded-[8px] border border-dashed border-[#E5E7EB] bg-[#F8FAFC] text-center space-y-2">
+              <ShieldCheck className="w-8 h-8 text-[#F97316] mx-auto" />
               <p className="text-xs font-bold text-[#111827]">
-                TradeX Fixed Income &amp; Bond Marketplace
+                BullRun Fixed Income &amp; Bond Marketplace
               </p>
               <p className="text-[11px] text-[#6B7280] max-w-md mx-auto">
                 Direct retail access to 7.18% GS 2033, REC, PFC, and AAA-rated corporate debt will launch in Phase 4 upon secondary market clearing integration.
@@ -803,7 +803,7 @@ export default function ExplorePage() {
           </div>
 
           {/* Section: Stocks in News & Disclosures */}
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white border border-[#E5E7EB] rounded-[10px] p-4 sm:p-5">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h2 className="text-base font-bold text-[#111827] tracking-tight">
@@ -813,15 +813,15 @@ export default function ExplorePage() {
                   Real-time regulatory disclosures and market developments.
                 </p>
               </div>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-[#6B7280] font-medium">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280] font-semibold">
                 BSE / NSE Disclosures
               </span>
             </div>
 
-            <div className="p-4 rounded-xl border border-[#E5E7EB] bg-[#F7F8FA] space-y-3">
+            <div className="p-4 rounded-[8px] border border-[#E5E7EB] bg-[#F8FAFC] space-y-3">
               <div className="flex items-start gap-2.5">
-                <Info className="w-4 h-4 text-[#4F46E5] shrink-0 mt-0.5" />
-                <p className="text-xs text-[#6B7280] leading-relaxed">
+                <Info className="w-4 h-4 text-[#F97316] shrink-0 mt-0.5" />
+                <p className="text-xs text-[#4B5563] leading-relaxed">
                   Market news provider pipeline is currently streaming quarterly earnings updates. Direct news sentiment integration will populate as real-time wire feeds connect.
                 </p>
               </div>
@@ -830,10 +830,10 @@ export default function ExplorePage() {
 
           {/* Section: Commodities & Mutual Funds / NFO */}
           <div id="commodities" className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-4 bg-white border border-[#E5E7EB] rounded-2xl shadow-xs">
+            <div className="p-4 bg-white border border-[#E5E7EB] rounded-[10px]">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-bold text-xs text-[#111827]">Commodities</span>
-                <span className="text-[10px] text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] text-[#EA580C] font-semibold bg-[#FFF7ED] px-2 py-0.5 rounded-full">
                   Coming soon
                 </span>
               </div>
@@ -842,10 +842,10 @@ export default function ExplorePage() {
               </p>
             </div>
 
-            <div className="p-4 bg-white border border-[#E5E7EB] rounded-2xl shadow-xs">
+            <div className="p-4 bg-white border border-[#E5E7EB] rounded-[10px]">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-bold text-xs text-[#111827]">Mutual Funds &amp; NFO</span>
-                <span className="text-[10px] text-[#4F46E5] font-semibold bg-indigo-50 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] text-[#EA580C] font-semibold bg-[#FFF7ED] px-2 py-0.5 rounded-full">
                   Coming soon
                 </span>
               </div>
@@ -854,20 +854,20 @@ export default function ExplorePage() {
               </p>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Right Column (4 cols ~ 30%): Investments Widget, Products & Tools, Trading Screens */}
-        <div className="lg:col-span-4 space-y-5 lg:space-y-6">
+        <aside className="lg:col-span-4 space-y-4">
           {/* 1. Your Investments Widget */}
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-3.5">
+          <div className="bg-white border border-[#E5E7EB] rounded-[10px] p-4">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-[#4F46E5]" />
+                <Briefcase className="w-4 h-4 text-[#F97316]" />
                 <h3 className="font-bold text-sm text-[#111827]">Your Investments</h3>
               </div>
               <Link
                 href="/portfolio"
-                className="text-xs text-[#4F46E5] font-semibold hover:underline flex items-center gap-0.5"
+                className="text-xs text-[#F97316] font-semibold hover:underline flex items-center gap-0.5"
               >
                 <span>Holdings</span>
                 <ChevronRight className="w-3 h-3" />
@@ -879,9 +879,9 @@ export default function ExplorePage() {
                 Loading portfolio summary...
               </div>
             ) : !portfolio || portfolio.holdings_count === 0 ? (
-              <div className="p-4 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] text-center space-y-3">
-                <div className="w-10 h-10 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center mx-auto text-[#9CA3AF]">
-                  <Briefcase className="w-5 h-5 text-[#4F46E5]" />
+              <div className="p-4 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] text-center space-y-3">
+                <div className="w-9 h-9 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center mx-auto text-[#9CA3AF]">
+                  <Briefcase className="w-4 h-4 text-[#F97316]" />
                 </div>
                 <div>
                   <p className="font-bold text-sm text-[#111827]">No investments yet</p>
@@ -891,14 +891,14 @@ export default function ExplorePage() {
                 </div>
                 <Link
                   href="/stocks/RELIANCE"
-                  className="inline-block w-full py-2 rounded-xl bg-[#4F46E5] text-white font-bold text-xs hover:bg-[#4338CA] transition-colors"
+                  className="inline-block w-full py-2 rounded-[8px] bg-[#F97316] text-white font-semibold text-xs hover:bg-[#EA580C] transition-colors"
                 >
                   Explore Stocks
                 </Link>
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="p-3.5 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] space-y-2">
+                <div className="p-3.5 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] space-y-2">
                   <div className="flex justify-between items-baseline">
                     <span className="text-xs text-[#6B7280]">Current Value</span>
                     <span className="font-mono text-base font-bold text-[#111827] tabular-nums">
@@ -906,7 +906,7 @@ export default function ExplorePage() {
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-baseline pt-1 border-t border-slate-200/60">
+                  <div className="flex justify-between items-baseline pt-1 border-t border-[#E5E7EB]">
                     <span className="text-xs text-[#6B7280]">Invested</span>
                     <span className="font-mono text-xs font-semibold text-[#4B5563] tabular-nums">
                       ₹{portfolio.total_invested.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -917,7 +917,7 @@ export default function ExplorePage() {
                     <span className="text-xs text-[#6B7280]">1D Returns</span>
                     <span
                       className={`font-mono text-xs font-bold tabular-nums ${
-                        portfolio.today_pnl >= 0 ? "text-[#00A86B]" : "text-[#EF4444]"
+                        portfolio.today_pnl >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"
                       }`}
                     >
                       {portfolio.today_pnl >= 0 ? "+" : ""}₹{portfolio.today_pnl.toFixed(2)} (
@@ -930,7 +930,7 @@ export default function ExplorePage() {
                     <span className="text-xs text-[#6B7280]">Total Returns</span>
                     <span
                       className={`font-mono text-xs font-bold tabular-nums ${
-                        portfolio.total_pnl >= 0 ? "text-[#00A86B]" : "text-[#EF4444]"
+                        portfolio.total_pnl >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"
                       }`}
                     >
                       {portfolio.total_pnl >= 0 ? "+" : ""}₹{portfolio.total_pnl.toFixed(2)} (
@@ -942,7 +942,7 @@ export default function ExplorePage() {
 
                 <Link
                   href="/portfolio"
-                  className="block text-center w-full py-2 rounded-xl border border-[#E5E7EB] text-xs font-semibold text-[#111827] hover:bg-[#F7F8FA] transition-colors"
+                  className="block text-center w-full py-2 rounded-[8px] border border-[#E5E7EB] text-xs font-semibold text-[#111827] hover:bg-[#F8FAFC] transition-colors"
                 >
                   View All {portfolio.holdings_count} Holdings →
                 </Link>
@@ -951,9 +951,9 @@ export default function ExplorePage() {
           </div>
 
           {/* 2. Products & Tools List */}
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white border border-[#E5E7EB] rounded-[10px] p-4">
             <h3 className="font-bold text-sm text-[#111827] mb-3">Products &amp; Tools</h3>
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-[#E5E7EB]">
               {productsAndTools.map((tool) => (
                 <div
                   key={tool.id}
@@ -964,17 +964,17 @@ export default function ExplorePage() {
                       setComingSoonFeature(tool.name);
                     }
                   }}
-                  className="py-2.5 flex items-center justify-between hover:bg-[#F9FAFB] px-2 rounded-lg cursor-pointer transition-colors"
+                  className="py-2.5 flex items-center justify-between hover:bg-[#F8FAFC] px-2 rounded-[8px] cursor-pointer transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-[#111827]">{tool.name}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      className={`text-[10px] px-2 py-0.5 rounded-[6px] font-medium ${
                         tool.available
-                          ? "bg-[#EEF2FF] text-[#4F46E5] font-semibold"
-                          : "bg-slate-100 text-[#6B7280]"
+                          ? "bg-[#FFF7ED] text-[#EA580C] font-semibold"
+                          : "bg-[#F3F4F6] text-[#6B7280]"
                       }`}
                     >
                       {tool.status}
@@ -987,18 +987,18 @@ export default function ExplorePage() {
           </div>
 
           {/* 3. Technical Screens — Preview (No fake signals) */}
-          <div id="screens" className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div id="screens" className="bg-white border border-[#E5E7EB] rounded-[10px] p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-[#4F46E5]" />
+                <BarChart3 className="w-4 h-4 text-[#F97316]" />
                 <h3 className="font-bold text-sm text-[#111827]">Technical Screens — Preview</h3>
               </div>
-              <span className="text-[10px] text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+              <span className="text-[10px] text-[#EA580C] font-semibold bg-[#FFF7ED] px-2 py-0.5 rounded-[6px] border border-[#FED7AA]">
                 Preview
               </span>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {[
                 { title: "Resistance Breakouts", desc: "Crossing 20D Resistance Band", status: "Data unavailable" },
                 { title: "MACD Bullish Cross", desc: "MACD Line > Signal Line", status: "Data unavailable" },
@@ -1007,13 +1007,13 @@ export default function ExplorePage() {
               ].map((screen) => (
                 <div
                   key={screen.title}
-                  className="p-3 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] block"
+                  className="p-3 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] block"
                 >
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-xs text-[#111827]">
                       {screen.title}
                     </span>
-                    <span className="text-[10px] font-mono text-[#9CA3AF] bg-white px-1.5 py-0.2 rounded border border-[#E5E7EB]">
+                    <span className="text-[10px] font-mono text-[#6B7280] bg-white px-1.5 py-0.5 rounded-[4px] border border-[#E5E7EB]">
                       {screen.status}
                     </span>
                   </div>
@@ -1022,11 +1022,11 @@ export default function ExplorePage() {
               ))}
             </div>
 
-            <p className="text-[10px] text-[#9CA3AF] mt-3 leading-relaxed">
+            <p className="text-[10px] text-[#6B7280] mt-3 leading-relaxed">
               *Analytical screen engine is in preview mode. Technical scans evaluate real market data once streaming filters are applied.
             </p>
           </div>
-        </div>
+        </aside>
       </div>
 
       {/* Quick Trade Order Pad Modal */}
@@ -1048,11 +1048,11 @@ export default function ExplorePage() {
 
       {/* Controlled "Coming Soon" Modal */}
       {comingSoonFeature && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-[10px] max-w-sm w-full p-5 space-y-4 shadow-lg">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#4F46E5]" />
+                <Sparkles className="w-5 h-5 text-[#F97316]" />
                 <h3 className="font-bold text-sm text-[#111827]">{comingSoonFeature}</h3>
               </div>
               <button
@@ -1063,11 +1063,11 @@ export default function ExplorePage() {
               </button>
             </div>
             <p className="text-xs text-[#6B7280] leading-relaxed">
-              This feature is part of the TradeX expansion roadmap. Infrastructure and regulatory contracts are currently being integrated. No mock data is shown.
+              This feature is part of the BullRun expansion roadmap. Infrastructure and regulatory contracts are currently being integrated. No mock data is shown.
             </p>
             <button
               onClick={() => setComingSoonFeature(null)}
-              className="w-full py-2 rounded-xl bg-[#4F46E5] text-white font-bold text-xs hover:bg-[#4338CA] transition-colors"
+              className="w-full py-2.5 rounded-[8px] bg-[#F97316] text-white font-semibold text-xs hover:bg-[#EA580C] transition-colors"
             >
               Understood
             </button>

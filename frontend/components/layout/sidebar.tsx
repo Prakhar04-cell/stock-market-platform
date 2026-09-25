@@ -77,23 +77,23 @@ export function Sidebar() {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium transition-all group",
+                    "flex items-center justify-between px-3 py-2 rounded-[8px] text-[13px] font-medium transition-all group",
                     isActive
-                      ? "bg-[#EEF2FF] text-[#4F46E5] font-semibold"
-                      : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                      ? "bg-[#FFF7ED] text-[#111827] font-bold border-l-2 border-[#F97316]"
+                      : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
                   )}
                 >
                   <div className="flex items-center gap-3">
                     <Icon
                       className={cn(
                         "w-4 h-4 shrink-0 transition-colors",
-                        isActive ? "text-[#4F46E5]" : "text-[#9CA3AF] group-hover:text-[#4B5563]"
+                        isActive ? "text-[#F97316]" : "text-[#9CA3AF] group-hover:text-[#4B5563]"
                       )}
                     />
                     <span>{item.name}</span>
                   </div>
                   {item.badge && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-indigo-100 text-[#4F46E5]">
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-[4px] bg-[#FFF7ED] text-[#EA580C]">
                       {item.badge}
                     </span>
                   )}
@@ -121,16 +121,16 @@ export function Sidebar() {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium transition-all group",
+                    "flex items-center gap-3 px-3 py-2 rounded-[8px] text-[13px] font-medium transition-all group",
                     isActive
-                      ? "bg-[#EEF2FF] text-[#4F46E5] font-semibold"
-                      : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                      ? "bg-[#FFF7ED] text-[#111827] font-bold border-l-2 border-[#F97316]"
+                      : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
                   )}
                 >
                   <Icon
                     className={cn(
                       "w-4 h-4 shrink-0 transition-colors",
-                      isActive ? "text-[#4F46E5]" : "text-[#9CA3AF] group-hover:text-[#4B5563]"
+                      isActive ? "text-[#F97316]" : "text-[#9CA3AF] group-hover:text-[#4B5563]"
                     )}
                   />
                   <span>{item.name}</span>
@@ -142,13 +142,13 @@ export function Sidebar() {
       </div>
 
       {/* Bottom Compact Environment Badge */}
-      <div className="p-3 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] text-center space-y-1">
-        <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#00A86B]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
+      <div className="p-3 rounded-[10px] bg-[#F8FAFC] border border-[#E5E7EB] text-center space-y-1">
+        <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#16A34A]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
           <span>Paper Engine Active</span>
         </div>
         <p className="text-[10px] text-[#6B7280]">
-          Zero Capital Risk • Live Upstox Feeds
+          Zero Capital Risk • Real-Time Feeds
         </p>
       </div>
     </aside>

@@ -9,7 +9,7 @@ import { Footer } from "@/components/layout/footer";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen bg-[#F7F8FA] text-[#111827]">
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC] text-[#111827]">
       {/* 1. Full-width Topbar Header */}
       <Topbar />
 

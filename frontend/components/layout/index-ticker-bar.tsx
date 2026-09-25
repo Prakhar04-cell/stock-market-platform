@@ -100,22 +100,22 @@ export function IndexTickerBar() {
   const isLive = connectionState === "CONNECTED";
 
   return (
-    <div className="w-full h-9 sm:h-10 bg-white border-b border-[#E5E7EB] px-4 sm:px-6 flex items-center gap-3 sm:gap-6 text-xs overflow-x-auto select-none no-scrollbar shadow-[0_1px_1px_rgba(0,0,0,0.01)]">
+    <div className="w-full h-9 sm:h-10 bg-white border-b border-[#E5E7EB] px-4 sm:px-6 flex items-center gap-3 sm:gap-6 text-xs overflow-x-auto select-none no-scrollbar">
       {/* 1. Global Market Feed Indicator Badge */}
       <div
         className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 border transition-colors ${
           isLive
-            ? "bg-[#ECFDF5] border-[#A7F3D0] text-[#00A86B]"
-            : "bg-[#F7F8FA] border-[#E5E7EB] text-[#6B7280]"
+            ? "bg-[#F0FDF4] border-[#BBF7D0] text-[#16A34A]"
+            : "bg-[#F8FAFC] border-[#E5E7EB] text-[#4B5563]"
         }`}
         title={isLive ? "Market WebSocket stream connected" : "Market WebSocket feed disconnected"}
       >
         <span
           className={`w-1.5 h-1.5 rounded-full ${
-            isLive ? "bg-[#00A86B] animate-pulse" : "bg-[#9CA3AF]"
+            isLive ? "bg-[#16A34A] animate-pulse" : "bg-slate-400"
           }`}
         />
-        <span>{isLive ? "● LIVE MARKET FEED" : "○ FEED DISCONNECTED"}</span>
+        <span>{isLive ? "● LIVE FEED" : "○ FEED DISCONNECTED"}</span>
       </div>
 
       <div className="h-3.5 w-[1px] bg-[#E5E7EB] shrink-0" />
@@ -132,7 +132,7 @@ export function IndexTickerBar() {
               href={`/stocks/${encodeURIComponent(idx.symbol)}`}
               className="flex items-center gap-2 group hover:opacity-85 transition-opacity"
             >
-              <span className="font-sans font-semibold text-[#374151] text-xs sm:text-[13px] group-hover:text-[#111827]">
+              <span className="font-sans font-semibold text-[#111827] text-xs sm:text-[13px] group-hover:text-[#F97316]">
                 {idx.name}
               </span>
 
@@ -143,7 +143,7 @@ export function IndexTickerBar() {
                   </span>
                   <span
                     className={`text-[11px] sm:text-xs font-semibold tabular-nums ${
-                      isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                      isPos ? "text-[#16A34A]" : "text-[#DC2626]"
                     }`}
                   >
                     {isPos ? "+" : ""}
@@ -158,8 +158,8 @@ export function IndexTickerBar() {
                   <div className="w-10 h-3 bg-slate-100 rounded" />
                 </div>
               ) : (
-                <span className="text-[#9CA3AF] text-[11px] font-sans font-normal">
-                  Data unavailable
+                <span className="text-[#6B7280] text-[11px] font-sans font-normal">
+                  Market data unavailable
                 </span>
               )}
             </Link>

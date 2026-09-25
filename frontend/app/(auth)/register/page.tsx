@@ -47,28 +47,29 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 text-slate-900 select-none">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#F8FAFC] text-[#111827] select-none">
+      <div className="w-full max-w-md space-y-5">
         {/* Brand Header */}
         <div className="text-center space-y-1">
           <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-sm">
-              TX
+            <div className="w-8 h-8 rounded-[8px] bg-[#0F172A] flex items-center justify-center text-white font-extrabold text-sm tracking-tight">
+              <span>B</span>
+              <span className="text-[#F97316]">R</span>
             </div>
-            <span className="text-2xl font-bold tracking-tight text-slate-900">
-              Trade<span className="text-indigo-600">X</span>
+            <span className="text-xl font-bold tracking-tight text-[#111827]">
+              Bull<span className="text-[#F97316]">Run</span>
             </span>
           </Link>
-          <h2 className="text-xl font-bold text-slate-900 pt-2">Create Paper Trading Account</h2>
-          <p className="text-xs text-slate-500">
+          <h2 className="text-lg font-bold text-[#111827] pt-2">Create Paper Trading Account</h2>
+          <p className="text-xs text-[#6B7280]">
             Get instant ₹1,00,000 virtual capital to simulate Indian stock trades
           </p>
         </div>
 
         {/* Form Card */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-card space-y-4">
+        <div className="rounded-[10px] border border-[#E5E7EB] bg-white p-6 space-y-4">
           {errorMessage && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-[8px] bg-rose-50 border border-rose-200 text-[#DC2626] text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -115,22 +116,22 @@ export default function RegisterPage() {
               type="submit"
               size="lg"
               isLoading={isLoading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm"
+              className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold text-xs rounded-[8px]"
             >
               Get Free ₹1,00,000 &amp; Start Trading
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </form>
 
-          <div className="pt-2 flex items-center gap-2 text-xs text-slate-500">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="pt-2 flex items-center gap-2 text-xs text-[#6B7280]">
+            <ShieldCheck className="w-4 h-4 text-[#16A34A] shrink-0" />
             <span>Zero real financial risk. 100% simulated sandbox.</span>
           </div>
         </div>
 
-        <p className="text-center text-xs text-slate-500">
+        <p className="text-center text-xs text-[#6B7280]">
           Already have an account?{" "}
-          <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-bold">
+          <Link href="/login" className="text-[#F97316] hover:underline font-semibold">
             Sign In here
           </Link>
         </p>

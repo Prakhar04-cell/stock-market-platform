@@ -44,28 +44,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 text-slate-900 select-none">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#F8FAFC] text-[#111827] select-none">
+      <div className="w-full max-w-md space-y-5">
         {/* Brand Header */}
         <div className="text-center space-y-1">
           <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-sm">
-              TX
+            <div className="w-8 h-8 rounded-[8px] bg-[#0F172A] flex items-center justify-center text-white font-extrabold text-sm tracking-tight">
+              <span>B</span>
+              <span className="text-[#F97316]">R</span>
             </div>
-            <span className="text-2xl font-bold tracking-tight text-slate-900">
-              Trade<span className="text-indigo-600">X</span>
+            <span className="text-xl font-bold tracking-tight text-[#111827]">
+              Bull<span className="text-[#F97316]">Run</span>
             </span>
           </Link>
-          <h2 className="text-xl font-bold text-slate-900 pt-2">Welcome Back</h2>
-          <p className="text-xs text-slate-500">
+          <h2 className="text-lg font-bold text-[#111827] pt-2">Welcome Back</h2>
+          <p className="text-xs text-[#6B7280]">
             Sign in to access your virtual paper wallet and trading terminal
           </p>
         </div>
 
         {/* Form Card */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-card space-y-4">
+        <div className="rounded-[10px] border border-[#E5E7EB] bg-white p-6 space-y-4">
           {errorMessage && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-[8px] bg-rose-50 border border-rose-200 text-[#DC2626] text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -75,7 +76,7 @@ export default function LoginPage() {
             <Input
               label="Email Address"
               type="email"
-              placeholder="trader@tradex.com"
+              placeholder="trader@bullrun.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -84,10 +85,10 @@ export default function LoginPage() {
 
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-700">Password</label>
+                <label className="text-xs font-semibold text-[#374151]">Password</label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="text-xs text-[#F97316] hover:underline font-semibold"
                 >
                   Forgot password?
                 </Link>
@@ -105,27 +106,27 @@ export default function LoginPage() {
               type="submit"
               size="lg"
               isLoading={isLoading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm"
+              className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold text-xs rounded-[8px]"
             >
-              Sign In to TradeX
+              Sign In to BullRun
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </form>
 
           {/* Demo Sandbox Hint */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs flex items-start gap-2">
-            <Info className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+          <div className="p-3 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] text-[#4B5563] text-xs flex items-start gap-2">
+            <Info className="w-4 h-4 text-[#F97316] shrink-0 mt-0.5" />
             <div className="space-y-0.5">
-              <span className="font-bold text-slate-900 block">Phase 1 Sandbox Accounts</span>
-              <span>Trader: trader1@tradex.com (Pass: Password123!)</span>
+              <span className="font-bold text-[#111827] block">Phase 1 Sandbox Accounts</span>
+              <span className="font-mono text-[11px]">Trader: trader1@tradex.com (Pass: Password123!)</span>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-slate-500">
+        <p className="text-center text-xs text-[#6B7280]">
           Don&apos;t have an account yet?{" "}
-          <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-bold">
+          <Link href="/register" className="text-[#F97316] hover:underline font-semibold">
             Create a free paper account
           </Link>
         </p>

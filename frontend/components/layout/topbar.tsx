@@ -292,43 +292,44 @@ export function Topbar() {
 
   return (
     <>
-      <header className="h-14 bg-white border-b border-[#E5E7EB] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 select-none shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
-        {/* 1. Left: Brand Logo & Main Navigation Tabs */}
-        <div className="flex items-center gap-6 shrink-0">
-          <Link href="/dashboard" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-[#4F46E5] flex items-center justify-center text-white shadow-xs group-hover:bg-[#4338CA] transition-colors">
-              <span className="font-extrabold text-sm tracking-tight">TX</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[17px] font-bold tracking-tight text-[#111827] leading-none">
-                Trade<span className="text-[#4F46E5]">X</span>
-              </span>
-              <span className="text-[9.5px] text-[#6B7280] font-medium tracking-wide">
-                Terminal
-              </span>
-            </div>
-          </Link>
+      <header className="h-14 bg-white border-b border-[#E5E7EB] px-4 sm:px-6 flex items-center sticky top-0 z-40 select-none">
+        <nav aria-label="Main Navigation" className="w-full flex items-center justify-between">
+          {/* 1. Left: Brand Logo & Main Navigation Tabs */}
+          <div className="flex items-center gap-6 shrink-0">
+            <Link href="/dashboard" className="flex items-center gap-2.5 group">
+              <div className="w-8 h-8 rounded-[8px] bg-[#0F172A] flex items-center justify-center text-white shadow-none group-hover:bg-[#F97316] transition-colors">
+                <span className="font-extrabold text-sm tracking-tight text-white">BR</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[17px] font-extrabold tracking-tight text-[#111827] leading-none">
+                  Bull<span className="text-[#F97316]">Run</span>
+                </span>
+                <span className="text-[9.5px] text-[#6B7280] font-medium tracking-wide">
+                  Markets
+                </span>
+              </div>
+            </Link>
 
-          {/* Top Desktop Navigation Links with Active Indicators */}
-          <nav className="hidden xl:flex items-center space-x-1">
-            {navTabs.map((tab) => (
-              <Link
-                key={tab.name}
-                href={tab.href}
-                className={`relative px-3 py-4 text-[13px] font-medium transition-colors flex items-center ${
-                  tab.isActive
-                    ? "text-[#111827] font-semibold"
-                    : "text-[#6B7280] hover:text-[#111827]"
-                }`}
-              >
-                <span>{tab.name}</span>
-                {tab.isActive && (
-                  <span className="absolute bottom-0 left-3 right-3 h-[2.5px] bg-[#4F46E5] rounded-t-full" />
-                )}
-              </Link>
-            ))}
-          </nav>
-        </div>
+            {/* Top Desktop Navigation Links with Active Indicators */}
+            <div className="hidden xl:flex items-center space-x-1">
+              {navTabs.map((tab) => (
+                <Link
+                  key={tab.name}
+                  href={tab.href}
+                  className={`relative px-3 py-4 text-[13px] font-medium transition-colors flex items-center ${
+                    tab.isActive
+                      ? "text-[#111827] font-bold"
+                      : "text-[#6B7280] hover:text-[#111827]"
+                  }`}
+                >
+                  <span>{tab.name}</span>
+                  {tab.isActive && (
+                    <span className="absolute bottom-0 left-3 right-3 h-[2.5px] bg-[#F97316] rounded-t-full" />
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
 
         {/* 2. Center: Global Search Bar + Terminal Action Button */}
         <div className="flex-1 max-w-lg mx-3 sm:mx-6 flex items-center gap-2 relative">
@@ -344,7 +345,7 @@ export function Topbar() {
               }}
               onKeyDown={handleKeyDown}
               placeholder="Search stocks, indices, ETFs (Press /)"
-              className="w-full pl-9 pr-14 py-1.5 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#4F46E5] focus:bg-white focus:ring-2 focus:ring-[#EEF2FF] transition-all"
+              className="w-full pl-9 pr-14 py-1.5 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#F97316] focus:bg-white focus:ring-2 focus:ring-[#FFF7ED] transition-all"
             />
             {searchQuery ? (
               <button
@@ -367,14 +368,14 @@ export function Topbar() {
           {/* Dedicated Terminal Button */}
           <Link
             href="/terminal"
-            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all shrink-0 ${
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] border text-xs font-semibold transition-all shrink-0 ${
               pathname === "/terminal"
-                ? "bg-[#111827] text-white border-[#111827]"
-                : "bg-white text-[#111827] border-[#E5E7EB] hover:bg-[#F7F8FA] hover:border-[#D1D5DB]"
+                ? "bg-[#0F172A] text-white border-[#0F172A]"
+                : "bg-white text-[#111827] border-[#E5E7EB] hover:bg-[#F8FAFC] hover:border-[#D1D5DB]"
             }`}
             title="Open Dedicated Full-Screen Trading Terminal"
           >
-            <TerminalIcon className="w-3.5 h-3.5 text-[#4F46E5]" />
+            <TerminalIcon className="w-3.5 h-3.5 text-[#F97316]" />
             <span>Terminal</span>
           </Link>
 
@@ -382,17 +383,17 @@ export function Topbar() {
           {isOpen && (
             <div
               ref={dropdownRef}
-              className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-[#E5E7EB] rounded-xl shadow-dropdown z-50 overflow-hidden text-xs max-h-96 overflow-y-auto"
+              className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-[#E5E7EB] rounded-[10px] shadow-dropdown z-50 overflow-hidden text-xs max-h-96 overflow-y-auto"
             >
               {/* Category Pills */}
-              <div className="flex items-center gap-1 p-2 bg-[#F9FAFB] border-b border-[#E5E7EB] overflow-x-auto text-[11px]">
+              <div className="flex items-center gap-1 p-2 bg-[#F8FAFC] border-b border-[#E5E7EB] overflow-x-auto text-[11px]">
                 {(["ALL", "STOCKS", "INDICES", "ETFS"] as const).map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setSearchCategory(cat)}
-                    className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                    className={`px-2.5 py-1 rounded-[6px] font-semibold transition-colors ${
                       searchCategory === cat
-                        ? "bg-[#4F46E5] text-white"
+                        ? "bg-[#F97316] text-white"
                         : "text-[#6B7280] hover:text-[#111827] hover:bg-[#E5E7EB]"
                     }`}
                   >
@@ -403,7 +404,7 @@ export function Topbar() {
 
               {isLoading && (
                 <div className="p-4 text-center text-[#6B7280] flex items-center justify-center gap-2">
-                  <div className="w-3.5 h-3.5 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3.5 h-3.5 border-2 border-[#F97316] border-t-transparent rounded-full animate-spin" />
                   <span>Searching instruments...</span>
                 </div>
               )}
@@ -425,12 +426,12 @@ export function Topbar() {
                         onClick={() => handleSelect(item)}
                         className={`px-3.5 py-2.5 flex items-center justify-between cursor-pointer border-b border-slate-50 last:border-none transition-colors ${
                           idx === selectedIndex
-                            ? "bg-[#EEF2FF] text-[#111827]"
-                            : "hover:bg-[#F7F8FA] text-[#111827]"
+                            ? "bg-[#FFF7ED] text-[#111827]"
+                            : "hover:bg-[#F8FAFC] text-[#111827]"
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-7 h-7 rounded-md bg-[#F3F4F6] border border-[#E5E7EB] flex items-center justify-center font-bold text-[#374151] text-[11px] font-mono shrink-0">
+                          <div className="w-7 h-7 rounded-[6px] bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center font-bold text-[#374151] text-[11px] font-mono shrink-0">
                             {item.symbol.slice(0, 2)}
                           </div>
                           <div className="truncate">
@@ -457,7 +458,7 @@ export function Topbar() {
                               </div>
                               <div
                                 className={`text-[10px] font-semibold tabular-nums flex items-center justify-end gap-0.5 ${
-                                  isPos ? "text-[#00A86B]" : "text-[#EF4444]"
+                                  isPos ? "text-[#16A34A]" : "text-[#DC2626]"
                                 }`}
                               >
                                 {isPos ? "+" : ""}
@@ -480,22 +481,22 @@ export function Topbar() {
         {/* 3. Right: Paper Trading Badge, Notifications, Market Status, Profile */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Market Status Pill */}
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F7F8FA] border border-[#E5E7EB] text-[#4B5563]">
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F8FAFC] border border-[#E5E7EB] text-[#4B5563]">
             <span
               className={`w-1.5 h-1.5 rounded-full ${
-                isMarketConnected ? "bg-[#00A86B] animate-pulse" : "bg-slate-400"
+                isMarketConnected ? "bg-[#16A34A] animate-pulse" : "bg-slate-400"
               }`}
             />
-            <span>{isMarketConnected ? "● LIVE MARKET FEED" : "○ FEED STANDBY"}</span>
+            <span>{isMarketConnected ? "● LIVE FEED" : "○ FEED DISCONNECTED"}</span>
           </div>
 
           {/* Paper Trading Indicator Badge (Clickable modal) */}
           <button
             onClick={() => setIsPaperModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#00A86B] text-xs font-bold hover:bg-[#D1FAE5] transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FFF7ED] border border-[#FDBA74] text-[#EA580C] text-xs font-bold hover:bg-[#FFEDD5] transition-colors"
             title="Click to view Paper Trading details"
           >
-            <span className="w-2 h-2 rounded-full bg-[#00A86B] animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#F97316] animate-pulse" />
             <span className="hidden sm:inline">PAPER TRADING</span>
             <span className="sm:hidden">PAPER</span>
           </button>
@@ -503,11 +504,11 @@ export function Topbar() {
           {/* Virtual Balance Display */}
           <button
             onClick={() => setIsPaperModalOpen(true)}
-            className="hidden md:flex flex-col items-end px-2.5 py-0.5 rounded-lg hover:bg-[#F7F8FA] transition-colors"
+            className="hidden md:flex flex-col items-end px-2.5 py-0.5 rounded-[8px] hover:bg-[#F8FAFC] transition-colors"
             title="Available Virtual Margin"
           >
             <span className="text-[10px] font-medium text-[#6B7280] leading-none">
-              Virtual Balance
+              Virtual Margin
             </span>
             <span className="text-xs font-bold font-mono text-[#111827] tabular-nums">
               ₹{wallet ? Number(wallet.available_balance).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "1,00,000.00"}
@@ -518,22 +519,22 @@ export function Topbar() {
           <div className="relative" ref={notifRef}>
             <button
               onClick={() => setIsNotifOpen(!isNotifOpen)}
-              className="p-2 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#F7F8FA] relative transition-colors"
+              className="p-2 rounded-[8px] text-[#6B7280] hover:text-[#111827] hover:bg-[#F8FAFC] relative transition-colors"
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#EF4444]" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#DC2626]" />
               )}
             </button>
 
             {isNotifOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white border border-[#E5E7EB] rounded-xl shadow-dropdown z-50 overflow-hidden text-xs">
-                <div className="p-3 border-b border-[#E5E7EB] flex items-center justify-between bg-[#F7F8FA]">
+              <div className="absolute right-0 mt-2 w-80 bg-white border border-[#E5E7EB] rounded-[10px] shadow-dropdown z-50 overflow-hidden text-xs">
+                <div className="p-3 border-b border-[#E5E7EB] flex items-center justify-between bg-[#F8FAFC]">
                   <div className="flex items-center gap-1.5">
                     <span className="font-bold text-[#111827]">Notifications</span>
                     {unreadCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-[#EEF2FF] text-[#4F46E5] font-bold text-[10px]">
+                      <span className="px-1.5 py-0.2 rounded-full bg-[#FFF7ED] text-[#F97316] font-bold text-[10px]">
                         {unreadCount} new
                       </span>
                     )}
@@ -541,7 +542,7 @@ export function Topbar() {
                   {unreadCount > 0 && (
                     <button
                       onClick={handleMarkAllRead}
-                      className="text-[11px] text-[#4F46E5] hover:underline font-semibold"
+                      className="text-[11px] text-[#F97316] hover:underline font-semibold"
                     >
                       Mark all read
                     </button>
@@ -562,17 +563,17 @@ export function Topbar() {
                       <div
                         key={notif.id}
                         onClick={() => handleMarkOneRead(notif.id)}
-                        className={`p-3 flex items-start gap-2.5 hover:bg-[#F7F8FA] cursor-pointer transition-colors ${
-                          !notif.is_read ? "bg-[#F9FAFB]" : ""
+                        className={`p-3 flex items-start gap-2.5 hover:bg-[#F8FAFC] cursor-pointer transition-colors ${
+                          !notif.is_read ? "bg-[#FFF7ED]/30" : ""
                         }`}
                       >
                         <div className="mt-0.5 shrink-0">
                           {notif.notification_type === "SUCCESS" ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#00A86B]" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A]" />
                           ) : notif.notification_type === "WARNING" ? (
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
                           ) : (
-                            <Info className="w-3.5 h-3.5 text-[#4F46E5]" />
+                            <Info className="w-3.5 h-3.5 text-[#F97316]" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -587,18 +588,18 @@ export function Topbar() {
                           </span>
                         </div>
                         {!notif.is_read && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#4F46E5] shrink-0 mt-1" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#F97316] shrink-0 mt-1" />
                         )}
                       </div>
                     ))
                   )}
                 </div>
 
-                <div className="p-2 border-t border-[#E5E7EB] bg-[#F7F8FA] text-center">
+                <div className="p-2 border-t border-[#E5E7EB] bg-[#F8FAFC] text-center">
                   <Link
                     href="/orders"
                     onClick={() => setIsNotifOpen(false)}
-                    className="text-[11px] text-[#4F46E5] font-semibold hover:underline"
+                    className="text-[11px] text-[#F97316] font-semibold hover:underline"
                   >
                     View order execution history →
                   </Link>
@@ -613,25 +614,25 @@ export function Topbar() {
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-1.5 pl-1.5 py-1 rounded-full hover:bg-[#F7F8FA] transition-colors"
+              className="flex items-center gap-1.5 pl-1.5 py-1 rounded-full hover:bg-[#F8FAFC] transition-colors"
             >
-              <div className="w-7 h-7 rounded-full bg-[#4F46E5] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                TX
+              <div className="w-7 h-7 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs shadow-none">
+                BR
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-[#9CA3AF]" />
             </button>
 
             {isProfileOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E5E7EB] rounded-xl shadow-dropdown z-50 py-1 text-xs">
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E5E7EB] rounded-[10px] shadow-dropdown z-50 py-1 text-xs">
                 <div className="px-3.5 py-2.5 border-b border-[#E5E7EB]">
-                  <p className="font-bold text-[#111827]">TradeX Trader</p>
+                  <p className="font-bold text-[#111827]">BullRun Trader</p>
                   <p className="text-[11px] text-[#6B7280] font-mono">Paper Account Active</p>
                 </div>
 
                 <Link
                   href="/explore"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[#6B7280]" />
                   <span>Explore Markets</span>
@@ -640,7 +641,7 @@ export function Topbar() {
                 <Link
                   href="/portfolio"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
                 >
                   <WalletIcon className="w-3.5 h-3.5 text-[#6B7280]" />
                   <span>Portfolio Holdings</span>
@@ -649,7 +650,7 @@ export function Topbar() {
                 <Link
                   href="/orders"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
                 >
                   <Activity className="w-3.5 h-3.5 text-[#6B7280]" />
                   <span>Order Book</span>
@@ -658,16 +659,16 @@ export function Topbar() {
                 <Link
                   href="/terminal"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
                 >
-                  <TerminalIcon className="w-3.5 h-3.5 text-[#4F46E5]" />
-                  <span className="font-medium text-[#4F46E5]">Trading Terminal</span>
+                  <TerminalIcon className="w-3.5 h-3.5 text-[#F97316]" />
+                  <span className="font-medium text-[#111827]">Trading Terminal</span>
                 </Link>
 
                 <Link
                   href="/admin/monitoring"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
+                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-[#6B7280]" />
                   <span>System Monitoring</span>
@@ -677,25 +678,26 @@ export function Topbar() {
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 w-full px-3.5 py-2 text-[#EF4444] hover:bg-rose-50 text-left font-medium"
+                  className="flex items-center gap-2 w-full px-3.5 py-2 text-[#DC2626] hover:bg-rose-50 text-left font-medium"
                 >
-                  <LogOut className="w-3.5 h-3.5 text-[#EF4444]" />
+                  <LogOut className="w-3.5 h-3.5 text-[#DC2626]" />
                   <span>Log out</span>
                 </button>
               </div>
             )}
           </div>
         </div>
-      </header>
+      </nav>
+    </header>
 
       {/* Paper Trading Information Modal */}
       {isPaperModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl select-none">
+          <div className="bg-white border border-[#E5E7EB] rounded-[10px] max-w-sm w-full p-5 space-y-4 shadow-dropdown select-none">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-emerald-50 text-[#00A86B]">
-                  <ShieldCheck className="w-5 h-5" />
+                <div className="p-2 rounded-[8px] bg-[#F0FDF4] text-[#16A34A]">
+                  <ShieldCheck className="w-5 h-5 text-[#16A34A]" />
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-[#111827]">Paper Trading Mode</h3>
@@ -710,9 +712,9 @@ export function Topbar() {
               </button>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] space-y-2">
+            <div className="p-3.5 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-[#6B7280]">Available Virtual Balance:</span>
+                <span className="text-[#6B7280]">Available Virtual Margin:</span>
                 <span className="font-mono font-bold text-[#111827] tabular-nums">
                   ₹{wallet ? Number(wallet.available_balance).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "1,00,000.00"}
                 </span>
@@ -732,12 +734,12 @@ export function Topbar() {
             </div>
 
             <p className="text-xs text-[#6B7280] leading-relaxed">
-              Real money is not involved. All orders execute against your virtual TradeX balance with real-time market price benchmarks and simulated regulatory charges.
+              Real money is not involved. All orders execute against your virtual BullRun balance with real-time market price benchmarks and simulated regulatory charges.
             </p>
 
             <button
               onClick={() => setIsPaperModalOpen(false)}
-              className="w-full py-2 rounded-xl bg-[#4F46E5] text-white font-bold text-xs hover:bg-[#4338CA] transition-colors"
+              className="w-full py-2 rounded-[8px] bg-[#F97316] text-white font-semibold text-xs hover:bg-[#EA580C] transition-colors"
             >
               Continue Trading
             </button>

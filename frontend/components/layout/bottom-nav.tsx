@@ -18,7 +18,7 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E5E7EB] flex items-center justify-around h-14 px-2 select-none shadow-md">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#E5E7EB] flex items-center justify-around h-14 px-2 select-none shadow-none">
       {navItems.map((item) => {
         const isActive =
           item.name === "Home"
@@ -35,13 +35,13 @@ export function BottomNav() {
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center w-full py-1 text-[10px] font-medium transition-colors",
-              isActive ? "text-[#4F46E5] font-bold" : "text-[#6B7280] hover:text-[#111827]"
+              isActive ? "text-[#F97316] font-bold" : "text-[#6B7280] hover:text-[#111827]"
             )}
           >
             <Icon
               className={cn(
                 "w-4 h-4 mb-0.5 transition-colors",
-                isActive ? "text-[#4F46E5]" : "text-[#9CA3AF]"
+                isActive ? "text-[#F97316]" : "text-[#9CA3AF]"
               )}
             />
             <span>{item.name}</span>

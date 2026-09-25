@@ -5,7 +5,7 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
   return (
     <div
       className={cn(
-        "rounded-xl border border-slate-200/90 bg-white shadow-card transition-all",
+        "rounded-[10px] border border-[#E5E7EB] bg-[#FFFFFF] shadow-none transition-all",
         className
       )}
       {...props}
@@ -17,7 +17,7 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
 
 export function CardHeader({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("px-5 py-4 border-b border-slate-100 flex items-center justify-between", className)} {...props}>
+    <div className={cn("px-4 py-3.5 border-b border-[#E5E7EB] flex items-center justify-between", className)} {...props}>
       {children}
     </div>
   );
@@ -25,7 +25,7 @@ export function CardHeader({ className, children, ...props }: React.HTMLAttribut
 
 export function CardTitle({ className, children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn("text-sm font-semibold text-slate-900 tracking-tight", className)} {...props}>
+    <h3 className={cn("text-sm font-bold text-[#111827] tracking-tight", className)} {...props}>
       {children}
     </h3>
   );
@@ -33,7 +33,7 @@ export function CardTitle({ className, children, ...props }: React.HTMLAttribute
 
 export function CardContent({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("p-5", className)} {...props}>
+    <div className={cn("p-4", className)} {...props}>
       {children}
     </div>
   );
@@ -41,7 +41,7 @@ export function CardContent({ className, children, ...props }: React.HTMLAttribu
 
 export function CardFooter({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("px-5 py-3 border-t border-slate-100 flex items-center", className)} {...props}>
+    <div className={cn("px-4 py-3 border-t border-[#E5E7EB] flex items-center", className)} {...props}>
       {children}
     </div>
   );
