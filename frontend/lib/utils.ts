@@ -65,3 +65,7 @@ export function normalizeStockSymbol(symbol: string | null | undefined): string 
   return decoded.toUpperCase();
 }
 
+// Re-export standardized Indian financial formatters
+export * from "./formatters";
+
+

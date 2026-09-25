@@ -5,6 +5,7 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown, Eye, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { normalizeStockSymbol } from "@/lib/utils";
+import { formatStockPrice } from "@/lib/formatters";
 
 export interface StockCardProps {
   symbol: string;
@@ -71,21 +72,21 @@ export function StockCard({
   };
 
   return (
-    <div className="flex flex-col justify-between p-4 rounded-xl border border-slate-200/90 bg-white hover:border-slate-300 hover:shadow-cardHover transition-all h-[142px] group select-none">
+    <div className="flex flex-col justify-between p-3.5 rounded-[10px] border border-[#E5E7EB] bg-white hover:border-[#CBD5E1] transition-all h-[142px] group select-none">
       {/* Top row: Logo/Monogram + Ticker & Name */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200/60 font-mono">
+          <div className="w-8 h-8 rounded-[6px] bg-[#F8FAFC] text-[#111827] font-bold text-xs flex items-center justify-center shrink-0 border border-[#E5E7EB] font-mono">
             {cleanSymbol.slice(0, 2)}
           </div>
           <div className="min-w-0 flex-1">
             <Link
               href={`/stocks/${encodeURIComponent(cleanSymbol)}`}
-              className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors block truncate"
+              className="text-xs font-bold text-[#111827] group-hover:text-[#F97316] transition-colors block truncate"
             >
               {cleanSymbol}
             </Link>
-            <p className="text-[11px] text-slate-500 truncate line-clamp-1" title={name}>
+            <p className="text-[11px] text-[#6B7280] truncate line-clamp-1" title={name}>
               {name}
             </p>
           </div>
@@ -97,40 +98,40 @@ export function StockCard({
 
       {/* Middle row: Price & Change */}
       <div className="flex items-baseline justify-between pt-1 font-mono">
-        <span className="text-sm font-bold text-slate-900">
-          {typeof price === "number" ? `₹${price.toFixed(2)}` : price}
+        <span className="text-sm font-bold text-[#111827] tabular-nums">
+          {formatStockPrice(price)}
         </span>
         <span
-          className={`text-[11px] font-semibold flex items-center gap-0.5 ${
-            isUp ? "text-emerald-600" : isDown ? "text-rose-600" : "text-slate-500"
+          className={`text-[11px] font-semibold flex items-center gap-0.5 tabular-nums ${
+            isUp ? "text-[#16A34A]" : isDown ? "text-[#DC2626]" : "text-[#6B7280]"
           }`}
         >
           {isUp && "+"}
-          {changePercent}
+          {typeof changePercent === "number" ? changePercent.toFixed(2) : changePercent}
           {typeof changePercent === "number" && "%"}
         </span>
       </div>
 
       {/* Bottom row: Compact Actions */}
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+      <div className="flex items-center justify-between pt-2 border-t border-[#E5E7EB] text-xs">
         <Link
           href={`/stocks/${encodeURIComponent(cleanSymbol)}`}
-          className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1"
+          className="text-[11px] font-semibold text-[#6B7280] hover:text-[#111827] transition-colors flex items-center gap-1"
         >
-          <Eye className="w-3 h-3 text-slate-400" />
+          <Eye className="w-3 h-3 text-[#9CA3AF]" />
           <span>Details</span>
         </Link>
 
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => onTrade ? onTrade(cleanSymbol, "BUY") : null}
-            className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+            className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] hover:bg-[#DCFCE7] transition-colors"
           >
             BUY
           </button>
           <button
             onClick={() => onTrade ? onTrade(cleanSymbol, "SELL") : null}
-            className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors"
+            className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] hover:bg-[#FEE2E2] transition-colors"
           >
             SELL
           </button>

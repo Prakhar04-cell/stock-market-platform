@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { apiRequest } from "@/lib/api-client";
 import { marketWs, WsPriceUpdate, useMarketWebSocket } from "@/lib/market-ws";
+import { formatStockPrice } from "@/lib/formatters";
 
 interface IndexItem {
   name: string;
@@ -139,7 +140,7 @@ export function IndexTickerBar() {
               {hasValue ? (
                 <div className="flex items-baseline gap-1.5">
                   <span className="font-bold text-[#111827] text-xs sm:text-[13px] tabular-nums">
-                    ₹{idx.value?.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatStockPrice(idx.value)}
                   </span>
                   <span
                     className={`text-[11px] sm:text-xs font-semibold tabular-nums ${
