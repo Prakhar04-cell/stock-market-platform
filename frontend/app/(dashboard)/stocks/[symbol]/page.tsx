@@ -219,17 +219,17 @@ export default function StockDetailPage() {
 
   return (
     <div className="space-y-6 select-none pb-24 lg:pb-8">
-      {/* Upstox Re-Authentication Alert Banner if Token Expired */}
-      {authError && (
+      {/* Upstox Re-Authentication Alert Banner only if no quote is available */}
+      {authError && !quote && (
         <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2.5">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
             <div>
               <h4 className="text-xs font-bold text-amber-900">
-                Market Data Authorization Required
+                Primary Market Feed Offline
               </h4>
               <p className="text-[11px] text-amber-700">
-                Upstox market tick stream token has expired. Connect Upstox to resume real-time feeds.
+                Primary Upstox token is expired. Connect Upstox to resume primary real-time stream.
               </p>
             </div>
           </div>
@@ -268,16 +268,26 @@ export default function StockDetailPage() {
             {symbol.slice(0, 2)}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-xl font-bold tracking-tight text-[#111827] leading-none">
                 {symbol}
               </h1>
               <span className="text-[10px] px-2 py-0.5 rounded bg-[#F7F8FA] text-[#6B7280] border border-[#E5E7EB] font-mono font-bold">
                 {stock?.exchange_code || "NSE"}
               </span>
-              <span className="text-[10.5px] px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#00A86B] font-bold">
-                ● LIVE
-              </span>
+              {quote?.status === "FALLBACK" ? (
+                <span className="text-[10.5px] px-2.5 py-0.5 rounded-full bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] font-bold">
+                  ● MARKET DATA: FALLBACK
+                </span>
+              ) : quote?.status === "LIVE" ? (
+                <span className="text-[10.5px] px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#00A86B] font-bold">
+                  ● LIVE
+                </span>
+              ) : (
+                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">
+                  {quote?.status || "INITIALIZING"}
+                </span>
+              )}
             </div>
             <p className="text-xs text-[#6B7280] mt-1">
               {stock?.name || `${symbol} Equities Ltd`}

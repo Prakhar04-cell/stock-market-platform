@@ -27,14 +27,29 @@ const DEFAULT_INDICES: IndexItem[] = [
 
 export function IndexTickerBar() {
   const [indices, setIndices] = useState<IndexItem[]>(DEFAULT_INDICES);
+  const [providerInfo, setProviderInfo] = useState<{ provider: string; is_fallback: boolean }>({
+    provider: "UPSTOX",
+    is_fallback: false,
+  });
   const { connectionState } = useMarketWebSocket();
 
   // Load initial ticker data from API
   const loadTicker = useCallback(async () => {
     try {
-      const res = await apiRequest<{ indices: IndexItem[]; provider_configured: boolean }>("/api/v1/market/ticker");
+      const res = await apiRequest<{
+        indices: IndexItem[];
+        provider_configured: boolean;
+        provider?: string;
+        is_fallback?: boolean;
+      }>("/api/v1/market/ticker");
       if (res && res.indices && res.indices.length > 0) {
         setIndices(res.indices);
+        if (res.provider) {
+          setProviderInfo({
+            provider: res.provider,
+            is_fallback: Boolean(res.is_fallback || res.provider === "BHARATSTOCKAPI"),
+          });
+        }
       }
     } catch {
       setIndices((prev) =>
@@ -107,16 +122,34 @@ export function IndexTickerBar() {
         className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 border transition-colors ${
           isLive
             ? "bg-[#F0FDF4] border-[#BBF7D0] text-[#16A34A]"
+            : providerInfo.is_fallback
+            ? "bg-[#FFFBEB] border-[#FDE68A] text-[#B45309]"
             : "bg-[#F8FAFC] border-[#E5E7EB] text-[#4B5563]"
         }`}
-        title={isLive ? "Market WebSocket stream connected" : "Market WebSocket feed disconnected"}
+        title={
+          isLive
+            ? "Market WebSocket stream connected"
+            : providerInfo.is_fallback
+            ? "Market Data: Fallback Provider (BharatStockAPI)"
+            : "Market WebSocket feed disconnected"
+        }
       >
         <span
           className={`w-1.5 h-1.5 rounded-full ${
-            isLive ? "bg-[#16A34A] animate-pulse" : "bg-slate-400"
+            isLive
+              ? "bg-[#16A34A] animate-pulse"
+              : providerInfo.is_fallback
+              ? "bg-[#D97706]"
+              : "bg-slate-400"
           }`}
         />
-        <span>{isLive ? "● LIVE FEED" : "○ FEED DISCONNECTED"}</span>
+        <span>
+          {isLive
+            ? "● LIVE FEED"
+            : providerInfo.is_fallback
+            ? "MARKET DATA: FALLBACK"
+            : "○ FEED DISCONNECTED"}
+        </span>
       </div>
 
       <div className="h-3.5 w-[1px] bg-[#E5E7EB] shrink-0" />

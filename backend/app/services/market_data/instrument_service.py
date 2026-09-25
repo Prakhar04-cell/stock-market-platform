@@ -256,6 +256,18 @@ class InstrumentService:
                         )
                     )
 
+            # Fallback to BharatStockAPI if local search returned no results
+            if not results:
+                try:
+                    from app.services.providers.bharatstock_provider import bharatstock_provider
+                    if bharatstock_provider.is_configured:
+                        fb_instruments = await bharatstock_provider.search_instruments(query=q, exchange=exchange)
+                        for item in fb_instruments:
+                            if not any(r.symbol == item.symbol for r in results):
+                                results.append(item)
+                except Exception as e:
+                    logger.debug(f"BharatStockAPI search fallback failed: {e}")
+
         return results[:limit]
 
     async def get_instrument_by_key(self, instrument_key: str) -> Optional[InstrumentData]:

@@ -125,6 +125,12 @@ class Settings(BaseSettings):
     PAPER_SEBI_PERCENT: Decimal = Decimal("0.000001")  # ₹10/crore = 0.0001%
     PAPER_GST_PERCENT: Decimal = Decimal("0.18")  # 18% on (brokerage + turnover + sebi)
 
+    # External Market Data API (Fallback Provider)
+    # Server-side only — never exposed to frontend
+    MARKET_DATA_API_KEY: str = ""
+    MARKET_DATA_API_BASE_URL: str = "https://bharatstockapi.com"
+    MARKET_DATA_API_PROVIDER: str = "BharatStockAPI"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -126,12 +126,19 @@ async def get_stock_by_symbol(
 
     if quote:
         market_status = quote.status
-        market_msg = f"Live market feed active ({quote.status})"
+        is_fallback = quote.status == "FALLBACK" or getattr(quote, "source", None) == "BHARATSTOCKAPI"
+        market_msg = (
+            "Market data active via fallback provider (BharatStockAPI)"
+            if is_fallback
+            else f"Live market feed active ({quote.status})"
+        )
         ltp = quote.ltp
         day_chg = quote.change
         day_chg_pct = quote.change_percent
         stats = {
             "status": quote.status,
+            "source": getattr(quote, "source", "BHARATSTOCKAPI" if is_fallback else "UPSTOX"),
+            "provider": getattr(quote, "source", "BHARATSTOCKAPI" if is_fallback else "UPSTOX"),
             "open": quote.open,
             "high": quote.high,
             "low": quote.low,

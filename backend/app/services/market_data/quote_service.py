@@ -9,6 +9,7 @@ from app.core.redis import get_redis
 from app.services.market_data.instrument_service import instrument_service
 from app.services.market_data.normalizer import MarketQuote
 from app.services.market_data.upstox_provider import UpstoxAuthRequiredError, upstox_provider
+from app.services.providers.bharatstock_provider import bharatstock_provider
 
 logger = logging.getLogger("tradex.quotes")
 
@@ -16,7 +17,8 @@ logger = logging.getLogger("tradex.quotes")
 class QuoteService:
     """
     High-performance real market quote retrieval service with dual-tier
-    (In-Memory + Redis) caching and automated provider fallback.
+    (In-Memory + Redis) caching and automated provider fallback:
+    UPSTOX (Primary) -> BHARATSTOCKAPI (Fallback) -> Redis -> FastAPI -> UI.
     """
 
     CACHE_TTL_SECONDS = 60  # Short cache for quotes
@@ -28,12 +30,14 @@ class QuoteService:
     async def get_quote(self, symbol_or_key: str) -> Optional[MarketQuote]:
         """Fetch quote for a single symbol or instrument key."""
         quotes = await self.get_quotes([symbol_or_key])
-        return quotes.get(symbol_or_key.strip().upper())
+        clean = symbol_or_key.strip().upper()
+        return quotes.get(clean) or quotes.get(clean.replace(":", "|"))
 
     async def get_quotes(self, symbols_or_keys: List[str]) -> Dict[str, MarketQuote]:
         """
         Retrieves multiple market quotes.
-        Checks in-memory cache, then Redis MGET, batch-fetching any misses from Upstox.
+        Checks in-memory cache, then Redis MGET, batch-fetching misses from Upstox (primary)
+        and falling back to BharatStockAPI for any remaining unfulfilled symbols.
         """
         if not symbols_or_keys:
             return {}
@@ -103,7 +107,8 @@ class QuoteService:
         else:
             redis_misses = unique_missing
 
-        # 3. Batch fetch missing quotes from Upstox Provider
+        # 3. Batch fetch missing quotes from Upstox Provider (PRIMARY)
+        remaining_misses: List[str] = list(redis_misses)
         if redis_misses:
             try:
                 fetched_quotes = await upstox_provider.get_quotes(redis_misses)
@@ -115,10 +120,43 @@ class QuoteService:
                     results[orig_sym] = quote
                     results[quote.symbol.upper()] = quote
                     await self.cache_quote(quote, extra_alias=orig_sym)
+                    if ikey in remaining_misses:
+                        remaining_misses.remove(ikey)
+                    if ikey_pipe in remaining_misses:
+                        remaining_misses.remove(ikey_pipe)
+                    if orig_sym in remaining_misses:
+                        remaining_misses.remove(orig_sym)
             except UpstoxAuthRequiredError as e:
-                logger.info(f"Upstox provider authentication required: {e}")
+                logger.info(f"Upstox provider authentication required, falling back to secondary: {e}")
             except Exception as e:
-                logger.warning(f"Failed to fetch quotes from provider for {redis_misses}: {e}")
+                logger.warning(f"Failed to fetch quotes from primary Upstox provider: {e}")
+
+        # 4. Fallback to BharatStockAPI for any remaining misses (FALLBACK)
+        if remaining_misses and bharatstock_provider.is_configured:
+            try:
+                # Convert keys to simple trading symbols for BharatStockAPI
+                fb_symbols: List[str] = []
+                for k in remaining_misses:
+                    sym = key_to_symbol_map.get(k)
+                    if not sym:
+                        sym = await instrument_service.get_symbol_for_key(k)
+                    if not sym:
+                        sym = k.split("|")[-1] if "|" in k else k
+                    if sym and sym not in fb_symbols:
+                        fb_symbols.append(sym)
+
+                fb_quotes = await bharatstock_provider.get_quotes(fb_symbols)
+                for sym_or_key, quote in fb_quotes.items():
+                    orig_sym = key_to_symbol_map.get(sym_or_key, quote.symbol.upper())
+                    ikey = quote.instrument_key
+                    ikey_pipe = ikey.replace(":", "|")
+                    results[quote.symbol.upper()] = quote
+                    results[orig_sym] = quote
+                    results[ikey] = quote
+                    results[ikey_pipe] = quote
+                    await self.cache_quote(quote, extra_alias=orig_sym)
+            except Exception as e:
+                logger.warning(f"Failed to fetch quotes from BharatStockAPI fallback: {e}")
 
         return results
 
@@ -158,6 +196,7 @@ class QuoteService:
                 "year_high": str(quote.year_high) if quote.year_high is not None else None,
                 "year_low": str(quote.year_low) if quote.year_low is not None else None,
                 "status": quote.status,
+                "source": quote.source or ("BHARATSTOCKAPI" if quote.status == "FALLBACK" else "UPSTOX"),
             }
             dumped = json.dumps(payload)
             await redis.set(f"market:quote:{ikey}", dumped, ex=self.CACHE_TTL_SECONDS)
@@ -186,6 +225,7 @@ class QuoteService:
             year_high=Decimal(raw["year_high"]) if raw.get("year_high") is not None else None,
             year_low=Decimal(raw["year_low"]) if raw.get("year_low") is not None else None,
             status=raw.get("status", "LIVE"),
+            source=raw.get("source", "UPSTOX"),
         )
 
 

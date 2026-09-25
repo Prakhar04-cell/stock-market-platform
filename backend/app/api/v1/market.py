@@ -9,6 +9,7 @@ from app.services.market_data.instrument_service import instrument_service
 from app.services.market_data.normalizer import CandleData, InstrumentData, MarketQuote
 from app.services.market_data.quote_service import quote_service
 from app.services.market_data.upstox_provider import UpstoxAuthRequiredError, upstox_provider
+from app.services.providers.bharatstock_provider import bharatstock_provider
 
 logger = logging.getLogger("tradex.api.market")
 
@@ -128,10 +129,16 @@ async def get_index_ticker():
                 "status": "UNAVAILABLE",
             })
 
+    # Determine effective data provider
+    has_live = any(r.get("status") == "LIVE" for r in results)
+    has_fallback = any(r.get("status") == "FALLBACK" for r in results)
+    effective_provider = "UPSTOX" if has_live else ("BHARATSTOCKAPI" if has_fallback else "UNAVAILABLE")
+
     return {
         "indices": results,
-        "provider": "upstox",
-        "provider_configured": upstox_provider.is_configured,
+        "provider": effective_provider,
+        "provider_configured": upstox_provider.is_configured or bharatstock_provider.is_configured,
+        "is_fallback": has_fallback and not has_live,
     }
 
 
@@ -139,6 +146,8 @@ async def get_index_ticker():
 async def get_market_movers():
     """
     Returns real top gainers, losers, and most active stocks based on real market quotes.
+    Primary: Upstox tracked quotes.
+    Fallback: BharatStockAPI dedicated /v1/movers endpoint.
     Strictly uses actual real-time market data without inventing fake prices.
     """
     tracked_stocks = [
@@ -149,9 +158,12 @@ async def get_market_movers():
     quotes_map = await quote_service.get_quotes(tracked_stocks)
 
     items = []
+    has_fallback_item = False
     for sym in tracked_stocks:
         q = quotes_map.get(sym)
         if q and q.ltp and q.ltp > 0:
+            if q.status == "FALLBACK" or getattr(q, "source", None) == "BHARATSTOCKAPI":
+                has_fallback_item = True
             chg = float(q.change) if q.change is not None else 0.0
             chg_pct = float(q.change_percent) if q.change_percent is not None else 0.0
             items.append({
@@ -165,22 +177,78 @@ async def get_market_movers():
                 "is_positive": chg >= 0,
                 "volume": int(q.volume or 0),
                 "status": q.status,
+                "source": getattr(q, "source", "UPSTOX"),
             })
 
-    # Gainers (change_percent desc)
-    gainers = sorted([i for i in items if i["change"] > 0], key=lambda x: x["change_percent"], reverse=True)[:5]
-    # Losers (change_percent asc)
-    losers = sorted([i for i in items if i["change"] < 0], key=lambda x: x["change_percent"])[:5]
-    # Most active (volume desc, or by price if volume not available)
-    most_active = sorted(items, key=lambda x: x["volume"] if x["volume"] > 0 else x["price"], reverse=True)[:5]
+    # If quotes_map yielded valid items, compute movers from them
+    if items:
+        gainers = sorted([i for i in items if i["change"] > 0], key=lambda x: x["change_percent"], reverse=True)[:5]
+        losers = sorted([i for i in items if i["change"] < 0], key=lambda x: x["change_percent"])[:5]
+        most_active = sorted(items, key=lambda x: x["volume"] if x["volume"] > 0 else x["price"], reverse=True)[:5]
+        effective_provider = "BHARATSTOCKAPI" if has_fallback_item else "UPSTOX"
+        effective_status = "FALLBACK" if has_fallback_item else "LIVE"
+
+        return {
+            "gainers": gainers,
+            "losers": losers,
+            "most_active": most_active,
+            "volume_shockers": most_active,
+            "total_tracked": len(items),
+            "provider": effective_provider,
+            "status": effective_status,
+        }
+
+    # If primary Upstox yielded no quotes, query BharatStockAPI dedicated /v1/movers endpoint directly
+    if bharatstock_provider.is_configured:
+        try:
+            fb_gainers = await bharatstock_provider.get_movers(category="gainers", limit=5)
+            fb_losers = await bharatstock_provider.get_movers(category="losers", limit=5)
+            fb_active = await bharatstock_provider.get_movers(category="active", limit=5)
+
+            if fb_gainers or fb_losers or fb_active:
+                return {
+                    "gainers": fb_gainers,
+                    "losers": fb_losers,
+                    "most_active": fb_active,
+                    "volume_shockers": fb_active,
+                    "total_tracked": len(fb_gainers) + len(fb_losers) + len(fb_active),
+                    "provider": "BHARATSTOCKAPI",
+                    "status": "FALLBACK",
+                }
+        except Exception as e:
+            logger.warning(f"Failed to fetch market movers from BharatStockAPI fallback: {e}")
+
+    # Return honest unavailable state
+    return {
+        "gainers": [],
+        "losers": [],
+        "most_active": [],
+        "volume_shockers": [],
+        "total_tracked": 0,
+        "provider": "NONE",
+        "status": "UNAVAILABLE",
+    }
+
+
+@router.get("/status", summary="Get market data provider status and priority telemetry")
+async def get_market_data_status():
+    """
+    Returns telemetry for primary (Upstox) and fallback (BharatStockAPI) providers.
+    Decoupled from client code and safe for dashboards/admin.
+    """
+    upstox_health = await upstox_provider.get_health()
+    bharat_health = await bharatstock_provider.get_health()
 
     return {
-        "gainers": gainers,
-        "losers": losers,
-        "most_active": most_active,
-        "volume_shockers": most_active,
-        "total_tracked": len(items),
-        "provider": "upstox",
-        "status": "LIVE" if items else "UNAVAILABLE",
+        "architecture": {
+            "primary": "UPSTOX",
+            "fallback": "BHARATSTOCKAPI",
+            "cache": "REDIS",
+        },
+        "providers": {
+            "upstox": upstox_health,
+            "bharatstock": bharat_health,
+        },
+        "active_fallback": not upstox_provider.is_configured or not upstox_provider.is_token_valid,
     }
 

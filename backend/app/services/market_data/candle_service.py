@@ -8,6 +8,7 @@ from app.core.redis import get_redis
 from app.services.market_data.instrument_service import instrument_service
 from app.services.market_data.normalizer import CandleData
 from app.services.market_data.upstox_provider import UpstoxAuthRequiredError, upstox_provider
+from app.services.providers.bharatstock_provider import bharatstock_provider
 
 logger = logging.getLogger("tradex.candles")
 
@@ -128,7 +129,7 @@ class CandleService:
             except Exception as e:
                 logger.debug(f"Redis get candles failed: {e}")
 
-        # Fetch from Upstox
+        # 1. Fetch from Upstox (Primary)
         candles: List[CandleData] = []
         try:
             if is_intraday and not from_date:
@@ -143,10 +144,26 @@ class CandleService:
                     to_date=to_date,
                     from_date=from_date,
                 )
-        except UpstoxAuthRequiredError:
-            raise
+        except UpstoxAuthRequiredError as e:
+            logger.info(f"Upstox authentication required for candles, falling back to BharatStockAPI: {e}")
+            candles = []
         except Exception as e:
-            logger.warning(f"Failed to fetch candles for {instrument_key}: {e}")
+            logger.warning(f"Failed to fetch candles from primary Upstox provider for {instrument_key}: {e}")
+            candles = []
+
+        # 2. Fallback to BharatStockAPI if Upstox returned no candles
+        if not candles and bharatstock_provider.is_configured:
+            try:
+                candles = await bharatstock_provider.get_historical_candles(
+                    instrument_key=instrument_key,
+                    interval="1D",
+                    to_date=to_date,
+                    from_date=from_date,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to fetch fallback candles from BharatStockAPI for {instrument_key}: {e}")
+
+        if not candles:
             return []
 
         # Deduplicate & sort chronologically
