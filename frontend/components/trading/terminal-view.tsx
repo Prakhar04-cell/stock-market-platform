@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { formatIndianNumber } from "@/lib/formatters";
 import {
   TrendingUp,
   TrendingDown,
@@ -119,7 +120,7 @@ export function TerminalView({
             <span>H: <strong className="text-emerald-700">{activeOHLC.high.toFixed(2)}</strong></span>
             <span>L: <strong className="text-rose-700">{activeOHLC.low.toFixed(2)}</strong></span>
             <span>C: <strong className="text-slate-800">{activeOHLC.close.toFixed(2)}</strong></span>
-            <span>Vol: <strong className="text-slate-700">{activeOHLC.volume.toLocaleString()}</strong></span>
+            <span>Vol: <strong className="text-slate-700">{formatIndianNumber(activeOHLC.volume)}</strong></span>
           </div>
         )}
 

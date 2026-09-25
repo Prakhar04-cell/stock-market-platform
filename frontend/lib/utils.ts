@@ -1,11 +1,15 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { formatINR, formatPercentage } from "./formatters";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export function formatCurrency(amount: number | string | null | undefined, currency = "INR"): string {
+  if (currency === "INR") {
+    return formatINR(amount);
+  }
   if (amount === null || amount === undefined || isNaN(Number(amount))) {
     return "—";
   }
@@ -21,9 +25,7 @@ export function formatPercent(value: number | string | null | undefined): string
   if (value === null || value === undefined || isNaN(Number(value))) {
     return "—";
   }
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  const sign = num > 0 ? "+" : "";
-  return `${sign}${num.toFixed(2)}%`;
+  return formatPercentage(value);
 }
 
 export function formatDateTime(dateStr: string | null | undefined): string {

@@ -10,6 +10,14 @@ import { useMarketWebSocket, WsPriceUpdate } from "@/lib/market-ws";
 import { normalizeStockSymbol } from "@/lib/utils";
 import { addRecentlyViewed } from "@/lib/recently-viewed";
 import {
+  formatStockPrice,
+  formatIndianNumber,
+  formatCompactINR,
+  formatLakhCrore,
+  formatPnL,
+  formatPercentage,
+} from "@/lib/formatters";
+import {
   Bookmark,
   ArrowLeft,
   AlertCircle,
@@ -282,22 +290,21 @@ export default function StockDetailPage() {
           <div className="text-left md:text-right font-mono">
             <div className="text-2xl font-black text-[#111827] tracking-tight tabular-nums">
               {numLtp !== null
-                ? `₹${numLtp.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                ? formatStockPrice(numLtp)
                 : "₹ --"}
             </div>
-            {numChange !== null && (
-              <div
-                className={`text-xs font-bold tabular-nums flex items-center md:justify-end gap-1 ${
-                  isPositive ? "text-[#00A86B]" : "text-[#EF4444]"
-                }`}
-              >
-                <span>
-                  {isPositive ? "+" : ""}
-                  {numChange.toFixed(2)} ({isPositive ? "+" : ""}
-                  {numChangePct?.toFixed(2)}%)
-                </span>
-              </div>
-            )}
+            {numChange !== null && (() => {
+              const pnl = formatPnL(numChange, numChangePct ?? 0);
+              return (
+                <div
+                  className={`text-xs font-bold tabular-nums flex items-center md:justify-end gap-1 ${pnl.colorClass}`}
+                >
+                  <span>
+                    {pnl.amountText} ({pnl.percentText})
+                  </span>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Add to Watchlist Button */}
@@ -338,16 +345,16 @@ export default function StockDetailPage() {
                 <div>
                   <span className="text-[10px] text-[#6B7280] block">Today&apos;s Low</span>
                   <span className="font-mono font-bold text-[#EF4444] tabular-nums">
-                    ₹{dayLow.toFixed(2)}
+                    {formatStockPrice(dayLow)}
                   </span>
                 </div>
                 <div className="text-center font-mono text-[11px] font-bold text-[#111827] tabular-nums">
-                  LTP: ₹{numLtp ? numLtp.toFixed(2) : "--"}
+                  LTP: {numLtp ? formatStockPrice(numLtp) : "--"}
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] text-[#6B7280] block">Today&apos;s High</span>
                   <span className="font-mono font-bold text-[#00A86B] tabular-nums">
-                    ₹{dayHigh.toFixed(2)}
+                    {formatStockPrice(dayHigh)}
                   </span>
                 </div>
               </div>
@@ -371,7 +378,7 @@ export default function StockDetailPage() {
                 <div>
                   <span className="text-[10px] text-[#6B7280] block">52-Week Low</span>
                   <span className="font-mono font-bold text-[#4B5563] tabular-nums">
-                    ₹{yearLow.toFixed(2)}
+                    {formatStockPrice(yearLow)}
                   </span>
                 </div>
                 <div className="text-center font-mono text-[11px] font-bold text-[#111827] tabular-nums">
@@ -380,7 +387,7 @@ export default function StockDetailPage() {
                 <div className="text-right">
                   <span className="text-[10px] text-[#6B7280] block">52-Week High</span>
                   <span className="font-mono font-bold text-[#4B5563] tabular-nums">
-                    ₹{yearHigh.toFixed(2)}
+                    {formatStockPrice(yearHigh)}
                   </span>
                 </div>
               </div>
@@ -414,7 +421,7 @@ export default function StockDetailPage() {
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
                 <span className="text-[#6B7280] text-[11px] block">Market Cap</span>
                 <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
-                  {stock?.market_cap ? `₹${(Number(stock.market_cap) / 10000000).toFixed(2)} Cr` : "--"}
+                  {stock?.market_cap ? formatLakhCrore(Number(stock.market_cap)) : "--"}
                 </span>
               </div>
 
@@ -449,7 +456,7 @@ export default function StockDetailPage() {
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
                 <span className="text-[#6B7280] text-[11px] block">EPS (TTM)</span>
                 <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
-                  {stock?.eps ? `₹${Number(stock.eps).toFixed(2)}` : "--"}
+                  {stock?.eps ? formatStockPrice(Number(stock.eps)) : "--"}
                 </span>
               </div>
 
@@ -463,7 +470,7 @@ export default function StockDetailPage() {
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
                 <span className="text-[#6B7280] text-[11px] block">Volume (Today)</span>
                 <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
-                  {quote?.volume ? Number(quote.volume).toLocaleString("en-IN") : "--"}
+                  {quote?.volume ? formatIndianNumber(Number(quote.volume)) : "--"}
                 </span>
               </div>
             </div>

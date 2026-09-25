@@ -8,6 +8,7 @@ import { OrderPadModal } from "@/components/trading/order-pad-modal";
 import { TableRowSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { marketWs, WsPriceUpdate } from "@/lib/market-ws";
+import { formatStockPrice, formatPercentage, formatPnL } from "@/lib/formatters";
 import {
   Bookmark,
   Plus,
@@ -328,7 +329,7 @@ export default function WatchlistPage() {
                   const price = q?.ltp;
                   const chg = q?.change ?? 0;
                   const chgPct = q?.change_percent ?? 0;
-                  const isPos = chg >= 0;
+                  const pnl = formatPnL(chg, chgPct);
 
                   return (
                     <tr
@@ -358,7 +359,7 @@ export default function WatchlistPage() {
                       {/* LTP */}
                       <td className="py-3 px-4 text-right font-mono font-bold text-xs text-[#111827] tabular-nums">
                         {price !== undefined
-                          ? `₹${price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          ? formatStockPrice(price)
                           : "₹ --"}
                       </td>
 
@@ -366,26 +367,22 @@ export default function WatchlistPage() {
                       <td
                         className={`py-3 px-4 text-right font-mono font-semibold text-xs tabular-nums ${
                           price !== undefined
-                            ? isPos
-                              ? "text-[#00A86B]"
-                              : "text-[#EF4444]"
+                            ? pnl.colorClass
                             : "text-[#9CA3AF]"
                         }`}
                       >
-                        {price !== undefined ? `${isPos ? "+" : ""}${chg.toFixed(2)}` : "--"}
+                        {price !== undefined ? pnl.amountText : "--"}
                       </td>
 
                       {/* Change % */}
                       <td
                         className={`py-3 px-4 text-right font-mono font-bold text-xs tabular-nums ${
                           price !== undefined
-                            ? isPos
-                              ? "text-[#00A86B]"
-                              : "text-[#EF4444]"
+                            ? pnl.colorClass
                             : "text-[#9CA3AF]"
                         }`}
                       >
-                        {price !== undefined ? `${isPos ? "+" : ""}${chgPct.toFixed(2)}%` : "--"}
+                        {price !== undefined ? pnl.percentText : "--"}
                       </td>
 
                       {/* Actions: View, Buy, Sell, Remove */}

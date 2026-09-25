@@ -25,6 +25,14 @@ import { normalizeStockSymbol } from "@/lib/utils";
 import { useMarketWebSocket } from "@/lib/market-ws";
 import { getRecentlyViewed, RecentlyViewedItem } from "@/lib/recently-viewed";
 import { OrderPadModal } from "@/components/trading/order-pad-modal";
+import {
+  formatINR,
+  formatCompactINR,
+  formatIndianNumber,
+  formatStockPrice,
+  formatPercentage,
+  formatPnL,
+} from "@/lib/formatters";
 
 interface QuoteItem {
   symbol: string;
@@ -370,7 +378,7 @@ export default function ExplorePage() {
                 {recentlyViewed.map((item) => {
                   const quote = recentQuotes[item.symbol] || recentQuotes[item.symbol.toUpperCase()];
                   const hasPrice = quote && quote.ltp !== undefined && quote.ltp > 0;
-                  const isPos = (quote?.change_percent ?? 0) >= 0;
+                  const pnl = formatPnL(quote?.change ?? 0, quote?.change_percent ?? 0);
 
                   return (
                     <article
@@ -393,15 +401,12 @@ export default function ExplorePage() {
                         {hasPrice ? (
                           <div>
                             <div className="font-mono text-xs font-bold text-[#111827] tabular-nums">
-                              ₹{quote.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              {formatStockPrice(quote.ltp)}
                             </div>
                             <div
-                              className={`text-[10.5px] font-semibold font-mono tabular-nums ${
-                                isPos ? "text-[#16A34A]" : "text-[#DC2626]"
-                              }`}
+                              className={`text-[10.5px] font-semibold font-mono tabular-nums ${pnl.colorClass}`}
                             >
-                              {isPos ? "+" : ""}{quote.change !== undefined ? quote.change.toFixed(2) : "0.00"}{" "}
-                              ({isPos ? "+" : ""}{quote.change_percent !== undefined ? quote.change_percent.toFixed(2) : "0.00"}%)
+                              {pnl.percentText}
                             </div>
                           </div>
                         ) : (
@@ -472,7 +477,7 @@ export default function ExplorePage() {
                 {mostTradedSymbols.map((sym) => {
                   const q = mostTradedQuotes[sym] || mostTradedQuotes[sym.toUpperCase()];
                   const hasPrice = q && q.ltp !== undefined && q.ltp > 0;
-                  const isPos = (q?.change_percent ?? 0) >= 0;
+                  const pnl = formatPnL(q?.change ?? 0, q?.change_percent ?? 0);
 
                   return (
                     <article
@@ -521,15 +526,12 @@ export default function ExplorePage() {
                           {hasPrice ? (
                             <div>
                               <div className="font-mono text-base font-bold text-[#111827] tabular-nums">
-                                ₹{q.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {formatStockPrice(q.ltp)}
                               </div>
                               <div
-                                className={`text-xs font-semibold font-mono tabular-nums ${
-                                  isPos ? "text-[#16A34A]" : "text-[#DC2626]"
-                                }`}
+                                className={`text-xs font-semibold font-mono tabular-nums ${pnl.colorClass}`}
                               >
-                                {isPos ? "+" : ""}{q.change !== undefined ? q.change.toFixed(2) : "0.00"}{" "}
-                                ({isPos ? "+" : ""}{q.change_percent !== undefined ? q.change_percent.toFixed(2) : "0.00"}%)
+                                {pnl.amountText} ({pnl.percentText})
                               </div>
                             </div>
                           ) : (
@@ -618,7 +620,7 @@ export default function ExplorePage() {
               <div className="divide-y divide-slate-100">
                 {activeMoversList.map((item) => {
                   const chgPct = item.change_percent ?? 0;
-                  const isPos = chgPct >= 0;
+                  const itemPnl = formatPnL(item.change ?? 0, chgPct);
                   return (
                     <article
                       key={item.symbol}
@@ -634,7 +636,7 @@ export default function ExplorePage() {
                             {item.symbol}
                           </span>
                           <span className="text-[10px] text-[#6B7280] font-mono">
-                            {item.volume ? `Vol: ${item.volume.toLocaleString("en-IN")}` : "NSE Equities"}
+                            {item.volume ? `Vol: ${formatIndianNumber(item.volume)}` : "NSE Equities"}
                           </span>
                         </div>
                       </div>
@@ -643,22 +645,19 @@ export default function ExplorePage() {
                       <div className="hidden sm:flex items-center justify-center w-24 h-5 opacity-70">
                         <div
                           className={`w-full h-[2px] rounded ${
-                            isPos ? "bg-[#16A34A]" : "bg-[#DC2626]"
+                            itemPnl.isPositive ? "bg-[#16A34A]" : itemPnl.isNegative ? "bg-[#DC2626]" : "bg-[#9CA3AF]"
                           }`}
                         />
                       </div>
 
                       <div className="text-right shrink-0">
                         <div className="font-mono text-xs font-bold text-[#111827] tabular-nums">
-                          ₹{item.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {formatStockPrice(item.ltp)}
                         </div>
                         <div
-                          className={`text-[10.5px] font-bold font-mono tabular-nums ${
-                            isPos ? "text-[#16A34A]" : "text-[#DC2626]"
-                          }`}
+                          className={`text-[10.5px] font-bold font-mono tabular-nums ${itemPnl.colorClass}`}
                         >
-                          {isPos ? "+" : ""}
-                          {chgPct.toFixed(2)}%
+                          {itemPnl.percentText}
                         </div>
                       </div>
                     </article>
@@ -686,7 +685,6 @@ export default function ExplorePage() {
               {sectors.map((sec) => {
                 const total = sec.gainers + sec.losers;
                 const gainerPct = (sec.gainers / total) * 100;
-                const isPos = sec.change >= 0;
 
                 return (
                   <div
@@ -711,11 +709,10 @@ export default function ExplorePage() {
                     <div className="text-right sm:w-20 shrink-0">
                       <span
                         className={`text-xs font-bold font-mono tabular-nums ${
-                          isPos ? "text-[#16A34A]" : "text-[#DC2626]"
+                          sec.change > 0 ? "text-[#16A34A]" : sec.change < 0 ? "text-[#DC2626]" : "text-[#6B7280]"
                         }`}
                       >
-                        {isPos ? "+" : ""}
-                        {sec.change.toFixed(2)}%
+                        {formatPercentage(sec.change)}
                       </span>
                     </div>
                   </div>
@@ -746,32 +743,33 @@ export default function ExplorePage() {
                 { name: "Nippon India Gold BeES ETF", symbol: "GOLDBEES", cat: "Gold", price: 68.25, chg: 0.85 },
                 { name: "Nippon India Silver BeES ETF", symbol: "SILVERBEES", cat: "Silver", price: 92.1, chg: -0.15 },
                 { name: "Motilal Oswal Nasdaq 100 ETF", symbol: "MON100", cat: "International", price: 164.8, chg: 1.12 },
-              ].map((etf) => (
-                <div
-                  key={etf.symbol}
-                  className="p-3 rounded-[8px] border border-[#E5E7EB] bg-[#F8FAFC] flex items-center justify-between"
-                >
-                  <div>
-                    <span className="text-[10px] text-[#F97316] font-bold">{etf.cat}</span>
-                    <span className="font-bold text-xs text-[#111827] block">{etf.symbol}</span>
-                    <span className="text-[10px] text-[#6B7280] truncate block max-w-[180px]">
-                      {etf.name}
-                    </span>
+              ].map((etf) => {
+                const etfPnl = formatPnL(etf.chg, etf.chg);
+                return (
+                  <div
+                    key={etf.symbol}
+                    className="p-3 rounded-[8px] border border-[#E5E7EB] bg-[#F8FAFC] flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="text-[10px] text-[#F97316] font-bold">{etf.cat}</span>
+                      <span className="font-bold text-xs text-[#111827] block">{etf.symbol}</span>
+                      <span className="text-[10px] text-[#6B7280] truncate block max-w-[180px]">
+                        {etf.name}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono text-xs font-bold text-[#111827] block tabular-nums">
+                        {formatStockPrice(etf.price)}
+                      </span>
+                      <span
+                        className={`text-[10.5px] font-bold font-mono tabular-nums ${etfPnl.colorClass}`}
+                      >
+                        {etfPnl.percentText}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="font-mono text-xs font-bold text-[#111827] block tabular-nums">
-                      ₹{etf.price.toFixed(2)}
-                    </span>
-                    <span
-                      className={`text-[10.5px] font-bold font-mono tabular-nums ${
-                        etf.chg >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"
-                      }`}
-                    >
-                      {etf.chg >= 0 ? "+" : ""}{etf.chg.toFixed(2)}%
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -897,56 +895,61 @@ export default function ExplorePage() {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-3">
-                <div className="p-3.5 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] space-y-2">
-                  <div className="flex justify-between items-baseline">
-                    <span className="text-xs text-[#6B7280]">Current Value</span>
-                    <span className="font-mono text-base font-bold text-[#111827] tabular-nums">
-                      ₹{portfolio.current_value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
+              (() => {
+                const todayPnl = formatPnL(portfolio.today_pnl, portfolio.today_pnl_percent);
+                const totalPnl = formatPnL(portfolio.total_pnl, portfolio.total_pnl_percent);
 
-                  <div className="flex justify-between items-baseline pt-1 border-t border-[#E5E7EB]">
-                    <span className="text-xs text-[#6B7280]">Invested</span>
-                    <span className="font-mono text-xs font-semibold text-[#4B5563] tabular-nums">
-                      ₹{portfolio.total_invested.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
+                return (
+                  <div className="space-y-3">
+                    <div className="p-3.5 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] space-y-2">
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-xs text-[#6B7280]">Current Value</span>
+                        <span
+                          className="font-mono text-base font-bold text-[#111827] tabular-nums"
+                          title={formatINR(portfolio.current_value)}
+                        >
+                          {formatCompactINR(portfolio.current_value)}
+                        </span>
+                      </div>
 
-                  <div className="flex justify-between items-baseline">
-                    <span className="text-xs text-[#6B7280]">1D Returns</span>
-                    <span
-                      className={`font-mono text-xs font-bold tabular-nums ${
-                        portfolio.today_pnl >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"
-                      }`}
+                      <div className="flex justify-between items-baseline pt-1 border-t border-[#E5E7EB]">
+                        <span className="text-xs text-[#6B7280]">Invested</span>
+                        <span
+                          className="font-mono text-xs font-semibold text-[#4B5563] tabular-nums"
+                          title={formatINR(portfolio.total_invested)}
+                        >
+                          {formatCompactINR(portfolio.total_invested)}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-xs text-[#6B7280]">1D Returns</span>
+                        <span
+                          className={`font-mono text-xs font-bold tabular-nums ${todayPnl.colorClass}`}
+                        >
+                          {todayPnl.amountText} ({todayPnl.percentText})
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-xs text-[#6B7280]">Total Returns</span>
+                        <span
+                          className={`font-mono text-xs font-bold tabular-nums ${totalPnl.colorClass}`}
+                        >
+                          {totalPnl.amountText} ({totalPnl.percentText})
+                        </span>
+                      </div>
+                    </div>
+
+                    <Link
+                      href="/portfolio"
+                      className="block text-center w-full py-2 rounded-[8px] border border-[#E5E7EB] text-xs font-semibold text-[#111827] hover:bg-[#F8FAFC] transition-colors"
                     >
-                      {portfolio.today_pnl >= 0 ? "+" : ""}₹{portfolio.today_pnl.toFixed(2)} (
-                      {portfolio.today_pnl_percent >= 0 ? "+" : ""}
-                      {portfolio.today_pnl_percent.toFixed(2)}%)
-                    </span>
+                      View All {portfolio.holdings_count} Holdings →
+                    </Link>
                   </div>
-
-                  <div className="flex justify-between items-baseline">
-                    <span className="text-xs text-[#6B7280]">Total Returns</span>
-                    <span
-                      className={`font-mono text-xs font-bold tabular-nums ${
-                        portfolio.total_pnl >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"
-                      }`}
-                    >
-                      {portfolio.total_pnl >= 0 ? "+" : ""}₹{portfolio.total_pnl.toFixed(2)} (
-                      {portfolio.total_pnl_percent >= 0 ? "+" : ""}
-                      {portfolio.total_pnl_percent.toFixed(2)}%)
-                    </span>
-                  </div>
-                </div>
-
-                <Link
-                  href="/portfolio"
-                  className="block text-center w-full py-2 rounded-[8px] border border-[#E5E7EB] text-xs font-semibold text-[#111827] hover:bg-[#F8FAFC] transition-colors"
-                >
-                  View All {portfolio.holdings_count} Holdings →
-                </Link>
-              </div>
+                );
+              })()
             )}
           </div>
 

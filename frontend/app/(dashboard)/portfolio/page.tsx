@@ -9,6 +9,13 @@ import { MetricCardSkeleton, TableRowSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { marketWs, WsPriceUpdate } from "@/lib/market-ws";
 import {
+  formatINR,
+  formatCompactINR,
+  formatStockPrice,
+  formatPercentage,
+  formatPnL,
+} from "@/lib/formatters";
+import {
   Briefcase,
   TrendingUp,
   TrendingDown,
@@ -165,7 +172,9 @@ export default function PortfolioPage() {
   const totalUnrealizedPnl = computedHoldings.reduce((sum, h) => sum + h.computedPnl, 0);
   const totalPnl = totalUnrealizedPnl + (portfolio ? Number(portfolio.realized_pnl) : 0);
   const totalPnlPercent = invested > 0 ? (totalPnl / invested) * 100 : 0;
-  const isPnlPositive = totalPnl >= 0;
+  const unrealizedPercent = invested > 0 ? (totalUnrealizedPnl / invested) * 100 : 0;
+  const unrealizedPnlData = formatPnL(totalUnrealizedPnl, unrealizedPercent);
+  const overallPnlData = formatPnL(totalPnl, totalPnlPercent);
 
   const handleTabChange = (tab: "HOLDINGS" | "POSITIONS") => {
     setActiveTab(tab);
@@ -243,8 +252,11 @@ export default function PortfolioPage() {
           {/* Total Value */}
           <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Total Value</span>
-            <div className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums">
-              ₹{currentPortfolioVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <div
+              className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums"
+              title={formatINR(currentPortfolioVal)}
+            >
+              {formatCompactINR(currentPortfolioVal)}
             </div>
             <span className="text-[11px] text-[#6B7280] block">Holdings Value</span>
           </div>
@@ -252,8 +264,11 @@ export default function PortfolioPage() {
           {/* Invested */}
           <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Invested</span>
-            <div className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums">
-              ₹{invested.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <div
+              className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums"
+              title={formatINR(invested)}
+            >
+              {formatCompactINR(invested)}
             </div>
             <span className="text-[11px] text-[#6B7280] block">Book Value</span>
           </div>
@@ -261,8 +276,11 @@ export default function PortfolioPage() {
           {/* Available Balance */}
           <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Available Cash</span>
-            <div className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums">
-              ₹{availableCash.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <div
+              className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums"
+              title={formatINR(availableCash)}
+            >
+              {formatCompactINR(availableCash)}
             </div>
             <span className="text-[11px] text-[#6B7280] block">Virtual Margin</span>
           </div>
@@ -271,12 +289,9 @@ export default function PortfolioPage() {
           <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Unrealized P&amp;L</span>
             <div
-              className={`font-mono text-xl sm:text-2xl font-bold tabular-nums ${
-                totalUnrealizedPnl >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"
-              }`}
+              className={`font-mono text-xl sm:text-2xl font-bold tabular-nums ${unrealizedPnlData.colorClass}`}
             >
-              {totalUnrealizedPnl >= 0 ? "+" : "-"}₹
-              {Math.abs(totalUnrealizedPnl).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {unrealizedPnlData.amountText}
             </div>
             <span className="text-[11px] text-[#6B7280] block">Live Float</span>
           </div>
@@ -285,17 +300,11 @@ export default function PortfolioPage() {
           <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5 col-span-2 lg:col-span-1">
             <span className="text-xs font-semibold text-[#6B7280] block">Overall P&amp;L</span>
             <div
-              className={`font-mono text-xl sm:text-2xl font-bold tabular-nums flex items-baseline gap-1.5 ${
-                isPnlPositive ? "text-[#16A34A]" : "text-[#DC2626]"
-              }`}
+              className={`font-mono text-xl sm:text-2xl font-bold tabular-nums flex items-baseline gap-1.5 ${overallPnlData.colorClass}`}
             >
-              <span>
-                {isPnlPositive ? "+" : "-"}₹
-                {Math.abs(totalPnl).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
+              <span>{overallPnlData.amountText}</span>
               <span className="text-xs font-bold font-sans">
-                ({isPnlPositive ? "+" : ""}
-                {totalPnlPercent.toFixed(2)}%)
+                ({overallPnlData.percentText})
               </span>
             </div>
             <span className="text-[11px] text-[#6B7280] block">Total Return</span>
@@ -365,7 +374,7 @@ export default function PortfolioPage() {
                   </thead>
                   <tbody className="divide-y divide-[#E5E7EB]">
                     {computedHoldings.map((h) => {
-                      const isPos = h.computedPnl >= 0;
+                      const pnl = formatPnL(h.computedPnl, h.computedPnlPct);
 
                       return (
                         <tr key={h.id} className="hover:bg-[#F8FAFC] transition-colors">
@@ -386,37 +395,31 @@ export default function PortfolioPage() {
                           </td>
 
                           <td className="py-3 px-4 text-right font-mono text-[#111827] tabular-nums">
-                            ₹{Number(h.average_buy_price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            {formatStockPrice(h.average_buy_price)}
                           </td>
 
                           <td className="py-3 px-4 text-right font-mono font-bold text-[#111827] tabular-nums">
-                            ₹{h.liveLtp.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {formatStockPrice(h.liveLtp)}
                           </td>
 
                           <td className="py-3 px-4 text-right font-mono text-[#111827] tabular-nums">
-                            ₹{h.computedInvestedVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            {formatINR(h.computedInvestedVal)}
                           </td>
 
                           <td className="py-3 px-4 text-right font-mono font-bold text-[#111827] tabular-nums">
-                            ₹{h.computedCurrentVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            {formatINR(h.computedCurrentVal)}
                           </td>
 
                           <td
-                            className={`py-3 px-4 text-right font-mono font-bold tabular-nums ${
-                              isPos ? "text-[#16A34A]" : "text-[#DC2626]"
-                            }`}
+                            className={`py-3 px-4 text-right font-mono font-bold tabular-nums ${pnl.colorClass}`}
                           >
-                            {isPos ? "+" : ""}₹
-                            {h.computedPnl.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {pnl.amountText}
                           </td>
 
                           <td
-                            className={`py-3 px-4 text-right font-mono font-bold tabular-nums ${
-                              isPos ? "text-[#16A34A]" : "text-[#DC2626]"
-                            }`}
+                            className={`py-3 px-4 text-right font-mono font-bold tabular-nums ${pnl.colorClass}`}
                           >
-                            {isPos ? "+" : ""}
-                            {h.computedPnlPct.toFixed(2)}%
+                            {pnl.percentText}
                           </td>
 
                           <td className="py-3 px-4 text-center">
@@ -445,7 +448,7 @@ export default function PortfolioPage() {
               {/* Mobile Card View */}
               <div className="md:hidden divide-y divide-[#E5E7EB]">
                 {computedHoldings.map((h) => {
-                  const isPos = h.computedPnl >= 0;
+                  const pnl = formatPnL(h.computedPnl, h.computedPnlPct);
 
                   return (
                     <div key={h.id} className="p-4 space-y-2.5">
@@ -453,20 +456,17 @@ export default function PortfolioPage() {
                         <div>
                           <span className="font-bold text-sm text-[#111827]">{h.symbol}</span>
                           <span className="text-[10px] text-[#6B7280] block font-mono">
-                            Qty: {h.quantity} • Avg: ₹{Number(h.average_buy_price).toFixed(2)}
+                            Qty: {h.quantity} • Avg: {formatStockPrice(h.average_buy_price)}
                           </span>
                         </div>
                         <div className="text-right font-mono">
                           <span className="font-bold text-xs text-[#111827]">
-                            ₹{h.liveLtp.toFixed(2)}
+                            {formatStockPrice(h.liveLtp)}
                           </span>
                           <span
-                            className={`text-[10.5px] block font-bold ${
-                              isPos ? "text-[#16A34A]" : "text-[#DC2626]"
-                            }`}
+                            className={`text-[10.5px] block font-bold ${pnl.colorClass}`}
                           >
-                            {isPos ? "+" : ""}
-                            {h.computedPnlPct.toFixed(2)}%
+                            {pnl.percentText}
                           </span>
                         </div>
                       </div>
@@ -475,13 +475,13 @@ export default function PortfolioPage() {
                         <div>
                           <span className="text-[10px] text-[#6B7280] block font-sans">Invested</span>
                           <span className="font-bold text-[#111827]">
-                            ₹{h.computedInvestedVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            {formatINR(h.computedInvestedVal)}
                           </span>
                         </div>
                         <div className="text-right">
                           <span className="text-[10px] text-[#6B7280] block font-sans">Current Value</span>
                           <span className="font-bold text-[#111827]">
-                            ₹{h.computedCurrentVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            {formatINR(h.computedCurrentVal)}
                           </span>
                         </div>
                       </div>

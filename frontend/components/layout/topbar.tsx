@@ -26,6 +26,12 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
+import {
+  formatINR,
+  formatCompactINR,
+  formatStockPrice,
+  formatPnL,
+} from "@/lib/formatters";
 import { useMarketWebSocket } from "@/lib/market-ws";
 
 interface SearchResultItem {
@@ -419,7 +425,7 @@ export function Topbar() {
                 <div className="py-1">
                   {results.map((item, idx) => {
                     const hasPrice = item.price !== undefined && item.price !== null;
-                    const isPos = (item.change_percent ?? 0) >= 0;
+                    const pnl = formatPnL(item.change_percent ?? 0, item.change_percent ?? 0);
                     return (
                       <div
                         key={item.instrument_key || item.symbol}
@@ -454,15 +460,12 @@ export function Topbar() {
                           {hasPrice ? (
                             <>
                               <div className="font-mono font-bold text-xs text-[#111827] tabular-nums">
-                                ₹{item.price?.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                                {formatStockPrice(item.price!)}
                               </div>
                               <div
-                                className={`text-[10px] font-semibold tabular-nums flex items-center justify-end gap-0.5 ${
-                                  isPos ? "text-[#16A34A]" : "text-[#DC2626]"
-                                }`}
+                                className={`text-[10px] font-semibold tabular-nums flex items-center justify-end gap-0.5 ${pnl.colorClass}`}
                               >
-                                {isPos ? "+" : ""}
-                                {item.change_percent?.toFixed(2)}%
+                                {pnl.percentText}
                               </div>
                             </>
                           ) : (
@@ -505,13 +508,13 @@ export function Topbar() {
           <button
             onClick={() => setIsPaperModalOpen(true)}
             className="hidden md:flex flex-col items-end px-2.5 py-0.5 rounded-[8px] hover:bg-[#F8FAFC] transition-colors"
-            title="Available Virtual Margin"
+            title={`Available Virtual Margin: ${formatINR(wallet ? Number(wallet.available_balance) : 100000)}`}
           >
             <span className="text-[10px] font-medium text-[#6B7280] leading-none">
               Virtual Margin
             </span>
             <span className="text-xs font-bold font-mono text-[#111827] tabular-nums">
-              ₹{wallet ? Number(wallet.available_balance).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "1,00,000.00"}
+              {formatCompactINR(wallet ? Number(wallet.available_balance) : 100000)}
             </span>
           </button>
 
@@ -716,19 +719,19 @@ export function Topbar() {
               <div className="flex justify-between items-center text-xs">
                 <span className="text-[#6B7280]">Available Virtual Margin:</span>
                 <span className="font-mono font-bold text-[#111827] tabular-nums">
-                  ₹{wallet ? Number(wallet.available_balance).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "1,00,000.00"}
+                  {formatINR(wallet ? Number(wallet.available_balance) : 100000)}
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-[#6B7280]">Total Virtual Balance:</span>
                 <span className="font-mono font-medium text-[#111827] tabular-nums">
-                  ₹{wallet ? Number(wallet.balance).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "1,00,000.00"}
+                  {formatINR(wallet ? Number(wallet.balance) : 100000)}
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-[#6B7280]">Locked Limit Margin:</span>
                 <span className="font-mono text-[#6B7280] tabular-nums">
-                  ₹{wallet ? Number(wallet.locked_balance).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "0.00"}
+                  {formatINR(wallet ? Number(wallet.locked_balance) : 0)}
                 </span>
               </div>
             </div>

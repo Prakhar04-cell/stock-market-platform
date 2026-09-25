@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Search, Plus, LineChart, Layers, ArrowUpRight, ArrowDownRight, ChevronRight } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { formatStockPrice, formatPnL } from "@/lib/formatters";
 import { apiRequest } from "@/lib/api-client";
 import { marketWs, WsPriceUpdate } from "@/lib/market-ws";
 
@@ -60,11 +61,12 @@ export function WatchlistDock({
                 const numLtp = Number(q.ltp);
                 const chg = q.change !== undefined && q.change !== null ? Number(q.change) : null;
                 const chgPct = q.change_percent !== undefined && q.change_percent !== null ? Number(q.change_percent) : null;
+                const pnl = chg !== null ? formatPnL(chg, chgPct ?? 0) : null;
                 return {
                   ...s,
-                  price: `₹${numLtp.toFixed(2)}`,
-                  change: chg !== null ? `${chg >= 0 ? "+" : ""}${chg.toFixed(2)} (${chgPct?.toFixed(2)}%)` : "--",
-                  isPositive: (chg ?? 0) >= 0,
+                  price: formatStockPrice(numLtp),
+                  change: pnl ? `${pnl.amountText} (${pnl.percentText})` : "--",
+                  isPositive: pnl ? pnl.isPositive : false,
                 };
               }
               return s;
@@ -90,11 +92,12 @@ export function WatchlistDock({
               const ltp = Number(update.ltp);
               const chg = update.change !== undefined && update.change !== null ? Number(update.change) : null;
               const chgPct = update.change_percent !== undefined && update.change_percent !== null ? Number(update.change_percent) : null;
+              const pnl = chg !== null ? formatPnL(chg, chgPct ?? 0) : null;
               return {
                 ...item,
-                price: `₹${ltp.toFixed(2)}`,
-                change: chg !== null ? `${chg >= 0 ? "+" : ""}${chg.toFixed(2)} (${chgPct?.toFixed(2)}%)` : item.change,
-                isPositive: (chg ?? 0) >= 0,
+                price: formatStockPrice(ltp),
+                change: pnl ? `${pnl.amountText} (${pnl.percentText})` : item.change,
+                isPositive: pnl ? pnl.isPositive : (chg ?? 0) >= 0,
               };
             }
             return item;

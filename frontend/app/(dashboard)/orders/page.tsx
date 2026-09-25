@@ -5,6 +5,7 @@ import Link from "next/link";
 import { apiRequest } from "@/lib/api-client";
 import { TableRowSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { formatStockPrice, formatINR } from "@/lib/formatters";
 import {
   Layers,
   RefreshCw,
@@ -271,12 +272,12 @@ export default function OrdersPage() {
 
                         {/* Price */}
                         <td className="py-3 px-4 text-right font-mono text-[#111827] tabular-nums">
-                          ₹{price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {formatStockPrice(price)}
                         </td>
 
                         {/* Order Value */}
                         <td className="py-3 px-4 text-right font-mono font-bold text-[#111827] tabular-nums">
-                          ₹{orderValue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {formatINR(orderValue)}
                         </td>
 
                         {/* Status */}
@@ -352,11 +353,11 @@ export default function OrdersPage() {
                       </div>
                       <div className="text-right">
                         <span className="text-[10px] text-[#6B7280] block font-sans">Price</span>
-                        <span className="font-bold text-[#111827]">₹{price.toFixed(2)}</span>
+                        <span className="font-bold text-[#111827]">{formatStockPrice(price)}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-[#6B7280] block font-sans">Total Value</span>
-                        <span className="font-bold text-[#111827]">₹{orderValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                        <span className="font-bold text-[#111827]">{formatINR(orderValue)}</span>
                       </div>
                       <div className="text-right">
                         <span className="text-[10px] text-[#6B7280] block font-sans">Date</span>

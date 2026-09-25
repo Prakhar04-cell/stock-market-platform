@@ -18,6 +18,12 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/api-client";
 import { formatCurrency, normalizeStockSymbol } from "@/lib/utils";
+import {
+  formatStockPrice,
+  formatIndianNumber,
+  formatPnL,
+  formatPercentage,
+} from "@/lib/formatters";
 import { useMarketWebSocket } from "@/lib/market-ws";
 import { ChartContainer } from "@/components/ui/chart-container";
 import { OrderPad } from "@/components/trading/order-pad-modal";
@@ -213,23 +219,23 @@ export default function TerminalPage() {
           <div>
             <div className="text-xs text-[#6B7280]">Real-Time LTP</div>
             <div className="text-base font-bold text-[#111827] tabular-nums">
-              {quote ? `₹${quote.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "Fetching..."}
+              {quote ? formatStockPrice(quote.ltp) : "Fetching..."}
             </div>
           </div>
 
-          {quote && quote.change_percent !== undefined && (
-            <div className="text-right">
-              <div className="text-xs text-[#6B7280]">1D Movement</div>
-              <div
-                className={`text-xs font-bold tabular-nums flex items-center justify-end gap-0.5 ${
-                  isPos ? "text-[#00A86B]" : "text-[#EF4444]"
-                }`}
-              >
-                {isPos ? "+" : ""}
-                {quote.change_percent.toFixed(2)}%
+          {quote && quote.change_percent !== undefined && (() => {
+            const pnl = formatPnL(quote.change ?? 0, quote.change_percent);
+            return (
+              <div className="text-right">
+                <div className="text-xs text-[#6B7280]">1D Movement</div>
+                <div
+                  className={`text-xs font-bold tabular-nums flex items-center justify-end gap-0.5 ${pnl.colorClass}`}
+                >
+                  {pnl.percentText}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           <div className="h-6 w-[1px] bg-[#E5E7EB]" />
 
@@ -251,19 +257,19 @@ export default function TerminalPage() {
             <div>
               <span className="text-[#6B7280] text-[11px] block">Day High</span>
               <span className="font-mono font-bold text-[#00A86B] block">
-                {quote?.high ? `₹${quote.high.toFixed(2)}` : "--"}
+                {quote?.high ? formatStockPrice(quote.high) : "--"}
               </span>
             </div>
             <div>
               <span className="text-[#6B7280] text-[11px] block">Day Low</span>
               <span className="font-mono font-bold text-[#EF4444] block">
-                {quote?.low ? `₹${quote.low.toFixed(2)}` : "--"}
+                {quote?.low ? formatStockPrice(quote.low) : "--"}
               </span>
             </div>
             <div>
               <span className="text-[#6B7280] text-[11px] block">Volume</span>
               <span className="font-mono font-bold text-[#111827] block">
-                {quote?.volume ? quote.volume.toLocaleString("en-IN") : "--"}
+                {quote?.volume ? formatIndianNumber(quote.volume) : "--"}
               </span>
             </div>
             <div>
@@ -350,7 +356,8 @@ export default function TerminalPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {positions.map((pos) => {
-                      const isProfit = pos.unrealized_pnl >= 0;
+                      const posPnl = formatPnL(pos.unrealized_pnl, pos.unrealized_pnl_percent);
+
                       return (
                         <tr key={pos.stock_symbol} className="hover:bg-[#F9FAFB] transition-colors">
                           <td className="py-2.5 font-bold text-[#111827] font-mono">
@@ -358,19 +365,15 @@ export default function TerminalPage() {
                           </td>
                           <td className="py-2.5 font-mono text-[#111827]">{pos.quantity}</td>
                           <td className="py-2.5 font-mono text-[#4B5563]">
-                            ₹{pos.average_buy_price.toFixed(2)}
+                            {formatStockPrice(pos.average_buy_price)}
                           </td>
                           <td className="py-2.5 font-mono text-[#111827]">
-                            ₹{pos.current_price.toFixed(2)}
+                            {formatStockPrice(pos.current_price)}
                           </td>
                           <td
-                            className={`py-2.5 font-mono font-bold text-right tabular-nums ${
-                              isProfit ? "text-[#00A86B]" : "text-[#EF4444]"
-                            }`}
+                            className={`py-2.5 font-mono font-bold text-right tabular-nums ${posPnl.colorClass}`}
                           >
-                            {isProfit ? "+" : ""}₹{pos.unrealized_pnl.toFixed(2)} (
-                            {isProfit ? "+" : ""}
-                            {pos.unrealized_pnl_percent.toFixed(2)}%)
+                            {posPnl.amountText} ({posPnl.percentText})
                           </td>
                         </tr>
                       );
@@ -428,7 +431,7 @@ export default function TerminalPage() {
                         <td className="py-2 text-[#4B5563] text-[11px]">{ord.order_type}</td>
                         <td className="py-2 text-[#111827]">{ord.quantity}</td>
                         <td className="py-2 text-[#111827]">
-                          ₹{ord.average_execution_price ? ord.average_execution_price.toFixed(2) : (ord.price ? ord.price.toFixed(2) : "--")}
+                          {ord.average_execution_price ? formatStockPrice(ord.average_execution_price) : (ord.price ? formatStockPrice(ord.price) : "--")}
                         </td>
                         <td className="py-2 text-right">
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#00A86B] font-bold">

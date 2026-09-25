@@ -22,6 +22,13 @@ import { apiRequest } from "@/lib/api-client";
 import { OrderPadModal } from "@/components/trading/order-pad-modal";
 import { MetricCardSkeleton, TableRowSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import {
+  formatINR,
+  formatCompactINR,
+  formatStockPrice,
+  formatPercentage,
+  formatPnL,
+} from "@/lib/formatters";
 
 interface PortfolioSummary {
   total_invested_value: number;
@@ -121,7 +128,9 @@ export default function DashboardPage() {
   const totalPnl = portfolio ? Number(portfolio.total_pnl) : 0;
   const unrealizedPnl = portfolio ? Number(portfolio.total_unrealized_pnl) : 0;
   const pnlPercent = invested > 0 ? (totalPnl / invested) * 100 : 0;
-  const isPnlPositive = totalPnl >= 0;
+  const unrealizedPercent = invested > 0 ? (unrealizedPnl / invested) * 100 : 0;
+  const unrealizedPnlData = formatPnL(unrealizedPnl, unrealizedPercent);
+  const overallPnlData = formatPnL(totalPnl, pnlPercent);
 
   const currentMoverList =
     activeMoverTab === "GAINERS"
@@ -166,11 +175,14 @@ export default function DashboardPage() {
               <span className="text-xs font-semibold text-[#6B7280] block">
                 Portfolio Value
               </span>
-              <div className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tracking-tight tabular-nums">
-                ₹{portfolioVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div
+                className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tracking-tight tabular-nums"
+                title={formatINR(portfolioVal)}
+              >
+                {formatCompactINR(portfolioVal)}
               </div>
               <div className="text-[11px] text-[#6B7280]">
-                Virtual Cash: ₹{portfolio ? Number(portfolio.available_cash).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "1,00,000.00"}
+                Virtual Cash: {formatCompactINR(portfolio ? Number(portfolio.available_cash) : 100000)}
               </div>
             </div>
 
@@ -179,8 +191,11 @@ export default function DashboardPage() {
               <span className="text-xs font-semibold text-[#6B7280] block">
                 Invested Capital
               </span>
-              <div className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tracking-tight tabular-nums">
-                ₹{invested.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div
+                className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tracking-tight tabular-nums"
+                title={formatINR(invested)}
+              >
+                {formatCompactINR(invested)}
               </div>
               <div className="text-[11px] text-[#6B7280]">
                 Active Holdings: {portfolio?.holdings?.length || 0}
@@ -193,12 +208,9 @@ export default function DashboardPage() {
                 Unrealized P&amp;L
               </span>
               <div
-                className={`font-mono text-xl sm:text-2xl font-bold tracking-tight tabular-nums ${
-                  unrealizedPnl >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"
-                }`}
+                className={`font-mono text-xl sm:text-2xl font-bold tracking-tight tabular-nums ${unrealizedPnlData.colorClass}`}
               >
-                {unrealizedPnl >= 0 ? "+₹" : "-₹"}
-                {Math.abs(unrealizedPnl).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {unrealizedPnlData.amountText}
               </div>
               <div className="text-[11px] text-[#6B7280]">
                 Mark-to-Market
@@ -211,21 +223,15 @@ export default function DashboardPage() {
                 Overall Return
               </span>
               <div
-                className={`font-mono text-xl sm:text-2xl font-bold tracking-tight tabular-nums flex items-baseline gap-1.5 ${
-                  isPnlPositive ? "text-[#16A34A]" : "text-[#DC2626]"
-                }`}
+                className={`font-mono text-xl sm:text-2xl font-bold tracking-tight tabular-nums flex items-baseline gap-1.5 ${overallPnlData.colorClass}`}
               >
-                <span>
-                  {isPnlPositive ? "+" : "-"}₹
-                  {Math.abs(totalPnl).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
+                <span>{overallPnlData.amountText}</span>
                 <span className="text-xs font-bold font-sans">
-                  ({isPnlPositive ? "+" : ""}
-                  {pnlPercent.toFixed(2)}%)
+                  ({overallPnlData.percentText})
                 </span>
               </div>
               <div className="text-[11px] text-[#6B7280]">
-                Realized: ₹{portfolio ? Number(portfolio.realized_pnl).toFixed(2) : "0.00"}
+                Realized: {formatINR(portfolio ? Number(portfolio.realized_pnl) : 0)}
               </div>
             </div>
           </div>
@@ -271,12 +277,11 @@ export default function DashboardPage() {
                 <div>
                   <span className="text-xs text-[#6B7280]">Current Asset Value</span>
                   <div className="text-2xl font-bold text-[#111827] tabular-nums">
-                    ₹{portfolioVal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    {formatINR(portfolioVal)}
                   </div>
                 </div>
-                <div className={`text-xs font-bold ${isPnlPositive ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-                  {isPnlPositive ? "+" : ""}
-                  {pnlPercent.toFixed(2)}% Return
+                <div className={`text-xs font-bold ${overallPnlData.colorClass}`}>
+                  {overallPnlData.percentText} Return
                 </div>
               </div>
 
@@ -292,7 +297,7 @@ export default function DashboardPage() {
                       <div
                         className="w-full rounded-[4px] bg-[#F97316] group-hover:bg-[#EA580C] transition-all"
                         style={{ height: `${heightPct}%` }}
-                        title={`${h.symbol}: ₹${val.toFixed(2)}`}
+                        title={`${h.symbol}: ${formatINR(val)}`}
                       />
                       <span className="text-[10px] font-mono text-[#6B7280] truncate max-w-[60px]">
                         {h.symbol}
@@ -383,7 +388,7 @@ export default function DashboardPage() {
           ) : currentMoverList.length > 0 ? (
             <div className="divide-y divide-[#E5E7EB]">
               {currentMoverList.map((item) => {
-                const isPos = item.change >= 0;
+                const itemPnl = formatPnL(item.change, item.change_percent);
                 return (
                   <div
                     key={item.symbol}
@@ -409,15 +414,12 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right font-mono">
                         <div className="text-xs font-bold text-[#111827] tabular-nums">
-                          ₹{item.price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          {formatStockPrice(item.price)}
                         </div>
                         <div
-                          className={`text-[10px] font-semibold tabular-nums ${
-                            isPos ? "text-[#16A34A]" : "text-[#DC2626]"
-                          }`}
+                          className={`text-[10px] font-semibold tabular-nums ${itemPnl.colorClass}`}
                         >
-                          {isPos ? "+" : ""}
-                          {item.change_percent.toFixed(2)}%
+                          {itemPnl.percentText}
                         </div>
                       </div>
 
