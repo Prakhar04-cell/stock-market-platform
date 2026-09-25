@@ -105,9 +105,9 @@ export function TerminalView({
             </span>
           </div>
 
-          <div className="flex items-baseline gap-2 font-mono">
-            <span className="text-sm font-bold text-slate-900">{price}</span>
-            <span className="text-xs text-slate-400 font-medium">
+          <div className="flex items-baseline gap-2 font-financial">
+            <span className="text-base font-extrabold text-slate-900 tracking-tight">{price}</span>
+            <span className="text-xs text-slate-500 font-bold">
               ({changePercent})
             </span>
           </div>
@@ -294,7 +294,7 @@ export function TerminalView({
 
           <div className="flex items-center gap-3 text-xs">
             <span className="text-slate-500 text-[11px]">Realized P&amp;L:</span>
-            <span className="font-mono font-bold text-slate-800">₹0.00</span>
+            <span className="font-financial font-extrabold text-slate-900 tracking-tight">₹0.00</span>
           </div>
         </div>
 

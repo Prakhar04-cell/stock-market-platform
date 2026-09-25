@@ -287,8 +287,8 @@ export default function StockDetailPage() {
 
         {/* Live LTP & Price Movements */}
         <div className="flex items-center gap-6">
-          <div className="text-left md:text-right font-mono">
-            <div className="text-2xl font-black text-[#111827] tracking-tight tabular-nums">
+          <div className="text-left md:text-right">
+            <div className="financial-num text-3xl sm:text-4xl lg:text-[44px] font-extrabold text-[#111827] tracking-tight tabular-nums leading-[1.1]">
               {numLtp !== null
                 ? formatStockPrice(numLtp)
                 : "₹ --"}
@@ -297,10 +297,13 @@ export default function StockDetailPage() {
               const pnl = formatPnL(numChange, numChangePct ?? 0);
               return (
                 <div
-                  className={`text-xs font-bold tabular-nums flex items-center md:justify-end gap-1 ${pnl.colorClass}`}
+                  className={`mt-1 flex items-center md:justify-end gap-1.5 ${pnl.colorClass}`}
                 >
-                  <span>
-                    {pnl.amountText} ({pnl.percentText})
+                  <span className="font-financial font-bold text-sm sm:text-base tabular-nums tracking-tight">
+                    {pnl.amountText}
+                  </span>
+                  <span className="financial-pnl-pct">
+                    {pnl.percentText}
                   </span>
                 </div>
               );
@@ -344,16 +347,16 @@ export default function StockDetailPage() {
               <div className="flex justify-between items-center text-xs">
                 <div>
                   <span className="text-[10px] text-[#6B7280] block">Today&apos;s Low</span>
-                  <span className="font-mono font-bold text-[#EF4444] tabular-nums">
+                  <span className="font-financial font-bold text-xs text-[#DC2626] tabular-nums tracking-tight">
                     {formatStockPrice(dayLow)}
                   </span>
                 </div>
-                <div className="text-center font-mono text-[11px] font-bold text-[#111827] tabular-nums">
+                <div className="text-center font-financial text-[11px] font-bold text-[#111827] tabular-nums">
                   LTP: {numLtp ? formatStockPrice(numLtp) : "--"}
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] text-[#6B7280] block">Today&apos;s High</span>
-                  <span className="font-mono font-bold text-[#00A86B] tabular-nums">
+                  <span className="font-financial font-bold text-xs text-[#16A34A] tabular-nums tracking-tight">
                     {formatStockPrice(dayHigh)}
                   </span>
                 </div>
@@ -377,16 +380,16 @@ export default function StockDetailPage() {
               <div className="flex justify-between items-center text-xs">
                 <div>
                   <span className="text-[10px] text-[#6B7280] block">52-Week Low</span>
-                  <span className="font-mono font-bold text-[#4B5563] tabular-nums">
+                  <span className="font-financial font-bold text-xs text-[#4B5563] tabular-nums tracking-tight">
                     {formatStockPrice(yearLow)}
                   </span>
                 </div>
-                <div className="text-center font-mono text-[11px] font-bold text-[#111827] tabular-nums">
+                <div className="text-center font-financial text-[11px] font-bold text-[#111827] tabular-nums">
                   52W Span
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] text-[#6B7280] block">52-Week High</span>
-                  <span className="font-mono font-bold text-[#4B5563] tabular-nums">
+                  <span className="font-financial font-bold text-xs text-[#4B5563] tabular-nums tracking-tight">
                     {formatStockPrice(yearHigh)}
                   </span>
                 </div>
@@ -420,42 +423,42 @@ export default function StockDetailPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
                 <span className="text-[#6B7280] text-[11px] block">Market Cap</span>
-                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.market_cap ? formatLakhCrore(Number(stock.market_cap)) : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
                 <span className="text-[#6B7280] text-[11px] block">P/E Ratio</span>
-                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.pe_ratio ? Number(stock.pe_ratio).toFixed(2) : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
                 <span className="text-[#6B7280] text-[11px] block">P/B Ratio</span>
-                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.pb_ratio ? Number(stock.pb_ratio).toFixed(2) : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
                 <span className="text-[#6B7280] text-[11px] block">ROE</span>
-                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.roe ? `${Number(stock.roe).toFixed(2)}%` : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
                 <span className="text-[#6B7280] text-[11px] block">ROCE</span>
-                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.roce ? `${Number(stock.roce).toFixed(2)}%` : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
                 <span className="text-[#6B7280] text-[11px] block">EPS (TTM)</span>
-                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.eps ? formatStockPrice(Number(stock.eps)) : "--"}
                 </span>
               </div>

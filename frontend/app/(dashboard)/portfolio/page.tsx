@@ -253,10 +253,10 @@ export default function PortfolioPage() {
           <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Total Value</span>
             <div
-              className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums"
+              className="financial-num text-2xl sm:text-3xl lg:text-[32px] font-extrabold text-[#111827] tabular-nums tracking-tight leading-[1.1]"
               title={formatINR(currentPortfolioVal)}
             >
-              {formatCompactINR(currentPortfolioVal)}
+              {formatINR(currentPortfolioVal)}
             </div>
             <span className="text-[11px] text-[#6B7280] block">Holdings Value</span>
           </div>
@@ -265,10 +265,10 @@ export default function PortfolioPage() {
           <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Invested</span>
             <div
-              className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums"
+              className="financial-num text-2xl sm:text-3xl lg:text-[32px] font-extrabold text-[#111827] tabular-nums tracking-tight leading-[1.1]"
               title={formatINR(invested)}
             >
-              {formatCompactINR(invested)}
+              {formatINR(invested)}
             </div>
             <span className="text-[11px] text-[#6B7280] block">Book Value</span>
           </div>
@@ -277,10 +277,10 @@ export default function PortfolioPage() {
           <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Available Cash</span>
             <div
-              className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tabular-nums"
+              className="financial-num text-2xl sm:text-3xl lg:text-[32px] font-extrabold text-[#111827] tabular-nums tracking-tight leading-[1.1]"
               title={formatINR(availableCash)}
             >
-              {formatCompactINR(availableCash)}
+              {formatINR(availableCash)}
             </div>
             <span className="text-[11px] text-[#6B7280] block">Virtual Margin</span>
           </div>
@@ -289,25 +289,32 @@ export default function PortfolioPage() {
           <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5">
             <span className="text-xs font-semibold text-[#6B7280] block">Unrealized P&amp;L</span>
             <div
-              className={`font-mono text-xl sm:text-2xl font-bold tabular-nums ${unrealizedPnlData.colorClass}`}
+              className={`financial-num text-2xl sm:text-3xl lg:text-[32px] font-extrabold tabular-nums tracking-tight leading-[1.1] ${unrealizedPnlData.colorClass}`}
             >
               {unrealizedPnlData.amountText}
             </div>
-            <span className="text-[11px] text-[#6B7280] block">Live Float</span>
+            <div className="flex items-center gap-1.5">
+              <span className={`financial-pnl-pct ${unrealizedPnlData.colorClass}`}>
+                {unrealizedPnlData.percentText}
+              </span>
+              <span className="text-[11px] text-[#6B7280]">Live Float</span>
+            </div>
           </div>
 
           {/* Overall P&L */}
           <div className="bg-white border border-[#E5E7EB] p-4 rounded-[10px] space-y-1.5 col-span-2 lg:col-span-1">
             <span className="text-xs font-semibold text-[#6B7280] block">Overall P&amp;L</span>
             <div
-              className={`font-mono text-xl sm:text-2xl font-bold tabular-nums flex items-baseline gap-1.5 ${overallPnlData.colorClass}`}
+              className={`financial-num text-2xl sm:text-3xl lg:text-[32px] font-extrabold tabular-nums tracking-tight leading-[1.1] ${overallPnlData.colorClass}`}
             >
-              <span>{overallPnlData.amountText}</span>
-              <span className="text-xs font-bold font-sans">
-                ({overallPnlData.percentText})
-              </span>
+              {overallPnlData.amountText}
             </div>
-            <span className="text-[11px] text-[#6B7280] block">Total Return</span>
+            <div className="flex items-center gap-1.5">
+              <span className={`financial-pnl-pct ${overallPnlData.colorClass}`}>
+                {overallPnlData.percentText}
+              </span>
+              <span className="text-[11px] text-[#6B7280]">Total Return</span>
+            </div>
           </div>
         </div>
       )}
@@ -390,34 +397,34 @@ export default function PortfolioPage() {
                             </span>
                           </td>
 
-                          <td className="py-3 px-4 text-right font-mono font-bold text-[#111827] tabular-nums">
+                          <td className="py-3 px-4 text-right financial-num-sm font-bold text-[#111827] tabular-nums">
                             {h.quantity}
                           </td>
 
-                          <td className="py-3 px-4 text-right font-mono text-[#111827] tabular-nums">
+                          <td className="py-3 px-4 text-right financial-num-sm font-semibold text-[#111827] tabular-nums">
                             {formatStockPrice(h.average_buy_price)}
                           </td>
 
-                          <td className="py-3 px-4 text-right font-mono font-bold text-[#111827] tabular-nums">
+                          <td className="py-3 px-4 text-right financial-num-sm font-extrabold text-[#111827] tabular-nums">
                             {formatStockPrice(h.liveLtp)}
                           </td>
 
-                          <td className="py-3 px-4 text-right font-mono text-[#111827] tabular-nums">
+                          <td className="py-3 px-4 text-right financial-num-sm font-medium text-[#111827] tabular-nums">
                             {formatINR(h.computedInvestedVal)}
                           </td>
 
-                          <td className="py-3 px-4 text-right font-mono font-bold text-[#111827] tabular-nums">
+                          <td className="py-3 px-4 text-right financial-num-sm font-extrabold text-[#111827] tabular-nums">
                             {formatINR(h.computedCurrentVal)}
                           </td>
 
                           <td
-                            className={`py-3 px-4 text-right font-mono font-bold tabular-nums ${pnl.colorClass}`}
+                            className={`py-3 px-4 text-right financial-num-sm font-extrabold tabular-nums ${pnl.colorClass}`}
                           >
                             {pnl.amountText}
                           </td>
 
                           <td
-                            className={`py-3 px-4 text-right font-mono font-bold tabular-nums ${pnl.colorClass}`}
+                            className={`py-3 px-4 text-right financial-num-sm font-extrabold tabular-nums ${pnl.colorClass}`}
                           >
                             {pnl.percentText}
                           </td>
@@ -459,28 +466,28 @@ export default function PortfolioPage() {
                             Qty: {h.quantity} • Avg: {formatStockPrice(h.average_buy_price)}
                           </span>
                         </div>
-                        <div className="text-right font-mono">
-                          <span className="font-bold text-xs text-[#111827]">
+                        <div className="text-right font-financial">
+                          <span className="font-extrabold text-xs text-[#111827] tabular-nums tracking-tight block">
                             {formatStockPrice(h.liveLtp)}
                           </span>
                           <span
-                            className={`text-[10.5px] block font-bold ${pnl.colorClass}`}
+                            className={`text-[11px] block font-bold tabular-nums ${pnl.colorClass}`}
                           >
                             {pnl.percentText}
                           </span>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-[#F8FAFC] p-2.5 rounded-[8px] border border-[#E5E7EB]">
+                      <div className="grid grid-cols-2 gap-2 text-xs bg-[#F8FAFC] p-2.5 rounded-[8px] border border-[#E5E7EB]">
                         <div>
                           <span className="text-[10px] text-[#6B7280] block font-sans">Invested</span>
-                          <span className="font-bold text-[#111827]">
+                          <span className="financial-num-sm font-bold text-[#111827]">
                             {formatINR(h.computedInvestedVal)}
                           </span>
                         </div>
                         <div className="text-right">
                           <span className="text-[10px] text-[#6B7280] block font-sans">Current Value</span>
-                          <span className="font-bold text-[#111827]">
+                          <span className="financial-num-sm font-extrabold text-[#111827]">
                             {formatINR(h.computedCurrentVal)}
                           </span>
                         </div>

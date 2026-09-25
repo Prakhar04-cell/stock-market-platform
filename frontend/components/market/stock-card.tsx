@@ -72,7 +72,7 @@ export function StockCard({
   };
 
   return (
-    <div className="flex flex-col justify-between p-3.5 rounded-[10px] border border-[#E5E7EB] bg-white hover:border-[#CBD5E1] transition-all h-[142px] group select-none">
+    <div className="flex flex-col justify-between p-3.5 rounded-[10px] border border-[#E5E7EB] bg-white hover:border-[#CBD5E1] transition-all min-h-[152px] group select-none">
       {/* Top row: Logo/Monogram + Ticker & Name */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -97,13 +97,13 @@ export function StockCard({
       </div>
 
       {/* Middle row: Price & Change */}
-      <div className="flex items-baseline justify-between pt-1 font-mono">
-        <span className="text-sm font-bold text-[#111827] tabular-nums">
+      <div className="flex items-baseline justify-between pt-1">
+        <span className="financial-num-card font-extrabold text-[#111827] tabular-nums tracking-tight">
           {formatStockPrice(price)}
         </span>
         <span
-          className={`text-[11px] font-semibold flex items-center gap-0.5 tabular-nums ${
-            isUp ? "text-[#16A34A]" : isDown ? "text-[#DC2626]" : "text-[#6B7280]"
+          className={`financial-pnl-pct flex items-center gap-0.5 tabular-nums ${
+            isUp ? "text-[#16A34A]" : isDown ? "text-[#DC2626]" : "text-[#111827]"
           }`}
         >
           {isUp && "+"}

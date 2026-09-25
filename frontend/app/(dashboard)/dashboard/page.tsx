@@ -176,13 +176,13 @@ export default function DashboardPage() {
                 Portfolio Value
               </span>
               <div
-                className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tracking-tight tabular-nums"
+                className="financial-num text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#111827] tracking-tight tabular-nums leading-[1.1]"
                 title={formatINR(portfolioVal)}
               >
-                {formatCompactINR(portfolioVal)}
+                {formatINR(portfolioVal)}
               </div>
               <div className="text-[11px] text-[#6B7280]">
-                Virtual Cash: {formatCompactINR(portfolio ? Number(portfolio.available_cash) : 100000)}
+                Virtual Cash: <span className="font-financial font-bold text-[#111827]">{formatINR(portfolio ? Number(portfolio.available_cash) : 100000)}</span>
               </div>
             </div>
 
@@ -192,13 +192,13 @@ export default function DashboardPage() {
                 Invested Capital
               </span>
               <div
-                className="font-mono text-xl sm:text-2xl font-bold text-[#111827] tracking-tight tabular-nums"
+                className="financial-num text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#111827] tracking-tight tabular-nums leading-[1.1]"
                 title={formatINR(invested)}
               >
-                {formatCompactINR(invested)}
+                {formatINR(invested)}
               </div>
               <div className="text-[11px] text-[#6B7280]">
-                Active Holdings: {portfolio?.holdings?.length || 0}
+                Active Holdings: <span className="font-financial font-bold text-[#111827]">{portfolio?.holdings?.length || 0}</span>
               </div>
             </div>
 
@@ -208,12 +208,15 @@ export default function DashboardPage() {
                 Unrealized P&amp;L
               </span>
               <div
-                className={`font-mono text-xl sm:text-2xl font-bold tracking-tight tabular-nums ${unrealizedPnlData.colorClass}`}
+                className={`financial-num text-3xl sm:text-4xl lg:text-[42px] font-extrabold tracking-tight tabular-nums leading-[1.1] ${unrealizedPnlData.colorClass}`}
               >
                 {unrealizedPnlData.amountText}
               </div>
-              <div className="text-[11px] text-[#6B7280]">
-                Mark-to-Market
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <span className={`financial-pnl-pct ${unrealizedPnlData.colorClass}`}>
+                  {unrealizedPnlData.percentText}
+                </span>
+                <span className="text-[11px] text-[#6B7280]">Mark-to-Market</span>
               </div>
             </div>
 
@@ -223,15 +226,17 @@ export default function DashboardPage() {
                 Overall Return
               </span>
               <div
-                className={`font-mono text-xl sm:text-2xl font-bold tracking-tight tabular-nums flex items-baseline gap-1.5 ${overallPnlData.colorClass}`}
+                className={`financial-num text-3xl sm:text-4xl lg:text-[42px] font-extrabold tracking-tight tabular-nums leading-[1.1] ${overallPnlData.colorClass}`}
               >
-                <span>{overallPnlData.amountText}</span>
-                <span className="text-xs font-bold font-sans">
-                  ({overallPnlData.percentText})
-                </span>
+                {overallPnlData.amountText}
               </div>
-              <div className="text-[11px] text-[#6B7280]">
-                Realized: {formatINR(portfolio ? Number(portfolio.realized_pnl) : 0)}
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <span className={`financial-pnl-pct ${overallPnlData.colorClass}`}>
+                  {overallPnlData.percentText}
+                </span>
+                <span className="text-[11px] text-[#6B7280]">
+                  Realized: <span className="font-financial font-bold text-[#111827]">{formatINR(portfolio ? Number(portfolio.realized_pnl) : 0)}</span>
+                </span>
               </div>
             </div>
           </div>
@@ -412,12 +417,12 @@ export default function DashboardPage() {
                     </Link>
 
                     <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-right font-mono">
-                        <div className="text-xs font-bold text-[#111827] tabular-nums">
+                      <div className="text-right font-financial">
+                        <div className="text-sm font-bold text-[#111827] tabular-nums tracking-tight">
                           {formatStockPrice(item.price)}
                         </div>
                         <div
-                          className={`text-[10px] font-semibold tabular-nums ${itemPnl.colorClass}`}
+                          className={`text-[11px] font-semibold tabular-nums ${itemPnl.colorClass}`}
                         >
                           {itemPnl.percentText}
                         </div>

@@ -40,7 +40,9 @@ export function MetricCard({
       </div>
 
       <div className="mt-2 flex items-baseline justify-between gap-2">
-        <div className="text-xl font-bold tracking-tight text-[#111827] font-mono tabular-nums">{value}</div>
+        <div className="font-financial text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111827] tabular-nums leading-tight">
+          {value}
+        </div>
         {statusBadge}
       </div>
 
@@ -49,7 +51,7 @@ export function MetricCard({
           {change && (
             <span
               className={cn(
-                "font-semibold text-[11px] font-mono tabular-nums",
+                "font-financial font-bold text-[13px] tracking-tight tabular-nums leading-none",
                 isPositive === true && "text-[#16A34A]",
                 isPositive === false && "text-[#DC2626]",
                 isPositive === undefined && "text-[#4B5563]"

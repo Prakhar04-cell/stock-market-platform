@@ -386,13 +386,13 @@ export function OrderPad({
                 {orderType === "MARKET" ? "Market Price (LTP)" : "Limit Price"}
               </span>
               {ltp && (
-                <span className="text-[11px] font-mono text-[#16A34A]">
+                <span className="text-xs font-financial font-bold text-[#16A34A] tabular-nums tracking-tight">
                   Live: {formatStockPrice(ltp)}
                 </span>
               )}
             </div>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-[#6B7280]">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-financial font-bold text-xs text-[#6B7280]">
                 ₹
               </span>
               <input
@@ -401,7 +401,7 @@ export function OrderPad({
                 disabled={orderType === "MARKET"}
                 value={orderType === "MARKET" ? (ltp ? ltp.toFixed(2) : "Fetching...") : price}
                 onChange={(e) => setPrice(e.target.value)}
-                className={`w-full pl-7 pr-3 py-2 border rounded-[8px] font-mono font-bold text-sm text-[#111827] tabular-nums focus:outline-none transition-all ${
+                className={`w-full pl-7 pr-3 py-2 border rounded-[8px] font-financial font-bold text-sm text-[#111827] tabular-nums focus:outline-none transition-all ${
                   orderType === "MARKET"
                     ? "bg-[#F8FAFC] border-[#E5E7EB] text-[#6B7280]"
                     : "bg-white border-[#E5E7EB] focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316]"
@@ -413,7 +413,7 @@ export function OrderPad({
           {/* Available Virtual Balance */}
           <div className="p-2.5 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] flex justify-between items-center text-xs">
             <span className="text-[#6B7280]">Available Virtual Balance</span>
-            <span className="font-mono font-bold text-[#111827] tabular-nums">
+            <span className="financial-num font-bold text-sm text-[#111827] tabular-nums tracking-tight">
               {formatINR(availableBalance)}
             </span>
           </div>
@@ -422,7 +422,7 @@ export function OrderPad({
           <div className="space-y-1.5 pt-1 text-xs border-t border-[#E5E7EB]">
             <div className="flex justify-between text-[#6B7280]">
               <span>Estimated Turnover</span>
-              <span className="font-mono text-[#111827] tabular-nums">
+              <span className="financial-num font-bold text-xs text-[#111827] tabular-nums">
                 {formatINR(turnover)}
               </span>
             </div>
@@ -436,36 +436,36 @@ export function OrderPad({
                 <span>Charges &amp; Taxes</span>
                 {showChargesDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               </button>
-              <span className="font-mono text-[#111827] tabular-nums">
+              <span className="financial-num font-bold text-xs text-[#111827] tabular-nums">
                 {formatINR(chargesBreakdown.totalCharges)}
               </span>
             </div>
 
             {/* Collapsible simulated charges breakdown */}
             {showChargesDetails && (
-              <div className="p-2 rounded-[6px] bg-[#F8FAFC] space-y-1 text-[10.5px] font-mono text-[#6B7280]">
+              <div className="p-2 rounded-[6px] bg-[#F8FAFC] space-y-1 text-[10.5px] font-financial text-[#6B7280]">
                 <div className="flex justify-between">
                   <span>Simulated Brokerage (max ₹20):</span>
-                  <span>{formatINR(chargesBreakdown.brokerage)}</span>
+                  <span className="financial-num font-bold">{formatINR(chargesBreakdown.brokerage)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>STT / CTT (0.1%):</span>
-                  <span>{formatINR(chargesBreakdown.stt)}</span>
+                  <span className="financial-num font-bold">{formatINR(chargesBreakdown.stt)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Exchange Turnover (0.00345%):</span>
-                  <span>{formatINR(chargesBreakdown.turnoverCharges)}</span>
+                  <span className="financial-num font-bold">{formatINR(chargesBreakdown.turnoverCharges)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>GST (18% on Brokerage+Turnover):</span>
-                  <span>{formatINR(chargesBreakdown.gst)}</span>
+                  <span className="financial-num font-bold">{formatINR(chargesBreakdown.gst)}</span>
                 </div>
               </div>
             )}
 
             <div className="flex justify-between text-sm font-bold text-[#111827] pt-1 border-t border-[#E5E7EB]">
               <span>Total Margin Required</span>
-              <span className="font-mono text-[#111827] tabular-nums">
+              <span className="financial-num font-extrabold text-base text-[#111827] tabular-nums tracking-tight">
                 {formatINR(totalAmount)}
               </span>
             </div>

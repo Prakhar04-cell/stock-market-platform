@@ -400,11 +400,11 @@ export default function ExplorePage() {
                       <div className="mt-1">
                         {hasPrice ? (
                           <div>
-                            <div className="font-mono text-xs font-bold text-[#111827] tabular-nums">
+                            <div className="font-financial font-extrabold text-sm text-[#111827] tabular-nums tracking-tight">
                               {formatStockPrice(quote.ltp)}
                             </div>
                             <div
-                              className={`text-[10.5px] font-semibold font-mono tabular-nums ${pnl.colorClass}`}
+                              className={`text-[11px] font-bold font-financial tabular-nums ${pnl.colorClass}`}
                             >
                               {pnl.percentText}
                             </div>
@@ -525,13 +525,16 @@ export default function ExplorePage() {
                         <div className="pt-2 border-t border-slate-100">
                           {hasPrice ? (
                             <div>
-                              <div className="font-mono text-base font-bold text-[#111827] tabular-nums">
+                              <div className="financial-num-card font-extrabold text-[#111827] tabular-nums tracking-tight">
                                 {formatStockPrice(q.ltp)}
                               </div>
-                              <div
-                                className={`text-xs font-semibold font-mono tabular-nums ${pnl.colorClass}`}
-                              >
-                                {pnl.amountText} ({pnl.percentText})
+                              <div className="flex items-center gap-1.5 pt-0.5">
+                                <span className={`font-financial font-bold text-xs tabular-nums ${pnl.colorClass}`}>
+                                  {pnl.amountText}
+                                </span>
+                                <span className={`financial-pnl-pct text-[11px] ${pnl.colorClass}`}>
+                                  {pnl.percentText}
+                                </span>
                               </div>
                             </div>
                           ) : (
@@ -651,11 +654,11 @@ export default function ExplorePage() {
                       </div>
 
                       <div className="text-right shrink-0">
-                        <div className="font-mono text-xs font-bold text-[#111827] tabular-nums">
+                        <div className="font-financial font-extrabold text-sm text-[#111827] tabular-nums tracking-tight">
                           {formatStockPrice(item.ltp)}
                         </div>
                         <div
-                          className={`text-[10.5px] font-bold font-mono tabular-nums ${itemPnl.colorClass}`}
+                          className={`text-[11px] font-bold font-financial tabular-nums ${itemPnl.colorClass}`}
                         >
                           {itemPnl.percentText}
                         </div>
@@ -905,39 +908,53 @@ export default function ExplorePage() {
                       <div className="flex justify-between items-baseline">
                         <span className="text-xs text-[#6B7280]">Current Value</span>
                         <span
-                          className="font-mono text-base font-bold text-[#111827] tabular-nums"
+                          className="financial-num text-xl font-extrabold text-[#111827] tabular-nums tracking-tight"
                           title={formatINR(portfolio.current_value)}
                         >
-                          {formatCompactINR(portfolio.current_value)}
+                          {formatINR(portfolio.current_value)}
                         </span>
                       </div>
 
                       <div className="flex justify-between items-baseline pt-1 border-t border-[#E5E7EB]">
                         <span className="text-xs text-[#6B7280]">Invested</span>
                         <span
-                          className="font-mono text-xs font-semibold text-[#4B5563] tabular-nums"
+                          className="font-financial font-bold text-sm text-[#4B5563] tabular-nums tracking-tight"
                           title={formatINR(portfolio.total_invested)}
                         >
-                          {formatCompactINR(portfolio.total_invested)}
+                          {formatINR(portfolio.total_invested)}
                         </span>
                       </div>
 
                       <div className="flex justify-between items-baseline">
                         <span className="text-xs text-[#6B7280]">1D Returns</span>
-                        <span
-                          className={`font-mono text-xs font-bold tabular-nums ${todayPnl.colorClass}`}
-                        >
-                          {todayPnl.amountText} ({todayPnl.percentText})
-                        </span>
+                        <div className="flex items-baseline gap-1.5">
+                          <span
+                            className={`font-financial font-extrabold text-sm tabular-nums ${todayPnl.colorClass}`}
+                          >
+                            {todayPnl.amountText}
+                          </span>
+                          <span
+                            className={`financial-pnl-pct text-xs ${todayPnl.colorClass}`}
+                          >
+                            {todayPnl.percentText}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="flex justify-between items-baseline">
                         <span className="text-xs text-[#6B7280]">Total Returns</span>
-                        <span
-                          className={`font-mono text-xs font-bold tabular-nums ${totalPnl.colorClass}`}
-                        >
-                          {totalPnl.amountText} ({totalPnl.percentText})
-                        </span>
+                        <div className="flex items-baseline gap-1.5">
+                          <span
+                            className={`font-financial font-extrabold text-sm tabular-nums ${totalPnl.colorClass}`}
+                          >
+                            {totalPnl.amountText}
+                          </span>
+                          <span
+                            className={`financial-pnl-pct text-xs ${totalPnl.colorClass}`}
+                          >
+                            {totalPnl.percentText}
+                          </span>
+                        </div>
                       </div>
                     </div>
 

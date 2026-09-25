@@ -40,18 +40,17 @@ export interface FormatOptions {
  */
 export function formatINR(
   amount: number | string | null | undefined,
-  decimals?: number
+  decimals: number = 2
 ): string {
   if (amount === null || amount === undefined || isNaN(Number(amount))) {
-    return decimals !== undefined && decimals > 0 ? "₹0.00" : "₹0";
+    return decimals > 0 ? `₹0.${"0".repeat(decimals)}` : "₹0";
   }
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  const dec = decimals !== undefined ? decimals : num % 1 === 0 ? 0 : 2;
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    minimumFractionDigits: dec,
-    maximumFractionDigits: dec,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(num);
 }
 
@@ -61,16 +60,15 @@ export function formatINR(
  */
 export function formatIndianNumber(
   amount: number | string | null | undefined,
-  decimals?: number
+  decimals: number = 2
 ): string {
   if (amount === null || amount === undefined || isNaN(Number(amount))) {
-    return decimals !== undefined && decimals > 0 ? "0.00" : "0";
+    return decimals > 0 ? `0.${"0".repeat(decimals)}` : "0";
   }
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  const dec = decimals !== undefined ? decimals : num % 1 === 0 ? 0 : 2;
   return new Intl.NumberFormat("en-IN", {
-    minimumFractionDigits: dec,
-    maximumFractionDigits: dec,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(num);
 }
 
@@ -214,7 +212,7 @@ export function formatPnL(
   if (percent !== undefined && percent !== null && !isNaN(Number(percent))) {
     const pctNum = typeof percent === "string" ? parseFloat(percent) : percent;
     if (Math.abs(pctNum) < 0.005) {
-      percentText = "0.00%";
+      percentText = isPositive ? "+0.00%" : isNegative ? "-0.00%" : "0.00%";
     } else {
       const pctSign = pctNum > 0 ? "+" : "";
       percentText = `${pctSign}${pctNum.toFixed(2)}%`;
@@ -225,7 +223,7 @@ export function formatPnL(
     ? `${amountText} (${percentText})`
     : amountText;
 
-  let colorClass = "text-[#6B7280]";
+  let colorClass = "text-[#111827]";
   if (isPositive) {
     colorClass = "text-[#16A34A]";
   } else if (isNegative) {

@@ -185,17 +185,17 @@ export function WatchlistDock({
               </div>
 
               {/* Price & Change */}
-              <div className="text-right font-mono shrink-0">
-                <span className="text-xs font-bold text-slate-800 block">
+              <div className="text-right font-financial shrink-0">
+                <span className="text-sm font-bold text-[#111827] block tabular-nums tracking-tight">
                   {stock.price}
                 </span>
                 <span
-                  className={`text-[10px] font-medium ${
+                  className={`text-[10.5px] font-bold tabular-nums ${
                     stock.isPositive === undefined
                       ? "text-slate-400"
                       : stock.isPositive
-                      ? "text-emerald-600"
-                      : "text-rose-600"
+                      ? "text-[#16A34A]"
+                      : "text-[#DC2626]"
                   }`}
                 >
                   {stock.change}

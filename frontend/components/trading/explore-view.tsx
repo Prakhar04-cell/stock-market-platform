@@ -91,10 +91,10 @@ export function ExploreView({
                 </span>
               </div>
               <div className="flex items-baseline gap-3 mt-1">
-                <span className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 tracking-tight">
+                <span className="financial-num text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
                   ₹1,00,000.00
                 </span>
-                <span className="text-xs font-semibold text-slate-500 flex items-center font-mono">
+                <span className="text-xs font-semibold text-slate-500 flex items-center font-financial">
                   Today&apos;s P&amp;L: ₹ -- (Waiting for API)
                 </span>
               </div>
@@ -116,15 +116,15 @@ export function ExploreView({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 text-xs">
             <div>
               <span className="text-slate-500 text-[11px] block">Invested Capital</span>
-              <span className="font-mono font-bold text-slate-900 text-sm">₹0.00</span>
+              <span className="font-financial font-extrabold text-slate-900 text-sm">₹0.00</span>
             </div>
             <div>
               <span className="text-slate-500 text-[11px] block">Total Returns</span>
-              <span className="font-mono font-bold text-slate-500 text-sm">₹ -- (--%)</span>
+              <span className="font-financial font-bold text-slate-500 text-sm">₹ -- (--%)</span>
             </div>
             <div>
               <span className="text-slate-500 text-[11px] block">Available Margin</span>
-              <span className="font-mono font-bold text-emerald-700 text-sm">₹1,00,000.00</span>
+              <span className="font-financial font-extrabold text-emerald-700 text-sm">₹1,00,000.00</span>
             </div>
           </div>
         </div>

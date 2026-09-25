@@ -266,17 +266,17 @@ export default function OrdersPage() {
                         </td>
 
                         {/* Quantity */}
-                        <td className="py-3 px-4 text-right font-mono font-bold text-[#111827] tabular-nums">
+                        <td className="py-3 px-4 text-right financial-num-sm font-bold text-[#111827] tabular-nums">
                           {order.filled_quantity} / {order.quantity}
                         </td>
 
                         {/* Price */}
-                        <td className="py-3 px-4 text-right font-mono text-[#111827] tabular-nums">
+                        <td className="py-3 px-4 text-right financial-num-sm font-bold text-[#111827] tabular-nums">
                           {formatStockPrice(price)}
                         </td>
 
                         {/* Order Value */}
-                        <td className="py-3 px-4 text-right font-mono font-bold text-[#111827] tabular-nums">
+                        <td className="py-3 px-4 text-right financial-num-sm font-extrabold text-[#111827] tabular-nums">
                           {formatINR(orderValue)}
                         </td>
 
@@ -346,18 +346,18 @@ export default function OrdersPage() {
                       {getStatusBadge(order.status)}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <span className="text-[10px] text-[#6B7280] block font-sans">Quantity</span>
-                        <span className="font-bold text-[#111827]">{order.quantity}</span>
+                        <span className="financial-num-sm font-bold text-[#111827]">{order.quantity}</span>
                       </div>
                       <div className="text-right">
                         <span className="text-[10px] text-[#6B7280] block font-sans">Price</span>
-                        <span className="font-bold text-[#111827]">{formatStockPrice(price)}</span>
+                        <span className="financial-num-sm font-bold text-[#111827]">{formatStockPrice(price)}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-[#6B7280] block font-sans">Total Value</span>
-                        <span className="font-bold text-[#111827]">{formatINR(orderValue)}</span>
+                        <span className="financial-num-sm font-extrabold text-[#111827]">{formatINR(orderValue)}</span>
                       </div>
                       <div className="text-right">
                         <span className="text-[10px] text-[#6B7280] block font-sans">Date</span>
