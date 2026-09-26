@@ -22,6 +22,7 @@ class QuoteService:
     """
 
     CACHE_TTL_SECONDS = 60  # Short cache for quotes
+    REDIS_CACHE_TTL_SECONDS = 86400  # 24 hours persistent Redis cache for quotes
     STALE_THRESHOLD_SECONDS = 120  # Mark stale if quote is older than 2 minutes
 
     def __init__(self):
@@ -220,17 +221,18 @@ class QuoteService:
                 "source": quote.source or ("BHARATSTOCKAPI" if quote.status == "FALLBACK" else "UPSTOX"),
             }
             dumped = json.dumps(payload)
-            await redis.set(f"market:quote:{ikey}", dumped, ex=self.CACHE_TTL_SECONDS)
-            await redis.set(f"market:quote:{ikey_pipe}", dumped, ex=self.CACHE_TTL_SECONDS)
-            await redis.set(f"market:quote:{ikey_colon}", dumped, ex=self.CACHE_TTL_SECONDS)
-            await redis.set(f"market:quote:{sym_upper}", dumped, ex=self.CACHE_TTL_SECONDS)
+            redis_ttl = getattr(self, "REDIS_CACHE_TTL_SECONDS", 86400)
+            await redis.set(f"market:quote:{ikey}", dumped, ex=redis_ttl)
+            await redis.set(f"market:quote:{ikey_pipe}", dumped, ex=redis_ttl)
+            await redis.set(f"market:quote:{ikey_colon}", dumped, ex=redis_ttl)
+            await redis.set(f"market:quote:{sym_upper}", dumped, ex=redis_ttl)
             if extra_alias:
                 alias_up = extra_alias.upper()
-                await redis.set(f"market:quote:{alias_up}", dumped, ex=self.CACHE_TTL_SECONDS)
+                await redis.set(f"market:quote:{alias_up}", dumped, ex=redis_ttl)
                 if "|" in alias_up:
-                    await redis.set(f"market:quote:{alias_up.replace('|', ':')}", dumped, ex=self.CACHE_TTL_SECONDS)
+                    await redis.set(f"market:quote:{alias_up.replace('|', ':')}", dumped, ex=redis_ttl)
                 elif ":" in alias_up:
-                    await redis.set(f"market:quote:{alias_up.replace(':', '|')}", dumped, ex=self.CACHE_TTL_SECONDS)
+                    await redis.set(f"market:quote:{alias_up.replace(':', '|')}", dumped, ex=redis_ttl)
         except Exception as e:
             logger.debug(f"Failed to cache quote in Redis: {e}")
 
