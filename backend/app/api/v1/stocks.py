@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.exceptions import ResourceNotFoundError
 from app.models.market import Exchange, Stock
 from app.schemas.stocks import StockDetailResponse, StockResponse
+from app.services.providers.bharatstock_provider import bharatstock_provider
 
 router = APIRouter(prefix="/stocks", tags=["Stocks & Markets"])
 
@@ -123,6 +124,7 @@ async def get_stock_by_symbol(
         raise ResourceNotFoundError(resource="Stock", identifier=clean_raw)
 
     quote = await quote_service.get_quote(stock.symbol)
+    fundamentals = await bharatstock_provider.get_fundamentals(stock.symbol)
 
     if quote:
         market_status = quote.status
@@ -167,6 +169,32 @@ async def get_stock_by_symbol(
             "52w_low": None,
         }
 
+    market_cap = None
+    pe_ratio = None
+    pb_ratio = None
+    roe = None
+    roce = None
+    eps = None
+    dividend_yield = None
+
+    if fundamentals:
+        if fundamentals.get("market_cap") is not None:
+            market_cap = Decimal(str(fundamentals["market_cap"]))
+        if fundamentals.get("pe_ratio") is not None:
+            pe_ratio = Decimal(str(fundamentals["pe_ratio"]))
+        if fundamentals.get("pb_ratio") is not None:
+            pb_ratio = Decimal(str(fundamentals["pb_ratio"]))
+        if fundamentals.get("roe") is not None:
+            roe = Decimal(str(fundamentals["roe"]))
+        if fundamentals.get("roce") is not None:
+            roce = Decimal(str(fundamentals["roce"]))
+        if fundamentals.get("eps") is not None:
+            eps = Decimal(str(fundamentals["eps"]))
+        if fundamentals.get("dividend_yield") is not None:
+            dividend_yield = Decimal(str(fundamentals["dividend_yield"]))
+        if stats.get("volume") is None and fundamentals.get("volume") is not None:
+            stats["volume"] = fundamentals["volume"]
+
     return StockDetailResponse(
         id=stock.id,
         exchange_code=stock.exchange.code if stock.exchange else exchange,
@@ -189,5 +217,12 @@ async def get_stock_by_symbol(
             "isin": stock.isin or "N/A",
         },
         chart_compatible_format="TradingView_Lightweight_Charts_v4",
+        market_cap=market_cap,
+        pe_ratio=pe_ratio,
+        pb_ratio=pb_ratio,
+        roe=roe,
+        roce=roce,
+        eps=eps,
+        dividend_yield=dividend_yield,
     )
 

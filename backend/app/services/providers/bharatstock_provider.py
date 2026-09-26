@@ -1,14 +1,21 @@
 import json
 import logging
+import os
+import sys
+import time
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote as url_quote
 
 import httpx
+from sqlalchemy import select
 
 from app.core.config import settings
+from app.core.database import AsyncSessionLocal
 from app.core.exceptions import TradeXException
+from app.core.redis import get_redis
+from app.models.system import ProviderCredential, SystemSetting
 from app.services.market_data.normalizer import (
     CandleData,
     InstrumentData,
@@ -30,26 +37,104 @@ class BharatStockAPIProvider(MarketDataProvider):
     Architecture role: FALLBACK provider when primary Upstox feed is unavailable.
     Authentication: X-API-Key header (server-side only, never exposed to frontend).
     Base URL: Configured via MARKET_DATA_API_BASE_URL (defaults to https://bharatstockapi.com).
+    Credentials: Dynamically loaded from environment, Redis, or PostgreSQL DB.
     """
 
     def __init__(self):
         self._last_successful_request: Optional[datetime] = None
         self._error_count: int = 0
         self._last_error_message: Optional[str] = None
+        self._cached_api_key: Optional[str] = None
+        self._cached_base_url: Optional[str] = None
+        self._last_cred_check: float = 0.0
 
     @property
     def provider_name(self) -> str:
         return "BharatStockAPI"
 
+    def get_api_key(self) -> Optional[str]:
+        """Returns the active API key from environment override or dynamic cache."""
+        if settings.MARKET_DATA_API_KEY and settings.MARKET_DATA_API_KEY.strip():
+            return settings.MARKET_DATA_API_KEY.strip()
+        if self._cached_api_key and self._cached_api_key.strip():
+            return self._cached_api_key.strip()
+        return None
+
+    async def ensure_configured(self) -> bool:
+        """
+        Dynamically discovers and loads the BharatStock API key and base URL from:
+        1. settings.MARKET_DATA_API_KEY
+        2. In-memory cached key
+        3. Upstash Redis (market:config:api_key)
+        4. PostgreSQL database (system_settings / provider_credentials)
+        """
+        if self.get_api_key():
+            return True
+
+        now = time.time()
+        # Avoid hammering DB if checked within last 10 seconds
+        if (now - self._last_cred_check < 10.0) and self._last_cred_check > 0:
+            return bool(self.get_api_key())
+        self._last_cred_check = now
+
+        # 1. Try Upstash Redis cache
+        try:
+            redis = await get_redis()
+            if redis:
+                key_from_redis = await redis.get("market:config:api_key")
+                if key_from_redis:
+                    self._cached_api_key = key_from_redis.strip()
+                    url_from_redis = await redis.get("market:config:base_url")
+                    if url_from_redis:
+                        self._cached_base_url = url_from_redis.strip()
+                    return True
+        except Exception as e:
+            logger.debug(f"Redis lookup for market data key failed: {e}")
+
+        # 2. Try PostgreSQL database (shared between Render & local)
+        is_test_env = "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST") is not None
+        if not is_test_env:
+            try:
+                async with AsyncSessionLocal() as db:
+                    # Check provider_credentials table
+                    stmt = (
+                        select(ProviderCredential)
+                        .where(ProviderCredential.provider_name == "bharatstock", ProviderCredential.is_active.is_(True))
+                        .order_by(ProviderCredential.created_at.desc())
+                    )
+                    cred = (await db.execute(stmt)).scalar_one_or_none()
+                    if cred and cred.access_token:
+                        self._cached_api_key = cred.access_token.strip()
+                        if cred.extra_data and isinstance(cred.extra_data, dict):
+                            b_url = cred.extra_data.get("base_url")
+                            if b_url:
+                                self._cached_base_url = b_url.strip()
+                        return True
+
+                    # Check system_settings table
+                    stmt2 = select(SystemSetting).where(SystemSetting.key == "MARKET_DATA_API_KEY")
+                    setting = (await db.execute(stmt2)).scalar_one_or_none()
+                    if setting and setting.value:
+                        self._cached_api_key = setting.value.strip()
+                        stmt3 = select(SystemSetting).where(SystemSetting.key == "MARKET_DATA_API_BASE_URL")
+                        url_setting = (await db.execute(stmt3)).scalar_one_or_none()
+                        if url_setting and url_setting.value:
+                            self._cached_base_url = url_setting.value.strip()
+                        return True
+            except Exception as e:
+                logger.debug(f"DB lookup for market data key failed: {e}")
+
+        return bool(self.get_api_key())
+
     @property
     def base_url(self) -> str:
-        url = settings.MARKET_DATA_API_BASE_URL or "https://bharatstockapi.com"
+        url = settings.MARKET_DATA_API_BASE_URL or self._cached_base_url or "https://bharatstockapi.com"
         return url.rstrip("/")
 
     @property
     def is_configured(self) -> bool:
         """Returns True if the server-side MARKET_DATA_API_KEY is configured."""
-        return bool(settings.MARKET_DATA_API_KEY and settings.MARKET_DATA_API_KEY.strip())
+        return bool(self.get_api_key())
 
     @property
     def is_token_valid(self) -> bool:
@@ -65,8 +150,9 @@ class BharatStockAPIProvider(MarketDataProvider):
             "Accept": "application/json",
             "User-Agent": "TradeX-BullRun/1.0",
         }
-        if self.is_configured:
-            headers["X-API-Key"] = settings.MARKET_DATA_API_KEY.strip()
+        api_key = self.get_api_key()
+        if api_key:
+            headers["X-API-Key"] = api_key
         return headers
 
     async def _make_request(
@@ -79,6 +165,9 @@ class BharatStockAPIProvider(MarketDataProvider):
         Internal HTTP client wrapper with robust status translation, timeout handling,
         and JSON validation. Never logs or leaks the API key.
         """
+        if not self.is_configured:
+            await self.ensure_configured()
+
         if not self.is_configured:
             raise TradeXException(
                 code="PROVIDER_NOT_CONFIGURED",
@@ -195,6 +284,8 @@ class BharatStockAPIProvider(MarketDataProvider):
         Fetch real-time normalized quote for a single symbol or instrument key.
         Tries detailed stock endpoint /v1/stocks/{ticker}, falling back to /v1/stocks/quotes.
         """
+        if not self.is_configured:
+            await self.ensure_configured()
         if not self.is_configured or not symbol_or_key:
             return None
 
@@ -215,28 +306,35 @@ class BharatStockAPIProvider(MarketDataProvider):
                 return idx_quotes
 
         try:
+            logger.info(f"[MARKET-DATA] Provider: BharatStockAPI")
+            logger.info(f"[MARKET-DATA] Symbol: {sym}")
             # 1. Try single stock endpoint
             encoded_sym = url_quote(sym, safe="")
             stock_data = await self._make_request(f"v1/stocks/{encoded_sym}")
             if stock_data and isinstance(stock_data, dict):
+                logger.info(f"[MARKET-DATA] Request successful: true")
                 norm = normalize_bharatstock_quote(
                     raw_data=stock_data,
                     symbol_override=sym,
                     instrument_key=symbol_or_key if "|" in symbol_or_key else None,
                 )
                 if norm.ltp > 0:
+                    logger.info(f"[MARKET-DATA] Response mapped: true")
                     return norm
 
             # 2. Fallback to batch quotes endpoint for this single symbol
             batch_data = await self._make_request("v1/stocks/quotes", params={"symbols": sym})
             if batch_data and isinstance(batch_data, list):
+                logger.info(f"[MARKET-DATA] Request successful: true")
                 for item in batch_data:
                     if item.get("symbol", "").upper() == sym and item.get("found", True):
-                        return normalize_bharatstock_quote(
+                        norm = normalize_bharatstock_quote(
                             raw_data=item,
                             symbol_override=sym,
                             instrument_key=symbol_or_key if "|" in symbol_or_key else None,
                         )
+                        logger.info(f"[MARKET-DATA] Response mapped: true")
+                        return norm
             return None
 
         except TradeXException as e:
@@ -252,6 +350,8 @@ class BharatStockAPIProvider(MarketDataProvider):
         Batch fetch quotes for multiple symbols or instrument keys via /v1/stocks/quotes.
         Maps results to both trading symbol and instrument key for instant cache lookup.
         """
+        if not self.is_configured:
+            await self.ensure_configured()
         if not self.is_configured or not symbols_or_keys:
             return {}
 
@@ -292,8 +392,11 @@ class BharatStockAPIProvider(MarketDataProvider):
                 chunk = stock_symbols[i : i + chunk_size]
                 syms_param = ",".join(chunk)
                 try:
+                    logger.info(f"[MARKET-DATA] Provider: BharatStockAPI")
+                    logger.info(f"[MARKET-DATA] Symbols: {syms_param}")
                     raw_list = await self._make_request("v1/stocks/quotes", params={"symbols": syms_param})
                     if raw_list and isinstance(raw_list, list):
+                        logger.info(f"[MARKET-DATA] Request successful: true")
                         for item in raw_list:
                             if not item.get("found", True):
                                 continue
@@ -302,6 +405,7 @@ class BharatStockAPIProvider(MarketDataProvider):
                                 continue
                             norm_quote = normalize_bharatstock_quote(raw_data=item, symbol_override=raw_sym)
                             if norm_quote.ltp > 0:
+                                logger.info(f"[MARKET-DATA] Response mapped: true")
                                 # Map to all associated keys/aliases
                                 for alias in symbol_to_keys.get(raw_sym, [raw_sym]):
                                     results[alias] = norm_quote
@@ -325,6 +429,11 @@ class BharatStockAPIProvider(MarketDataProvider):
         """
         Retrieves latest quote for an index (e.g. NIFTY 50, SENSEX) using /v1/indices/{name}/prices.
         """
+        if not self.is_configured:
+            await self.ensure_configured()
+        if not self.is_configured:
+            return None
+
         clean_idx = index_name.strip().upper()
         # Canonical index names for BharatStockAPI
         canonical_map = {
@@ -399,6 +508,8 @@ class BharatStockAPIProvider(MarketDataProvider):
         Endpoint: GET /v1/stocks/{ticker}/prices or GET /v1/indices/{name}/prices
         """
         if not self.is_configured:
+            await self.ensure_configured()
+        if not self.is_configured:
             return []
 
         from app.services.market_data.instrument_service import instrument_service
@@ -455,6 +566,8 @@ class BharatStockAPIProvider(MarketDataProvider):
         Fetch market movers (gainers, losers, active) directly from BharatStockAPI /v1/movers.
         """
         if not self.is_configured:
+            await self.ensure_configured()
+        if not self.is_configured:
             return []
 
         cat = category.lower()
@@ -501,6 +614,8 @@ class BharatStockAPIProvider(MarketDataProvider):
         """
         Search stocks and companies via BharatStockAPI /v1/search.
         """
+        if not self.is_configured:
+            await self.ensure_configured()
         if not self.is_configured or not query:
             return []
 
@@ -517,14 +632,106 @@ class BharatStockAPIProvider(MarketDataProvider):
 
         return []
 
+    async def get_fundamentals(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """
+        Fetches fundamental ratios and corporate metrics for a stock ticker.
+        Primary source: GET /v1/stocks/{ticker}/ratios
+        Secondary source: GET /v1/stocks/{ticker}
+        Cached in Redis for 1 hour to optimize performance.
+        """
+        if not self.is_configured:
+            await self.ensure_configured()
+        if not self.is_configured or not symbol:
+            return None
+
+        clean_sym = self._extract_symbol(symbol).strip().upper()
+        cache_key = f"market:fundamentals:{clean_sym}"
+
+        # 1. Try Redis cache
+        try:
+            redis = await get_redis()
+            if redis:
+                cached = await redis.get(cache_key)
+                if cached:
+                    return json.loads(cached)
+        except Exception as e:
+            logger.debug(f"Redis get fundamentals cache failed for {clean_sym}: {e}")
+
+        # 2. Query BharatStockAPI /v1/stocks/{ticker}/ratios
+        fundamentals: Dict[str, Any] = {
+            "symbol": clean_sym,
+            "market_cap": None,
+            "pe_ratio": None,
+            "pb_ratio": None,
+            "roe": None,
+            "roce": None,
+            "eps": None,
+            "dividend_yield": None,
+            "volume": None,
+            "source": "BHARATSTOCKAPI",
+        }
+
+        try:
+            encoded_sym = url_quote(clean_sym, safe="")
+            ratios_data = await self._make_request(f"v1/stocks/{encoded_sym}/ratios")
+            if ratios_data and isinstance(ratios_data, dict):
+                for k in ["market_cap", "pe_ratio", "pb_ratio", "roe", "roce", "eps", "dividend_yield"]:
+                    if ratios_data.get(k) is not None:
+                        try:
+                            fundamentals[k] = float(ratios_data[k])
+                        except (ValueError, TypeError):
+                            pass
+
+            # If some fields or volume missing, also check detailed /v1/stocks/{ticker}
+            if fundamentals["market_cap"] is None or fundamentals["volume"] is None:
+                detail_data = await self._make_request(f"v1/stocks/{encoded_sym}")
+                if detail_data and isinstance(detail_data, dict):
+                    if fundamentals["market_cap"] is None and detail_data.get("market_cap") is not None:
+                        try:
+                            fundamentals["market_cap"] = float(detail_data["market_cap"])
+                        except (ValueError, TypeError):
+                            pass
+                    
+                    latest = detail_data.get("latest_price")
+                    if isinstance(latest, dict) and latest.get("volume") is not None:
+                        try:
+                            fundamentals["volume"] = int(latest["volume"])
+                        except (ValueError, TypeError):
+                            pass
+
+                    metrics = detail_data.get("metrics")
+                    if isinstance(metrics, dict):
+                        for k in ["pe_ratio", "pb_ratio", "roe", "roce", "eps", "dividend_yield"]:
+                            if fundamentals.get(k) is None and metrics.get(k) is not None:
+                                try:
+                                    fundamentals[k] = float(metrics[k])
+                                except (ValueError, TypeError):
+                                    pass
+
+            # 3. Store in Redis cache (1 hour)
+            try:
+                redis = await get_redis()
+                if redis:
+                    await redis.set(cache_key, json.dumps(fundamentals), ex=3600)
+            except Exception as e:
+                logger.debug(f"Redis set fundamentals cache failed for {clean_sym}: {e}")
+
+            return fundamentals
+
+        except Exception as e:
+            logger.warning(f"Failed to fetch fundamentals for {clean_sym}: {e}")
+            return None
+
     async def get_health(self) -> Dict[str, Any]:
         """Subsystem health telemetry for BharatStockAPI."""
+        if not self.is_configured:
+            await self.ensure_configured()
         if not self.is_configured:
             return {
                 "status": "not_configured",
                 "provider": self.provider_name,
                 "role": "fallback",
-                "message": "BharatStockAPI key not set in environment.",
+                "message": "BharatStockAPI key not set in environment or database.",
             }
 
         return {

@@ -24,11 +24,35 @@ from app.services.providers.bharatstock_provider import (
 
 
 @pytest.fixture(autouse=True)
-def clean_memory_cache():
-    """Clear in-memory quote cache between test runs."""
+async def clean_memory_cache():
+    """Clear in-memory and Redis quote cache between test runs."""
     quote_service._memory_cache.clear()
+    try:
+        from app.core.redis import get_redis
+        redis = await get_redis()
+        if redis:
+            keys = [
+                "market:quote:RELIANCE", "market:quote:TCS", "market:quote:INFY",
+                "market:quote:NSE_EQ|RELIANCE", "market:quote:NSE_EQ:RELIANCE",
+                "market:quote:NSE_EQ|TCS", "market:quote:NSE_EQ:TCS",
+                "market:quote:NSE_EQ|INFY", "market:quote:NSE_EQ:INFY",
+                "market:quote:NSE_EQ|INE002A01018", "market:quote:NSE_EQ:INE002A01018",
+                "market:quote:NSE_EQ|INE467B01029", "market:quote:NSE_EQ:INE467B01029",
+                "market:quote:NSE_EQ|INE009A01021", "market:quote:NSE_EQ:INE009A01021",
+                "market:fundamentals:RELIANCE", "market:fundamentals:TCS", "market:fundamentals:INFY"
+            ]
+            await redis.delete(*keys)
+    except Exception:
+        pass
     yield
     quote_service._memory_cache.clear()
+    try:
+        from app.core.redis import get_redis
+        redis = await get_redis()
+        if redis:
+            await redis.delete(*keys)
+    except Exception:
+        pass
 
 
 # ==============================================================================
@@ -428,3 +452,67 @@ async def test_market_movers_fallback(client: AsyncClient):
                 assert data["status"] == "FALLBACK"
                 assert len(data["gainers"]) > 0
                 assert data["gainers"][0]["symbol"] == "SWARAJ"
+
+
+@pytest.mark.asyncio
+async def test_bharatstock_get_fundamentals():
+    """Verify get_fundamentals fetches ratios, falls back to stock detail, and caches."""
+    mock_ratios = {
+        "as_of_date": "2026-09-25",
+        "market_cap": 16590232000000.0,
+        "pe_ratio": 22.2,
+        "pb_ratio": 1.53,
+        "eps": 55.22,
+        "roe": 8.82,
+        "roce": 9.18,
+        "dividend_yield": 0.49,
+    }
+    mock_detail = {
+        "symbol": "RELIANCE",
+        "latest_price": {"volume": 13138735},
+    }
+
+    with patch.object(settings, "MARKET_DATA_API_KEY", "mock_key_123"):
+        with patch.object(bharatstock_provider, "_make_request") as mock_req:
+            mock_req.side_effect = [mock_ratios, mock_detail]
+            fund = await bharatstock_provider.get_fundamentals("RELIANCE")
+            assert fund is not None
+            assert fund["symbol"] == "RELIANCE"
+            assert fund["market_cap"] == 16590232000000.0
+            assert fund["pe_ratio"] == 22.2
+            assert fund["pb_ratio"] == 1.53
+            assert fund["roe"] == 8.82
+            assert fund["roce"] == 9.18
+            assert fund["eps"] == 55.22
+            assert fund["dividend_yield"] == 0.49
+            assert fund["volume"] == 13138735
+            assert fund["source"] == "BHARATSTOCKAPI"
+
+
+@pytest.mark.asyncio
+async def test_stock_detail_with_fundamentals(client: AsyncClient):
+    """Verify GET /api/v1/stocks/{symbol} populates fundamental metrics in StockDetailResponse."""
+    mock_fund = {
+        "symbol": "RELIANCE",
+        "market_cap": 16590232000000.0,
+        "pe_ratio": 22.2,
+        "pb_ratio": 1.53,
+        "roe": 8.82,
+        "roce": 9.18,
+        "eps": 55.22,
+        "dividend_yield": 0.49,
+        "volume": 13138735,
+        "source": "BHARATSTOCKAPI",
+    }
+    with patch.object(bharatstock_provider, "get_fundamentals", new_callable=AsyncMock, return_value=mock_fund):
+        res = await client.get("/api/v1/stocks/RELIANCE")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["symbol"] == "RELIANCE"
+        assert float(data["market_cap"]) == 16590232000000.0
+        assert float(data["pe_ratio"]) == 22.2
+        assert float(data["pb_ratio"]) == 1.53
+        assert float(data["roe"]) == 8.82
+        assert float(data["roce"]) == 9.18
+        assert float(data["eps"]) == 55.22
+        assert float(data["dividend_yield"]) == 0.49

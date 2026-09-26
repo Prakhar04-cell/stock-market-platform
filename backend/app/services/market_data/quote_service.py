@@ -132,6 +132,10 @@ class QuoteService:
                 logger.warning(f"Failed to fetch quotes from primary Upstox provider: {e}")
 
         # 4. Fallback to BharatStockAPI for any remaining misses (FALLBACK)
+        if remaining_misses:
+            if not bharatstock_provider.is_configured:
+                await bharatstock_provider.ensure_configured()
+
         if remaining_misses and bharatstock_provider.is_configured:
             try:
                 # Convert keys to simple trading symbols for BharatStockAPI
@@ -147,14 +151,24 @@ class QuoteService:
 
                 fb_quotes = await bharatstock_provider.get_quotes(fb_symbols)
                 for sym_or_key, quote in fb_quotes.items():
-                    orig_sym = key_to_symbol_map.get(sym_or_key, quote.symbol.upper())
+                    sym_upper = quote.symbol.upper()
+                    results[sym_upper] = quote
                     ikey = quote.instrument_key
                     ikey_pipe = ikey.replace(":", "|")
-                    results[quote.symbol.upper()] = quote
-                    results[orig_sym] = quote
+                    ikey_colon = ikey.replace("|", ":")
                     results[ikey] = quote
                     results[ikey_pipe] = quote
-                    await self.cache_quote(quote, extra_alias=orig_sym)
+                    results[ikey_colon] = quote
+
+                    # Map to all caller-requested keys/aliases that resolved to this symbol
+                    for req_key, mapped_sym in key_to_symbol_map.items():
+                        if mapped_sym.upper() == sym_upper or req_key.upper() == sym_upper:
+                            results[req_key] = quote
+                            results[req_key.replace(":", "|")] = quote
+                            results[req_key.replace("|", ":")] = quote
+                            await self.cache_quote(quote, extra_alias=req_key)
+
+                    await self.cache_quote(quote, extra_alias=sym_upper)
             except Exception as e:
                 logger.warning(f"Failed to fetch quotes from BharatStockAPI fallback: {e}")
 
@@ -167,12 +181,19 @@ class QuoteService:
         sym_upper = quote.symbol.upper()
         ikey = quote.instrument_key
         ikey_colon = ikey.replace("|", ":")
+        ikey_pipe = ikey.replace(":", "|")
 
         self._memory_cache[sym_upper] = (exp, quote)
         self._memory_cache[ikey] = (exp, quote)
+        self._memory_cache[ikey_pipe] = (exp, quote)
         self._memory_cache[ikey_colon] = (exp, quote)
         if extra_alias:
-            self._memory_cache[extra_alias.upper()] = (exp, quote)
+            alias_up = extra_alias.upper()
+            self._memory_cache[alias_up] = (exp, quote)
+            if "|" in alias_up:
+                self._memory_cache[alias_up.replace("|", ":")] = (exp, quote)
+            elif ":" in alias_up:
+                self._memory_cache[alias_up.replace(":", "|")] = (exp, quote)
 
         # 2. Update Redis
         redis = await get_redis()
@@ -200,9 +221,16 @@ class QuoteService:
             }
             dumped = json.dumps(payload)
             await redis.set(f"market:quote:{ikey}", dumped, ex=self.CACHE_TTL_SECONDS)
+            await redis.set(f"market:quote:{ikey_pipe}", dumped, ex=self.CACHE_TTL_SECONDS)
+            await redis.set(f"market:quote:{ikey_colon}", dumped, ex=self.CACHE_TTL_SECONDS)
             await redis.set(f"market:quote:{sym_upper}", dumped, ex=self.CACHE_TTL_SECONDS)
             if extra_alias:
-                await redis.set(f"market:quote:{extra_alias.upper()}", dumped, ex=self.CACHE_TTL_SECONDS)
+                alias_up = extra_alias.upper()
+                await redis.set(f"market:quote:{alias_up}", dumped, ex=self.CACHE_TTL_SECONDS)
+                if "|" in alias_up:
+                    await redis.set(f"market:quote:{alias_up.replace('|', ':')}", dumped, ex=self.CACHE_TTL_SECONDS)
+                elif ":" in alias_up:
+                    await redis.set(f"market:quote:{alias_up.replace(':', '|')}", dumped, ex=self.CACHE_TTL_SECONDS)
         except Exception as e:
             logger.debug(f"Failed to cache quote in Redis: {e}")
 

@@ -40,3 +40,10 @@ class StockDetailResponse(StockResponse):
     }
     company_info: Dict[str, Any] = {}
     chart_compatible_format: str = "TradingView_Lightweight_Charts_v4"
+    market_cap: Optional[Decimal] = None
+    pe_ratio: Optional[Decimal] = None
+    pb_ratio: Optional[Decimal] = None
+    roe: Optional[Decimal] = None
+    roce: Optional[Decimal] = None
+    eps: Optional[Decimal] = None
+    dividend_yield: Optional[Decimal] = None

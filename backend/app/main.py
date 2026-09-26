@@ -46,10 +46,19 @@ async def seed_initial_data():
                 ("MARKET_DATA_PROVIDER", "NOT_CONFIGURED", "Active market data stream provider"),
                 ("TRADING_ENGINE_PROVIDER", "NOT_CONFIGURED", "Active execution engine provider"),
             ]
+            if settings.MARKET_DATA_API_KEY and settings.MARKET_DATA_API_KEY.strip():
+                settings_seed.extend([
+                    ("MARKET_DATA_API_KEY", settings.MARKET_DATA_API_KEY.strip(), "BharatStockAPI Server Key"),
+                    ("MARKET_DATA_API_BASE_URL", settings.MARKET_DATA_API_BASE_URL or "https://bharatstockapi.com", "BharatStockAPI Base URL"),
+                    ("MARKET_DATA_API_PROVIDER", "BharatStockAPI", "Configured Market Data Fallback Provider"),
+                ])
             for key, val, desc in settings_seed:
                 stmt = select(SystemSetting).where(SystemSetting.key == key)
-                if not (await db.execute(stmt)).scalar_one_or_none():
+                existing = (await db.execute(stmt)).scalar_one_or_none()
+                if not existing:
                     db.add(SystemSetting(key=key, value=val, description=desc))
+                elif key == "MARKET_DATA_API_KEY" and val and not existing.value:
+                    existing.value = val
 
             # 3. Seed Exchanges (NSE & BSE)
             stmt = select(Exchange).where(Exchange.code == "NSE")
@@ -194,6 +203,8 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         await seed_initial_data()
+        from app.services.providers.bharatstock_provider import bharatstock_provider
+        await bharatstock_provider.ensure_configured()
     except Exception as e:
         logger.warning(f"Database initialization during lifespan: {e}")
 
