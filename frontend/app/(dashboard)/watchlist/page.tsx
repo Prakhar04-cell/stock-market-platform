@@ -224,10 +224,10 @@ export default function WatchlistPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-xl shadow-xs">
         <div>
-          <h1 className="text-lg font-bold text-[#111827] tracking-tight">
+          <h1 className="text-lg font-semibold text-[#111827] tracking-tight">
             Watchlists
           </h1>
-          <p className="text-xs text-[#6B7280]">
+          <p className="text-xs text-[#6B7280] font-normal">
             Track indices, equities, and execute simulated paper trades
           </p>
         </div>
@@ -235,7 +235,7 @@ export default function WatchlistPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setAddStockModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4F46E5] text-white text-xs font-bold hover:bg-[#4338CA] shadow-xs transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4F46E5] text-white text-xs font-medium hover:bg-[#4338CA] shadow-xs transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Stock</span>
@@ -243,7 +243,7 @@ export default function WatchlistPage() {
 
           <button
             onClick={() => setCreateModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E7EB] bg-white text-xs font-semibold text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E7EB] bg-white text-xs font-medium text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA] transition-colors"
           >
             <span>New List</span>
           </button>
@@ -265,14 +265,14 @@ export default function WatchlistPage() {
             <button
               key={wl.id}
               onClick={() => setActiveWatchlistId(wl.id)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
                 (activeWatchlistId || watchlists[0]?.id) === wl.id
                   ? "bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]"
                   : "bg-white text-[#6B7280] border border-[#E5E7EB] hover:text-[#111827] hover:bg-[#F7F8FA]"
               }`}
             >
               <span>{wl.name}</span>
-              <span className="ml-1.5 text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 text-[#4B5563]">
+              <span className="ml-1.5 text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 text-[#4B5563] font-normal">
                 {wl.items?.length || 0}
               </span>
             </button>
@@ -302,7 +302,7 @@ export default function WatchlistPage() {
               action={
                 <button
                   onClick={() => setAddStockModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-bold hover:bg-[#4338CA] shadow-xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-medium hover:bg-[#4338CA] shadow-xs transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Explore Markets &amp; Add</span>
@@ -313,13 +313,13 @@ export default function WatchlistPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="bg-[#F7F8FA] border-b border-[#E5E7EB] text-[#6B7280] text-[11px] font-semibold uppercase tracking-wider">
+              <thead className="bg-[#F7F8FA] border-b border-[#E5E7EB] text-[#6B7280] text-[11px] font-medium uppercase tracking-wider">
                 <tr>
-                  <th className="py-3 px-4">Instrument</th>
-                  <th className="py-3 px-4 text-right">LTP (₹)</th>
-                  <th className="py-3 px-4 text-right">Day Change</th>
-                  <th className="py-3 px-4 text-right">Change %</th>
-                  <th className="py-3 px-4 text-center">Actions</th>
+                  <th className="py-3 px-4 font-medium">Instrument</th>
+                  <th className="py-3 px-4 text-right font-medium">LTP (₹)</th>
+                  <th className="py-3 px-4 text-right font-medium">Day Change</th>
+                  <th className="py-3 px-4 text-right font-medium">Change %</th>
+                  <th className="py-3 px-4 text-center font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]">
@@ -342,14 +342,14 @@ export default function WatchlistPage() {
                           href={`/stocks/${encodeURIComponent(sym)}`}
                           className="flex items-center gap-2.5"
                         >
-                          <div className="w-7 h-7 rounded-md bg-[#F3F4F6] border border-[#E5E7EB] flex items-center justify-center font-bold text-[#374151] text-[11px] font-mono shrink-0">
+                          <div className="w-7 h-7 rounded-md bg-[#F3F4F6] border border-[#E5E7EB] flex items-center justify-center font-medium text-[#374151] text-[11px] font-mono shrink-0">
                             {sym.slice(0, 2)}
                           </div>
                           <div>
-                            <span className="font-bold text-xs text-[#111827] group-hover:text-[#4F46E5] transition-colors block">
+                            <span className="font-semibold text-xs text-[#111827] group-hover:text-[#4F46E5] transition-colors block">
                               {sym}
                             </span>
-                            <span className="text-[10.5px] text-[#6B7280] block truncate max-w-[200px]">
+                            <span className="text-[10.5px] text-[#6B7280] block truncate max-w-[200px] font-normal">
                               {item.stock?.name || `${sym} Equities`}
                             </span>
                           </div>
@@ -357,7 +357,7 @@ export default function WatchlistPage() {
                       </td>
 
                       {/* LTP */}
-                      <td className="py-3 px-4 text-right font-mono font-bold text-xs text-[#111827] tabular-nums">
+                      <td className="py-3 px-4 text-right font-mono font-semibold text-xs text-[#111827] tabular-nums">
                         {price !== undefined
                           ? formatStockPrice(price)
                           : "₹ --"}
@@ -365,7 +365,7 @@ export default function WatchlistPage() {
 
                       {/* Day Change */}
                       <td
-                        className={`py-3 px-4 text-right font-mono font-semibold text-xs tabular-nums ${
+                        className={`py-3 px-4 text-right font-mono font-medium text-xs tabular-nums ${
                           price !== undefined
                             ? pnl.colorClass
                             : "text-[#9CA3AF]"
@@ -376,7 +376,7 @@ export default function WatchlistPage() {
 
                       {/* Change % */}
                       <td
-                        className={`py-3 px-4 text-right font-mono font-bold text-xs tabular-nums ${
+                        className={`py-3 px-4 text-right font-mono font-medium text-xs tabular-nums ${
                           price !== undefined
                             ? pnl.colorClass
                             : "text-[#9CA3AF]"
@@ -398,14 +398,14 @@ export default function WatchlistPage() {
 
                           <button
                             onClick={() => openOrderPad(sym, item.stock?.name || sym, "BUY")}
-                            className="px-2 py-1 rounded bg-[#ECFDF5] text-[#00A86B] border border-[#A7F3D0] text-[10.5px] font-bold hover:bg-[#D1FAE5] transition-colors"
+                            className="px-2 py-1 rounded bg-[#ECFDF5] text-[#00A86B] border border-[#A7F3D0] text-[10.5px] font-medium hover:bg-[#D1FAE5] transition-colors"
                           >
                             BUY
                           </button>
 
                           <button
                             onClick={() => openOrderPad(sym, item.stock?.name || sym, "SELL")}
-                            className="px-2 py-1 rounded bg-[#FEF2F2] text-[#EF4444] border border-[#FECACA] text-[10.5px] font-bold hover:bg-[#FEE2E2] transition-colors"
+                            className="px-2 py-1 rounded bg-[#FEF2F2] text-[#EF4444] border border-[#FECACA] text-[10.5px] font-medium hover:bg-[#FEE2E2] transition-colors"
                           >
                             SELL
                           </button>
@@ -433,7 +433,7 @@ export default function WatchlistPage() {
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white border border-[#E5E7EB] rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl select-none">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-sm text-[#111827]">Add Instrument to Watchlist</h3>
+              <h3 className="font-semibold text-sm text-[#111827]">Add Instrument to Watchlist</h3>
               <button
                 onClick={() => setAddStockModalOpen(false)}
                 className="text-[#9CA3AF] hover:text-[#111827]"
@@ -449,16 +449,16 @@ export default function WatchlistPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search symbol (e.g. RELIANCE, TCS, INFY)..."
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] text-xs text-[#111827] focus:outline-none focus:border-[#4F46E5]"
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] text-xs text-[#111827] focus:outline-none focus:border-[#4F46E5] font-normal"
                 autoFocus
               />
             </div>
 
             <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 text-xs">
               {isSearching ? (
-                <div className="p-4 text-center text-[#6B7280]">Searching...</div>
+                <div className="p-4 text-center text-[#6B7280] font-normal">Searching...</div>
               ) : searchResults.length === 0 && searchQuery ? (
-                <div className="p-4 text-center text-[#6B7280]">No instruments found.</div>
+                <div className="p-4 text-center text-[#6B7280] font-normal">No instruments found.</div>
               ) : (
                 searchResults.map((item) => (
                   <div
@@ -467,10 +467,10 @@ export default function WatchlistPage() {
                     className="p-2.5 flex items-center justify-between hover:bg-[#F7F8FA] cursor-pointer rounded-lg transition-colors"
                   >
                     <div>
-                      <span className="font-bold text-[#111827]">{item.symbol}</span>
-                      <span className="text-[10.5px] text-[#6B7280] block">{item.name}</span>
+                      <span className="font-semibold text-[#111827]">{item.symbol}</span>
+                      <span className="text-[10.5px] text-[#6B7280] block font-normal">{item.name}</span>
                     </div>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-[#4B5563] font-mono">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-[#4B5563] font-mono font-medium">
                       {item.exchange || "NSE"}
                     </span>
                   </div>
@@ -489,7 +489,7 @@ export default function WatchlistPage() {
             className="bg-white border border-[#E5E7EB] rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl select-none"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-sm text-[#111827]">Create New Watchlist</h3>
+              <h3 className="font-semibold text-sm text-[#111827]">Create New Watchlist</h3>
               <button
                 type="button"
                 onClick={() => setCreateModalOpen(false)}
@@ -500,7 +500,7 @@ export default function WatchlistPage() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-[#4B5563] block mb-1.5">
+              <label className="text-xs font-medium text-[#4B5563] block mb-1.5">
                 Watchlist Name
               </label>
               <input
@@ -508,7 +508,7 @@ export default function WatchlistPage() {
                 value={newWatchlistName}
                 onChange={(e) => setNewWatchlistName(e.target.value)}
                 placeholder="e.g. Bluechips, Banking, Tech"
-                className="w-full px-3 py-2 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] text-xs text-[#111827] focus:outline-none focus:border-[#4F46E5]"
+                className="w-full px-3 py-2 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] text-xs text-[#111827] focus:outline-none focus:border-[#4F46E5] font-normal"
                 autoFocus
               />
             </div>
@@ -517,14 +517,14 @@ export default function WatchlistPage() {
               <button
                 type="button"
                 onClick={() => setCreateModalOpen(false)}
-                className="flex-1 py-2 rounded-xl border border-[#E5E7EB] text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
+                className="flex-1 py-2 rounded-xl border border-[#E5E7EB] text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!newWatchlistName.trim()}
-                className="flex-1 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-bold hover:bg-[#4338CA] disabled:opacity-50"
+                className="flex-1 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-medium hover:bg-[#4338CA] disabled:opacity-50"
               >
                 Create
               </button>

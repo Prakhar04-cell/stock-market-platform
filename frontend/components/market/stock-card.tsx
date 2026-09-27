@@ -76,13 +76,13 @@ export function StockCard({
       {/* Top row: Logo/Monogram + Ticker & Name */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-[6px] bg-[#F8FAFC] text-[#111827] font-bold text-xs flex items-center justify-center shrink-0 border border-[#E5E7EB] font-mono">
+          <div className="w-8 h-8 rounded-[6px] bg-[#F8FAFC] text-[#111827] font-medium text-xs flex items-center justify-center shrink-0 border border-[#E5E7EB] font-mono">
             {cleanSymbol.slice(0, 2)}
           </div>
           <div className="min-w-0 flex-1">
             <Link
               href={`/stocks/${encodeURIComponent(cleanSymbol)}`}
-              className="text-xs font-bold text-[#111827] group-hover:text-[#F97316] transition-colors block truncate"
+              className="text-xs font-semibold text-[#111827] group-hover:text-[#F97316] transition-colors block truncate"
             >
               {cleanSymbol}
             </Link>
@@ -98,7 +98,7 @@ export function StockCard({
 
       {/* Middle row: Price & Change */}
       <div className="flex items-baseline justify-between pt-1">
-        <span className="financial-num-card font-extrabold text-[#111827] tabular-nums tracking-tight">
+        <span className="financial-num-card font-semibold text-[#111827] tabular-nums tracking-tight">
           {formatStockPrice(price)}
         </span>
         <span
@@ -116,7 +116,7 @@ export function StockCard({
       <div className="flex items-center justify-between pt-2 border-t border-[#E5E7EB] text-xs">
         <Link
           href={`/stocks/${encodeURIComponent(cleanSymbol)}`}
-          className="text-[11px] font-semibold text-[#6B7280] hover:text-[#111827] transition-colors flex items-center gap-1"
+          className="text-[11px] font-medium text-[#6B7280] hover:text-[#111827] transition-colors flex items-center gap-1"
         >
           <Eye className="w-3 h-3 text-[#9CA3AF]" />
           <span>Details</span>
@@ -125,13 +125,13 @@ export function StockCard({
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => onTrade ? onTrade(cleanSymbol, "BUY") : null}
-            className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] hover:bg-[#DCFCE7] transition-colors"
+            className="px-2 py-0.5 rounded-[4px] text-[10px] font-semibold bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] hover:bg-[#DCFCE7] transition-colors"
           >
             BUY
           </button>
           <button
             onClick={() => onTrade ? onTrade(cleanSymbol, "SELL") : null}
-            className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] hover:bg-[#FEE2E2] transition-colors"
+            className="px-2 py-0.5 rounded-[4px] text-[10px] font-semibold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] hover:bg-[#FEE2E2] transition-colors"
           >
             SELL
           </button>

@@ -90,9 +90,9 @@ export function OIAnalysisWidget({
               <BarChart3 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight flex items-center gap-2">
                 Open Interest (OI) Analysis
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                   Simulation
                 </span>
               </h2>
@@ -107,9 +107,9 @@ export function OIAnalysisWidget({
                 <button
                   key={idx}
                   onClick={() => setSelectedIndex(idx)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
                     selectedIndex === idx
-                      ? "bg-white text-indigo-600 shadow-xs"
+                      ? "bg-white text-indigo-600 shadow-xs font-semibold"
                       : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
@@ -124,16 +124,16 @@ export function OIAnalysisWidget({
             <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
               <button
                 onClick={() => setActiveTab("chart")}
-                className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
-                  activeTab === "chart" ? "bg-white text-indigo-600 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                  activeTab === "chart" ? "bg-white text-indigo-600 shadow-xs font-semibold" : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 Chart
               </button>
               <button
                 onClick={() => setActiveTab("table")}
-                className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
-                  activeTab === "table" ? "bg-white text-indigo-600 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                  activeTab === "table" ? "bg-white text-indigo-600 shadow-xs font-semibold" : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 Table
@@ -154,27 +154,27 @@ export function OIAnalysisWidget({
           <div>
             <span className="text-slate-500 text-[11px] block">Put-Call Ratio (PCR)</span>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="font-mono font-bold text-slate-900 text-sm">{pcr}</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+              <span className="font-mono font-semibold text-slate-900 text-sm tabular-nums">{pcr}</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
                 BULLISH
               </span>
             </div>
           </div>
           <div>
             <span className="text-slate-500 text-[11px] block">Max Pain Strike</span>
-            <span className="font-mono font-bold text-indigo-600 text-sm">
+            <span className="font-mono font-semibold text-indigo-600 text-sm tabular-nums">
               {Math.round(spot / 50) * 50}
             </span>
           </div>
           <div>
             <span className="text-slate-500 text-[11px] block">Total Call OI</span>
-            <span className="font-mono font-bold text-rose-600 text-sm">
+            <span className="font-mono font-semibold text-rose-600 text-sm tabular-nums">
               {totalCallOI.toFixed(1)} L
             </span>
           </div>
           <div>
             <span className="text-slate-500 text-[11px] block">Total Put OI</span>
-            <span className="font-mono font-bold text-emerald-600 text-sm">
+            <span className="font-mono font-semibold text-emerald-600 text-sm tabular-nums">
               {totalPutOI.toFixed(1)} L
             </span>
           </div>
@@ -222,7 +222,7 @@ export function OIAnalysisWidget({
                       </div>
 
                       {/* Center Strike */}
-                      <div className="w-20 text-center font-mono font-bold text-xs text-slate-800 shrink-0">
+                      <div className="w-20 text-center font-mono font-semibold text-xs text-slate-800 shrink-0">
                         {s.strike}
                       </div>
 
@@ -241,7 +241,7 @@ export function OIAnalysisWidget({
           ) : (
             <div className="rounded-xl border border-slate-200 overflow-hidden">
               <table className="w-full text-xs text-left">
-                <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-200">
+                <thead className="bg-slate-50 text-slate-500 uppercase font-medium border-b border-slate-200">
                   <tr>
                     <th className="py-2 px-3 text-right">Call OI</th>
                     <th className="py-2 px-3 text-right">LTP (₹)</th>
@@ -253,11 +253,11 @@ export function OIAnalysisWidget({
                 <tbody className="divide-y divide-slate-100 font-mono">
                   {strikeData.map((row) => (
                     <tr key={row.strike} className="hover:bg-slate-50">
-                      <td className="py-2 px-3 text-right text-rose-600 font-bold">{row.callOI}L</td>
-                      <td className="py-2 px-3 text-right text-slate-700">{row.callLTP.toFixed(2)}</td>
-                      <td className="py-2 px-3 text-center font-bold text-slate-900 bg-slate-50">{row.strike}</td>
-                      <td className="py-2 px-3 text-left text-slate-700">{row.putLTP.toFixed(2)}</td>
-                      <td className="py-2 px-3 text-left text-emerald-600 font-bold">{row.putOI}L</td>
+                      <td className="py-2 px-3 text-right text-rose-600 font-medium tabular-nums">{row.callOI}L</td>
+                      <td className="py-2 px-3 text-right text-slate-700 tabular-nums">{row.callLTP.toFixed(2)}</td>
+                      <td className="py-2 px-3 text-center font-semibold text-slate-900 bg-slate-50 tabular-nums">{row.strike}</td>
+                      <td className="py-2 px-3 text-left text-slate-700 tabular-nums">{row.putLTP.toFixed(2)}</td>
+                      <td className="py-2 px-3 text-left text-emerald-600 font-medium tabular-nums">{row.putOI}L</td>
                     </tr>
                   ))}
                 </tbody>

@@ -12,7 +12,7 @@ export function ProviderStatusBanner() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-amber-900">TradeX Phase 1 Sandbox Mode</span>
+              <span className="text-xs font-semibold text-amber-900">TradeX Phase 1 Sandbox Mode</span>
               <Badge variant="unconfigured">MARKET DATA DISCONNECTED</Badge>
             </div>
             <p className="text-xs text-amber-800/90 mt-0.5">

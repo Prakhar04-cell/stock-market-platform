@@ -13,17 +13,17 @@ export function Footer() {
           {/* Brand & Overview */}
           <div className="col-span-2 lg:col-span-1">
             <Link href="/dashboard" className="flex items-center gap-2.5 mb-3 group">
-              <div className="w-8 h-8 rounded-[8px] bg-[#0F172A] flex items-center justify-center text-white font-extrabold text-sm tracking-tight group-hover:bg-[#F97316] transition-colors">
+              <div className="w-8 h-8 rounded-[8px] bg-[#0F172A] flex items-center justify-center text-white font-semibold text-sm tracking-tight group-hover:bg-[#F97316] transition-colors">
                 BR
               </div>
-              <span className="text-xl font-extrabold tracking-tight text-[#111827]">
+              <span className="text-xl font-semibold tracking-tight text-[#111827]">
                 Bull<span className="text-[#F97316]">Run</span>
               </span>
             </Link>
-            <p className="text-xs text-[#6B7280] leading-relaxed mb-4">
+            <p className="text-xs text-[#6B7280] leading-relaxed mb-4 font-normal">
               Modern high-speed trading and financial discovery platform. Real-time market data, interactive charts, and institutional-grade paper trading execution.
             </p>
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#16A34A]">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#16A34A]">
               <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A]" />
               <span>Platform Systems Operational</span>
             </div>
@@ -31,10 +31,10 @@ export function Footer() {
 
           {/* BULLRUN */}
           <div>
-            <h4 className="text-xs font-bold text-[#111827] tracking-wider uppercase mb-4">
+            <h4 className="text-xs font-semibold text-[#111827] tracking-wider uppercase mb-4">
               BullRun
             </h4>
-            <ul className="space-y-2.5 text-xs text-[#6B7280]">
+            <ul className="space-y-2.5 text-xs text-[#6B7280] font-normal">
               <li>
                 <Link href="/dashboard" className="hover:text-[#111827] transition-colors">
                   About Us
@@ -70,10 +70,10 @@ export function Footer() {
 
           {/* PRODUCTS */}
           <div>
-            <h4 className="text-xs font-bold text-[#111827] tracking-wider uppercase mb-4">
+            <h4 className="text-xs font-semibold text-[#111827] tracking-wider uppercase mb-4">
               Products
             </h4>
-            <ul className="space-y-2.5 text-xs text-[#6B7280]">
+            <ul className="space-y-2.5 text-xs text-[#6B7280] font-normal">
               <li>
                 <Link href="/stocks/NIFTY%2050" className="hover:text-[#111827] transition-colors">
                   Stocks &amp; Equities
@@ -82,7 +82,7 @@ export function Footer() {
               <li>
                 <Link href="/terminal" className="hover:text-[#111827] transition-colors flex items-center gap-1.5">
                   <span>Trading Terminal</span>
-                  <span className="text-[10px] bg-[#FFF7ED] text-[#EA580C] px-1.5 py-0.5 rounded-[4px] font-bold">PRO</span>
+                  <span className="text-[10px] bg-[#FFF7ED] text-[#EA580C] px-1.5 py-0.5 rounded-[4px] font-medium">PRO</span>
                 </Link>
               </li>
               <li>
@@ -115,10 +115,10 @@ export function Footer() {
 
           {/* TOOLS */}
           <div>
-            <h4 className="text-xs font-bold text-[#111827] tracking-wider uppercase mb-4">
+            <h4 className="text-xs font-semibold text-[#111827] tracking-wider uppercase mb-4">
               Tools &amp; Analytics
             </h4>
-            <ul className="space-y-2.5 text-xs text-[#6B7280]">
+            <ul className="space-y-2.5 text-xs text-[#6B7280] font-normal">
               <li>
                 <Link href="/terminal" className="hover:text-[#111827] transition-colors">
                   Trading Terminal
@@ -149,10 +149,10 @@ export function Footer() {
 
           {/* LEGAL */}
           <div>
-            <h4 className="text-xs font-bold text-[#111827] tracking-wider uppercase mb-4">
+            <h4 className="text-xs font-semibold text-[#111827] tracking-wider uppercase mb-4">
               Legal &amp; Compliance
             </h4>
-            <ul className="space-y-2.5 text-xs text-[#6B7280]">
+            <ul className="space-y-2.5 text-xs text-[#6B7280] font-normal">
               <li>
                 <Link href="/dashboard" className="hover:text-[#111827] transition-colors">
                   Terms of Service
@@ -191,7 +191,7 @@ export function Footer() {
         <div className="mt-10 pt-6 border-t border-[#E5E7EB] text-[11px] text-[#6B7280] leading-relaxed">
           <div className="flex items-start gap-2 mb-2 font-medium text-[#111827]">
             <ShieldCheck className="w-4 h-4 text-[#F97316] flex-shrink-0 mt-0.5" />
-            <span className="font-bold">Risk Disclosure on Derivatives &amp; Securities Trading</span>
+            <span className="font-semibold">Risk Disclosure on Derivatives &amp; Securities Trading</span>
           </div>
           <p>
             Securities trading and investment in equity shares, exchange-traded funds, mutual funds, and derivative instruments involve significant financial risk including loss of capital. Investors should independently assess market risk and consult certified financial advisors before transacting. BullRun provides simulated paper trading execution for education, algorithmic strategy validation, and real-time market data streaming.

@@ -40,16 +40,16 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md space-y-5">
         <div className="text-center space-y-1">
           <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-8 h-8 rounded-[8px] bg-[#0F172A] flex items-center justify-center text-white font-extrabold text-sm tracking-tight">
+            <div className="w-8 h-8 rounded-[8px] bg-[#0F172A] flex items-center justify-center text-white font-semibold text-sm tracking-tight">
               <span>B</span>
               <span className="text-[#F97316]">R</span>
             </div>
-            <span className="text-xl font-bold tracking-tight text-[#111827]">
+            <span className="text-xl font-semibold tracking-tight text-[#111827]">
               Bull<span className="text-[#F97316]">Run</span>
             </span>
           </Link>
-          <h2 className="text-lg font-bold text-[#111827] pt-2">Reset Your Password</h2>
-          <p className="text-xs text-[#6B7280]">Enter your email to receive recovery instructions</p>
+          <h2 className="text-lg font-semibold text-[#111827] pt-2">Reset Your Password</h2>
+          <p className="text-xs text-[#6B7280] font-normal">Enter your email to receive recovery instructions</p>
         </div>
 
         <div className="rounded-[10px] border border-[#E5E7EB] bg-white p-6 space-y-4">
@@ -58,17 +58,17 @@ export default function ForgotPasswordPage() {
               <div className="w-12 h-12 rounded-full bg-[#F0FDF4] text-[#16A34A] flex items-center justify-center mx-auto border border-[#BBF7D0]">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-bold text-[#111827]">Recovery Instructions Sent</h3>
-              <p className="text-xs text-[#6B7280]">
+              <h3 className="text-sm font-semibold text-[#111827]">Recovery Instructions Sent</h3>
+              <p className="text-xs text-[#6B7280] font-normal">
                 If an account exists for {email}, recovery instructions have been initiated.
               </p>
 
               {resetToken && (
                 <div className="p-3 bg-[#F8FAFC] rounded-[8px] border border-[#E5E7EB] text-left text-xs space-y-2 mt-4">
-                  <span className="font-bold text-[#111827] block">Dev Sandbox Reset Link:</span>
+                  <span className="font-semibold text-[#111827] block">Dev Sandbox Reset Link:</span>
                   <Link
                     href={`/reset-password?token=${resetToken}`}
-                    className="text-[#F97316] font-mono text-[11px] underline block break-all"
+                    className="text-[#F97316] font-mono text-[11px] underline block break-all font-normal"
                   >
                     Click to reset password with dev token
                   </Link>
@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
               )}
 
               <Link href="/login" className="block pt-3">
-                <Button variant="outline" size="sm" className="w-full border-[#E5E7EB] text-[#111827] hover:bg-[#F8FAFC] rounded-[8px]">
+                <Button variant="outline" size="sm" className="w-full border-[#E5E7EB] text-[#111827] hover:bg-[#F8FAFC] rounded-[8px] font-medium">
                   Return to Sign In
                 </Button>
               </Link>
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {errorMessage && (
-                <div className="p-3 rounded-[8px] bg-rose-50 border border-rose-200 text-[#DC2626] text-xs flex items-center gap-2">
+                <div className="p-3 rounded-[8px] bg-rose-50 border border-rose-200 text-[#DC2626] text-xs flex items-center gap-2 font-normal">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
@@ -104,7 +104,7 @@ export default function ForgotPasswordPage() {
                 type="submit"
                 size="lg"
                 isLoading={isLoading}
-                className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold text-xs rounded-[8px]"
+                className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-xs rounded-[8px]"
               >
                 Send Reset Link
               </Button>

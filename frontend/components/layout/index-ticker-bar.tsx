@@ -119,7 +119,7 @@ export function IndexTickerBar() {
     <div className="w-full h-9 sm:h-10 bg-white border-b border-[#E5E7EB] px-4 sm:px-6 flex items-center gap-3 sm:gap-6 text-xs overflow-x-auto select-none no-scrollbar">
       {/* 1. Global Market Feed Indicator Badge */}
       <div
-        className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 border transition-colors ${
+        className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium shrink-0 border transition-colors ${
           isLive
             ? "bg-[#F0FDF4] border-[#BBF7D0] text-[#16A34A]"
             : providerInfo.is_fallback
@@ -166,17 +166,17 @@ export function IndexTickerBar() {
               href={`/stocks/${encodeURIComponent(idx.symbol)}`}
               className="flex items-center gap-2 group hover:opacity-85 transition-opacity"
             >
-              <span className="font-sans font-semibold text-[#111827] text-xs sm:text-[13px] group-hover:text-[#F97316]">
+              <span className="font-sans font-medium text-[#111827] text-xs sm:text-[13px] group-hover:text-[#F97316]">
                 {idx.name}
               </span>
 
               {hasValue ? (
                 <div className="flex items-baseline gap-1.5">
-                  <span className="font-bold text-[#111827] text-xs sm:text-[13px] tabular-nums">
+                  <span className="font-semibold text-[#111827] text-xs sm:text-[13px] tabular-nums">
                     {formatStockPrice(idx.value)}
                   </span>
                   <span
-                    className={`text-[11px] sm:text-xs font-semibold tabular-nums ${
+                    className={`text-[11px] sm:text-xs font-medium tabular-nums ${
                       isPos ? "text-[#16A34A]" : "text-[#DC2626]"
                     }`}
                   >

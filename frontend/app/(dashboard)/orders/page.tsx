@@ -92,7 +92,7 @@ export default function OrdersPage() {
     switch (status) {
       case "FILLED":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-[#ECFDF5] text-[#00A86B] border border-[#A7F3D0]">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-[#ECFDF5] text-[#00A86B] border border-[#A7F3D0]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B]" />
             FILLED
           </span>
@@ -100,26 +100,26 @@ export default function OrdersPage() {
       case "OPEN":
       case "PENDING":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
             OPEN
           </span>
         );
       case "CANCELLED":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-slate-100 text-[#6B7280] border border-[#E5E7EB]">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-slate-100 text-[#6B7280] border border-[#E5E7EB]">
             CANCELLED
           </span>
         );
       case "REJECTED":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-[#FEF2F2] text-[#EF4444] border border-[#FECACA]">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-[#FEF2F2] text-[#EF4444] border border-[#FECACA]">
             REJECTED
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-slate-100 text-[#6B7280]">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-slate-100 text-[#6B7280]">
             {status}
           </span>
         );
@@ -131,16 +131,16 @@ export default function OrdersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-xl shadow-xs">
         <div>
-          <h1 className="text-lg font-bold text-[#111827] tracking-tight">
+          <h1 className="text-lg font-semibold text-[#111827] tracking-tight">
             Order Book &amp; Executions
           </h1>
-          <p className="text-xs text-[#6B7280]">
+          <p className="text-xs text-[#6B7280] font-normal">
             Audit history of paper market orders, limit fills, and margin releases
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#00A86B] text-[11px] font-bold">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#00A86B] text-[11px] font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
             <span>Virtual Execution Engine</span>
           </div>
@@ -167,9 +167,9 @@ export default function OrdersPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
               activeTab === tab.id
-                ? "bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]"
+                ? "bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE] font-semibold"
                 : "bg-white text-[#6B7280] border border-[#E5E7EB] hover:text-[#111827] hover:bg-[#F7F8FA]"
             }`}
           >
@@ -203,7 +203,7 @@ export default function OrdersPage() {
               action={
                 <Link
                   href="/stocks/RELIANCE"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-bold hover:bg-[#4338CA] shadow-xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-medium hover:bg-[#4338CA] shadow-xs transition-colors"
                 >
                   <span>Explore Markets &amp; Trade</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
@@ -216,7 +216,7 @@ export default function OrdersPage() {
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-xs text-left">
-                <thead className="bg-[#F7F8FA] border-b border-[#E5E7EB] text-[#6B7280] text-[11px] font-semibold uppercase tracking-wider">
+                <thead className="bg-[#F7F8FA] border-b border-[#E5E7EB] text-[#6B7280] text-[11px] font-medium uppercase tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Instrument</th>
                     <th className="py-3 px-4">Type</th>
@@ -242,7 +242,7 @@ export default function OrdersPage() {
                         <td className="py-3 px-4">
                           <Link
                             href={`/stocks/${encodeURIComponent(order.symbol || order.stock_id)}`}
-                            className="font-bold text-xs text-[#111827] hover:text-[#4F46E5] transition-colors"
+                            className="font-semibold text-xs text-[#111827] hover:text-[#4F46E5] transition-colors"
                           >
                             {order.symbol || order.stock_id}
                           </Link>
@@ -252,31 +252,31 @@ export default function OrdersPage() {
                         </td>
 
                         {/* Side & Type */}
-                        <td className="py-3 px-4 font-semibold">
+                        <td className="py-3 px-4 font-medium">
                           <span
-                            className={`px-1.5 py-0.5 rounded text-[10.5px] font-bold ${
+                            className={`px-1.5 py-0.5 rounded text-[10.5px] font-medium ${
                               isBuy ? "bg-[#ECFDF5] text-[#00A86B]" : "bg-[#FEF2F2] text-[#EF4444]"
                             }`}
                           >
                             {order.side}
                           </span>
-                          <span className="ml-1.5 text-[11px] text-[#4B5563] font-mono">
+                          <span className="ml-1.5 text-[11px] text-[#4B5563] font-mono font-normal">
                             {order.order_type}
                           </span>
                         </td>
 
                         {/* Quantity */}
-                        <td className="py-3 px-4 text-right financial-num-sm font-bold text-[#111827] tabular-nums">
+                        <td className="py-3 px-4 text-right financial-num-sm font-medium text-[#111827] tabular-nums">
                           {order.filled_quantity} / {order.quantity}
                         </td>
 
                         {/* Price */}
-                        <td className="py-3 px-4 text-right financial-num-sm font-bold text-[#111827] tabular-nums">
+                        <td className="py-3 px-4 text-right financial-num-sm font-semibold text-[#111827] tabular-nums">
                           {formatStockPrice(price)}
                         </td>
 
                         {/* Order Value */}
-                        <td className="py-3 px-4 text-right financial-num-sm font-extrabold text-[#111827] tabular-nums">
+                        <td className="py-3 px-4 text-right financial-num-sm font-semibold text-[#111827] tabular-nums">
                           {formatINR(orderValue)}
                         </td>
 
@@ -301,7 +301,7 @@ export default function OrdersPage() {
                             <button
                               onClick={() => handleCancelOrder(order.id)}
                               disabled={cancellingId === order.id}
-                              className="px-2.5 py-1 rounded bg-[#FEF2F2] border border-[#FECACA] text-[#EF4444] text-[11px] font-bold hover:bg-[#FEE2E2] transition-colors"
+                              className="px-2.5 py-1 rounded bg-[#FEF2F2] border border-[#FECACA] text-[#EF4444] text-[11px] font-medium hover:bg-[#FEE2E2] transition-colors"
                             >
                               {cancellingId === order.id ? "Cancelling..." : "Cancel"}
                             </button>
@@ -329,11 +329,11 @@ export default function OrdersPage() {
                   <div key={order.id} className="p-4 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-[#111827]">
+                        <span className="font-semibold text-sm text-[#111827]">
                           {order.symbol || order.stock_id}
                         </span>
                         <span
-                          className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                          className={`px-1.5 py-0.2 rounded text-[10px] font-medium ${
                             isBuy ? "bg-[#ECFDF5] text-[#00A86B]" : "bg-[#FEF2F2] text-[#EF4444]"
                           }`}
                         >
@@ -348,19 +348,19 @@ export default function OrdersPage() {
 
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-[10px] text-[#6B7280] block font-sans">Quantity</span>
-                        <span className="financial-num-sm font-bold text-[#111827]">{order.quantity}</span>
+                        <span className="text-[10px] text-[#6B7280] block font-sans font-normal">Quantity</span>
+                        <span className="financial-num-sm font-medium text-[#111827] tabular-nums">{order.quantity}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] text-[#6B7280] block font-sans">Price</span>
-                        <span className="financial-num-sm font-bold text-[#111827]">{formatStockPrice(price)}</span>
+                        <span className="text-[10px] text-[#6B7280] block font-sans font-normal">Price</span>
+                        <span className="financial-num-sm font-semibold text-[#111827] tabular-nums">{formatStockPrice(price)}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-[#6B7280] block font-sans">Total Value</span>
-                        <span className="financial-num-sm font-extrabold text-[#111827]">{formatINR(orderValue)}</span>
+                        <span className="text-[10px] text-[#6B7280] block font-sans font-normal">Total Value</span>
+                        <span className="financial-num-sm font-semibold text-[#111827] tabular-nums">{formatINR(orderValue)}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] text-[#6B7280] block font-sans">Date</span>
+                        <span className="text-[10px] text-[#6B7280] block font-sans font-normal">Date</span>
                         <span className="text-[#6B7280] text-[10.5px]">
                           {new Date(order.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
@@ -371,7 +371,7 @@ export default function OrdersPage() {
                       <button
                         onClick={() => handleCancelOrder(order.id)}
                         disabled={cancellingId === order.id}
-                        className="w-full py-1.5 rounded-lg bg-[#FEF2F2] text-[#EF4444] border border-[#FECACA] text-xs font-bold"
+                        className="w-full py-1.5 rounded-lg bg-[#FEF2F2] text-[#EF4444] border border-[#FECACA] text-xs font-semibold"
                       >
                         Cancel Limit Order
                       </button>

@@ -83,18 +83,18 @@ export function ExploreView({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <h3 className="text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Paper Portfolio Capital
                 </h3>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
                   Phase 1 Paper
                 </span>
               </div>
               <div className="flex items-baseline gap-3 mt-1">
-                <span className="financial-num text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                <span className="financial-num text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight tabular-nums">
                   ₹1,00,000.00
                 </span>
-                <span className="text-xs font-semibold text-slate-500 flex items-center font-financial">
+                <span className="text-xs font-normal text-slate-500 flex items-center">
                   Today&apos;s P&amp;L: ₹ -- (Waiting for API)
                 </span>
               </div>
@@ -105,7 +105,7 @@ export function ExploreView({
                 variant="outline"
                 size="sm"
                 onClick={onOpenTerminal}
-                className="text-xs font-semibold border-slate-200 text-slate-700 hover:bg-slate-50"
+                className="text-xs font-medium border-slate-200 text-slate-700 hover:bg-slate-50"
               >
                 <BarChart2 className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
                 Open Pro Terminal
@@ -116,15 +116,15 @@ export function ExploreView({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 text-xs">
             <div>
               <span className="text-slate-500 text-[11px] block">Invested Capital</span>
-              <span className="font-financial font-extrabold text-slate-900 text-sm">₹0.00</span>
+              <span className="font-semibold text-slate-900 text-sm tabular-nums">₹0.00</span>
             </div>
             <div>
               <span className="text-slate-500 text-[11px] block">Total Returns</span>
-              <span className="font-financial font-bold text-slate-500 text-sm">₹ -- (--%)</span>
+              <span className="font-semibold text-slate-500 text-sm tabular-nums">₹ -- (--%)</span>
             </div>
             <div>
               <span className="text-slate-500 text-[11px] block">Available Margin</span>
-              <span className="font-financial font-extrabold text-emerald-700 text-sm">₹1,00,000.00</span>
+              <span className="font-semibold text-emerald-700 text-sm tabular-nums">₹1,00,000.00</span>
             </div>
           </div>
         </div>
@@ -135,7 +135,7 @@ export function ExploreView({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-slate-600" />
-                <span className="text-xs font-bold text-slate-800">
+                <span className="text-xs font-semibold text-slate-800">
                   Market Hours
                 </span>
               </div>
@@ -153,7 +153,7 @@ export function ExploreView({
             <Button
               size="sm"
               onClick={onOpenOI}
-              className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold"
+              className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-medium"
             >
               <Zap className="w-3.5 h-3.5 mr-1" />
               OI Analysis
@@ -161,7 +161,7 @@ export function ExploreView({
             <Button
               size="sm"
               onClick={onOpenTerminal}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm"
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium shadow-sm"
             >
               Terminal
             </Button>
@@ -174,7 +174,7 @@ export function ExploreView({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Flame className="w-4 h-4 text-indigo-600" />
-            <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+            <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
               Trending Stocks
             </h2>
           </div>
@@ -191,9 +191,9 @@ export function ExploreView({
               <button
                 key={tab.id}
                 onClick={() => setTrendingTab(tab.id)}
-                className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+                className={`px-3 py-1 rounded-lg font-medium transition-all ${
                   trendingTab === tab.id
-                    ? "bg-white text-indigo-600 shadow-xs"
+                    ? "bg-white text-indigo-600 shadow-xs font-semibold"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -227,7 +227,7 @@ export function ExploreView({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <PieChart className="w-4 h-4 text-indigo-600" />
-            <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+            <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
               Popular Index ETFs
             </h3>
           </div>
@@ -261,7 +261,7 @@ export function ExploreView({
         <div className="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-card">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+              <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
                 Sectors Trending Today
               </h3>
               <p className="text-xs text-slate-500">
@@ -286,7 +286,7 @@ export function ExploreView({
 
               return (
                 <div key={sector.name} className="space-y-1 text-xs">
-                  <div className="flex items-center justify-between font-semibold text-slate-800">
+                  <div className="flex items-center justify-between font-medium text-slate-800">
                     <span>{sector.name}</span>
                     <span className="font-mono text-slate-500">Quotes pending</span>
                   </div>
@@ -319,14 +319,14 @@ export function ExploreView({
         <div className="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-card">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+              <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
                 Technical Trading Ideas
               </h3>
               <p className="text-xs text-slate-500">
                 Rule-based scanning criteria for swing and intraday setups
               </p>
             </div>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-medium">
               Scans
             </span>
           </div>
@@ -369,10 +369,10 @@ export function ExploreView({
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                    <h4 className="text-xs font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
                       {screen.title}
                     </h4>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${screen.color}`}>
+                    <span className={`text-[9px] font-medium px-1.5 py-0.2 rounded border ${screen.color}`}>
                       {screen.tag}
                     </span>
                   </div>
@@ -381,7 +381,7 @@ export function ExploreView({
                   </p>
                 </div>
                 <div className="text-right shrink-0 pl-3">
-                  <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-900 font-mono">
+                  <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900 font-mono">
                     {screen.count}
                   </span>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 ml-auto mt-1" />
@@ -397,7 +397,7 @@ export function ExploreView({
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
             <Newspaper className="w-4 h-4 text-indigo-600" />
-            <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+            <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
               Stocks in the News Today
             </h3>
           </div>
@@ -436,17 +436,17 @@ export function ExploreView({
               onClick={() => onSelectStock(news.symbol)}
               className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 hover:bg-white hover:border-slate-300 hover:shadow-cardHover cursor-pointer transition-all flex flex-col justify-between group"
             >
-              <h4 className="text-xs font-semibold text-slate-800 group-hover:text-indigo-600 leading-snug">
+              <h4 className="text-xs font-medium text-slate-800 group-hover:text-indigo-600 leading-snug">
                 {news.headline}
               </h4>
 
               <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100 text-[11px]">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-slate-700 group-hover:text-indigo-600">
+                  <span className="font-mono font-medium text-slate-700 group-hover:text-indigo-600">
                     {news.symbol}
                   </span>
                   <span
-                    className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
+                    className={`text-[9px] font-medium px-1.5 py-0.2 rounded ${
                       news.sentiment === "Positive"
                         ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                         : "bg-slate-100 text-slate-600 border border-slate-200"

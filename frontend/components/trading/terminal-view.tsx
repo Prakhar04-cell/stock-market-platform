@@ -99,15 +99,15 @@ export function TerminalView({
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 border-b border-slate-200 bg-white">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-base font-bold text-slate-900 tracking-tight">{symbol}</span>
+            <span className="text-base font-semibold text-slate-900 tracking-tight">{symbol}</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 font-mono font-medium">
               NSE EQ
             </span>
           </div>
 
-          <div className="flex items-baseline gap-2 font-financial">
-            <span className="text-base font-extrabold text-slate-900 tracking-tight">{price}</span>
-            <span className="text-xs text-slate-500 font-bold">
+          <div className="flex items-baseline gap-2">
+            <span className="text-base font-semibold text-slate-900 tracking-tight tabular-nums">{price}</span>
+            <span className="text-xs text-slate-500 font-medium tabular-nums">
               ({changePercent})
             </span>
           </div>
@@ -116,11 +116,11 @@ export function TerminalView({
         {/* OHLC Banner */}
         {activeOHLC && (
           <div className="hidden xl:flex items-center gap-4 text-xs font-mono text-slate-500 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200/80">
-            <span>O: <strong className="text-slate-800">{activeOHLC.open.toFixed(2)}</strong></span>
-            <span>H: <strong className="text-emerald-700">{activeOHLC.high.toFixed(2)}</strong></span>
-            <span>L: <strong className="text-rose-700">{activeOHLC.low.toFixed(2)}</strong></span>
-            <span>C: <strong className="text-slate-800">{activeOHLC.close.toFixed(2)}</strong></span>
-            <span>Vol: <strong className="text-slate-700">{formatIndianNumber(activeOHLC.volume)}</strong></span>
+            <span>O: <strong className="text-slate-800 font-medium">{activeOHLC.open.toFixed(2)}</strong></span>
+            <span>H: <strong className="text-emerald-700 font-medium">{activeOHLC.high.toFixed(2)}</strong></span>
+            <span>L: <strong className="text-rose-700 font-medium">{activeOHLC.low.toFixed(2)}</strong></span>
+            <span>C: <strong className="text-slate-800 font-medium">{activeOHLC.close.toFixed(2)}</strong></span>
+            <span>Vol: <strong className="text-slate-700 font-medium">{formatIndianNumber(activeOHLC.volume)}</strong></span>
           </div>
         )}
 
@@ -132,9 +132,9 @@ export function TerminalView({
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
-                className={`px-2 py-0.5 rounded-md font-semibold transition-all ${
+                className={`px-2 py-0.5 rounded-md font-medium transition-all ${
                   timeframe === tf
-                    ? "bg-white text-indigo-600 shadow-2xs"
+                    ? "bg-white text-indigo-600 shadow-2xs font-semibold"
                     : "text-slate-500 hover:text-slate-900"
                 }`}
               >
@@ -148,14 +148,14 @@ export function TerminalView({
             <Button
               size="sm"
               onClick={() => onTrade("BUY")}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-7 px-3 shadow-xs"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-7 px-3 shadow-xs"
             >
               BUY
             </Button>
             <Button
               size="sm"
               onClick={() => onTrade("SELL")}
-              className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs h-7 px-3 shadow-xs"
+              className="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs h-7 px-3 shadow-xs"
             >
               SELL
             </Button>
@@ -281,9 +281,9 @@ export function TerminalView({
               <button
                 key={tab.id}
                 onClick={() => setActiveBottomTab(tab.id)}
-                className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all ${
+                className={`px-3 py-1.5 text-xs font-medium uppercase tracking-wider transition-all ${
                   activeBottomTab === tab.id
-                    ? "text-indigo-600 border-b-2 border-indigo-600 bg-white"
+                    ? "text-indigo-600 border-b-2 border-indigo-600 bg-white font-semibold"
                     : "text-slate-500 hover:text-slate-800"
                 }`}
               >
@@ -294,7 +294,7 @@ export function TerminalView({
 
           <div className="flex items-center gap-3 text-xs">
             <span className="text-slate-500 text-[11px]">Realized P&amp;L:</span>
-            <span className="font-financial font-extrabold text-slate-900 tracking-tight">₹0.00</span>
+            <span className="font-semibold text-slate-900 tracking-tight tabular-nums">₹0.00</span>
           </div>
         </div>
 

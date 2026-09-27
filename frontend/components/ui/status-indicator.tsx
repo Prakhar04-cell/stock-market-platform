@@ -45,7 +45,7 @@ export function StatusIndicator({ status, label, showText = true, className }: S
         <span className={cn("relative inline-flex rounded-full h-2 w-2", current.dot)}></span>
       </span>
       {showText && (
-        <span className={cn("text-xs font-semibold tracking-wide uppercase", current.text)}>
+        <span className={cn("text-xs font-medium tracking-wide uppercase", current.text)}>
           {label || current.label}
         </span>
       )}

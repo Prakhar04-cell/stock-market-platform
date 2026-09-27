@@ -145,16 +145,16 @@ export default function DashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-lg font-bold text-[#111827] tracking-tight">
+            <h1 className="text-lg font-semibold text-[#111827] tracking-tight">
               Portfolio Overview
             </h1>
-            <p className="text-xs text-[#6B7280]">
+            <p className="text-xs text-[#6B7280] font-normal">
               Paper Trading mark-to-market performance &amp; capital allocation
             </p>
           </div>
           <button
             onClick={loadDashboardData}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E7EB] bg-white text-xs font-semibold text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E7EB] bg-white text-xs font-medium text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA] transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isPortfolioLoading ? "animate-spin" : ""}`} />
             <span className="hidden sm:inline">Refresh</span>
@@ -172,43 +172,43 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Card 1: Total Portfolio Value */}
             <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-[10px] space-y-2">
-              <span className="text-xs font-semibold text-[#6B7280] block">
+              <span className="text-xs font-medium text-[#6B7280] block">
                 Portfolio Value
               </span>
               <div
-                className="financial-num text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#111827] tracking-tight tabular-nums leading-[1.1]"
+                className="financial-num text-3xl sm:text-4xl lg:text-[42px] font-semibold text-[#111827] tracking-tight tabular-nums leading-[1.1]"
                 title={formatINR(portfolioVal)}
               >
                 {formatINR(portfolioVal)}
               </div>
-              <div className="text-[11px] text-[#6B7280]">
-                Virtual Cash: <span className="font-financial font-bold text-[#111827]">{formatINR(portfolio ? Number(portfolio.available_cash) : 100000)}</span>
+              <div className="text-[11px] text-[#6B7280] font-normal">
+                Virtual Cash: <span className="font-semibold text-[#111827]">{formatINR(portfolio ? Number(portfolio.available_cash) : 100000)}</span>
               </div>
             </div>
 
             {/* Card 2: Invested Value */}
             <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-[10px] space-y-2">
-              <span className="text-xs font-semibold text-[#6B7280] block">
+              <span className="text-xs font-medium text-[#6B7280] block">
                 Invested Capital
               </span>
               <div
-                className="financial-num text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#111827] tracking-tight tabular-nums leading-[1.1]"
+                className="financial-num text-3xl sm:text-4xl lg:text-[42px] font-semibold text-[#111827] tracking-tight tabular-nums leading-[1.1]"
                 title={formatINR(invested)}
               >
                 {formatINR(invested)}
               </div>
-              <div className="text-[11px] text-[#6B7280]">
-                Active Holdings: <span className="font-financial font-bold text-[#111827]">{portfolio?.holdings?.length || 0}</span>
+              <div className="text-[11px] text-[#6B7280] font-normal">
+                Active Holdings: <span className="font-semibold text-[#111827]">{portfolio?.holdings?.length || 0}</span>
               </div>
             </div>
 
             {/* Card 3: Unrealized P&L */}
             <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-[10px] space-y-2">
-              <span className="text-xs font-semibold text-[#6B7280] block">
+              <span className="text-xs font-medium text-[#6B7280] block">
                 Unrealized P&amp;L
               </span>
               <div
-                className={`financial-num text-3xl sm:text-4xl lg:text-[42px] font-extrabold tracking-tight tabular-nums leading-[1.1] ${unrealizedPnlData.colorClass}`}
+                className={`financial-num text-3xl sm:text-4xl lg:text-[42px] font-semibold tracking-tight tabular-nums leading-[1.1] ${unrealizedPnlData.colorClass}`}
               >
                 {unrealizedPnlData.amountText}
               </div>
@@ -216,17 +216,17 @@ export default function DashboardPage() {
                 <span className={`financial-pnl-pct ${unrealizedPnlData.colorClass}`}>
                   {unrealizedPnlData.percentText}
                 </span>
-                <span className="text-[11px] text-[#6B7280]">Mark-to-Market</span>
+                <span className="text-[11px] text-[#6B7280] font-normal">Mark-to-Market</span>
               </div>
             </div>
 
             {/* Card 4: Overall P&L */}
             <div className="bg-white border border-[#E5E7EB] p-4 sm:p-5 rounded-[10px] space-y-2">
-              <span className="text-xs font-semibold text-[#6B7280] block">
+              <span className="text-xs font-medium text-[#6B7280] block">
                 Overall Return
               </span>
               <div
-                className={`financial-num text-3xl sm:text-4xl lg:text-[42px] font-extrabold tracking-tight tabular-nums leading-[1.1] ${overallPnlData.colorClass}`}
+                className={`financial-num text-3xl sm:text-4xl lg:text-[42px] font-semibold tracking-tight tabular-nums leading-[1.1] ${overallPnlData.colorClass}`}
               >
                 {overallPnlData.amountText}
               </div>
@@ -234,8 +234,8 @@ export default function DashboardPage() {
                 <span className={`financial-pnl-pct ${overallPnlData.colorClass}`}>
                   {overallPnlData.percentText}
                 </span>
-                <span className="text-[11px] text-[#6B7280]">
-                  Realized: <span className="font-financial font-bold text-[#111827]">{formatINR(portfolio ? Number(portfolio.realized_pnl) : 0)}</span>
+                <span className="text-[11px] text-[#6B7280] font-normal">
+                  Realized: <span className="font-semibold text-[#111827]">{formatINR(portfolio ? Number(portfolio.realized_pnl) : 0)}</span>
                 </span>
               </div>
             </div>
@@ -249,10 +249,10 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 bg-white border border-[#E5E7EB] p-5 rounded-[10px] space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E5E7EB]">
             <div>
-              <h2 className="text-sm font-bold text-[#111827]">
+              <h2 className="text-sm font-semibold text-[#111827]">
                 Portfolio Performance Trajectory
               </h2>
-              <span className="text-[11px] text-[#6B7280]">
+              <span className="text-[11px] text-[#6B7280] font-normal">
                 Historical mark-to-market valuation curves
               </span>
             </div>
@@ -263,9 +263,9 @@ export default function DashboardPage() {
                 <button
                   key={tf}
                   onClick={() => setChartTimeframe(tf)}
-                  className={`px-2.5 py-1 text-xs font-semibold rounded-[6px] transition-all ${
+                  className={`px-2.5 py-1 text-xs font-medium rounded-[6px] transition-all ${
                     chartTimeframe === tf
-                      ? "bg-white text-[#F97316] font-bold shadow-xs border border-[#E5E7EB]"
+                      ? "bg-white text-[#F97316] font-semibold shadow-xs border border-[#E5E7EB]"
                       : "text-[#6B7280] hover:text-[#111827]"
                   }`}
                 >
@@ -281,11 +281,11 @@ export default function DashboardPage() {
               <div className="flex items-baseline justify-between font-mono">
                 <div>
                   <span className="text-xs text-[#6B7280]">Current Asset Value</span>
-                  <div className="text-2xl font-bold text-[#111827] tabular-nums">
+                  <div className="text-2xl font-semibold text-[#111827] tabular-nums">
                     {formatINR(portfolioVal)}
                   </div>
                 </div>
-                <div className={`text-xs font-bold ${overallPnlData.colorClass}`}>
+                <div className={`text-xs font-semibold ${overallPnlData.colorClass}`}>
                   {overallPnlData.percentText} Return
                 </div>
               </div>
@@ -312,7 +312,7 @@ export default function DashboardPage() {
                 })}
               </div>
 
-              <div className="flex justify-between pt-2 border-t border-[#E5E7EB] text-[11px] text-[#6B7280]">
+              <div className="flex justify-between pt-2 border-t border-[#E5E7EB] text-[11px] text-[#6B7280] font-normal">
                 <span>Allocation by Holding</span>
                 <span>Active Holdings: {portfolio.holdings.length}</span>
               </div>
@@ -326,7 +326,7 @@ export default function DashboardPage() {
                 action={
                   <Link
                     href="/stocks/RELIANCE"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] bg-[#F97316] text-white text-xs font-semibold hover:bg-[#EA580C] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] bg-[#F97316] text-white text-xs font-medium hover:bg-[#EA580C] transition-colors"
                   >
                     <span>Explore Markets &amp; Trade</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
@@ -341,8 +341,8 @@ export default function DashboardPage() {
         <div className="bg-white border border-[#E5E7EB] p-5 rounded-[10px] space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
             <div>
-              <h2 className="text-sm font-bold text-[#111827]">Market Discovery</h2>
-              <span className="text-[11px] text-[#6B7280]">Real-time Indian indices &amp; stocks</span>
+              <h2 className="text-sm font-semibold text-[#111827]">Market Discovery</h2>
+              <span className="text-[11px] text-[#6B7280] font-normal">Real-time Indian indices &amp; stocks</span>
             </div>
           </div>
 
@@ -350,9 +350,9 @@ export default function DashboardPage() {
           <div className="grid grid-cols-3 gap-1 bg-[#F8FAFC] p-1 rounded-[8px] border border-[#E5E7EB]">
             <button
               onClick={() => setActiveMoverTab("GAINERS")}
-              className={`py-1 text-xs font-semibold rounded-[6px] transition-all ${
+              className={`py-1 text-xs font-medium rounded-[6px] transition-all ${
                 activeMoverTab === "GAINERS"
-                  ? "bg-white text-[#16A34A] font-bold shadow-xs border border-[#E5E7EB]"
+                  ? "bg-white text-[#16A34A] font-semibold shadow-xs border border-[#E5E7EB]"
                   : "text-[#6B7280] hover:text-[#111827]"
               }`}
             >
@@ -360,9 +360,9 @@ export default function DashboardPage() {
             </button>
             <button
               onClick={() => setActiveMoverTab("LOSERS")}
-              className={`py-1 text-xs font-semibold rounded-[6px] transition-all ${
+              className={`py-1 text-xs font-medium rounded-[6px] transition-all ${
                 activeMoverTab === "LOSERS"
-                  ? "bg-white text-[#DC2626] font-bold shadow-xs border border-[#E5E7EB]"
+                  ? "bg-white text-[#DC2626] font-semibold shadow-xs border border-[#E5E7EB]"
                   : "text-[#6B7280] hover:text-[#111827]"
               }`}
             >
@@ -370,9 +370,9 @@ export default function DashboardPage() {
             </button>
             <button
               onClick={() => setActiveMoverTab("ACTIVE")}
-              className={`py-1 text-xs font-semibold rounded-[6px] transition-all ${
+              className={`py-1 text-xs font-medium rounded-[6px] transition-all ${
                 activeMoverTab === "ACTIVE"
-                  ? "bg-white text-[#F97316] font-bold shadow-xs border border-[#E5E7EB]"
+                  ? "bg-white text-[#F97316] font-semibold shadow-xs border border-[#E5E7EB]"
                   : "text-[#6B7280] hover:text-[#111827]"
               }`}
             >
@@ -403,11 +403,11 @@ export default function DashboardPage() {
                       href={`/stocks/${encodeURIComponent(item.symbol)}`}
                       className="flex items-center gap-2.5 min-w-0"
                     >
-                      <div className="w-7 h-7 rounded-[6px] bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center font-bold text-[#111827] text-[11px] font-mono shrink-0">
+                      <div className="w-7 h-7 rounded-[6px] bg-[#F8FAFC] border border-[#E5E7EB] flex items-center justify-center font-semibold text-[#111827] text-[11px] font-mono shrink-0">
                         {item.symbol.slice(0, 2)}
                       </div>
                       <div className="truncate">
-                        <span className="font-bold text-xs text-[#111827] group-hover:text-[#F97316] transition-colors block">
+                        <span className="font-semibold text-xs text-[#111827] group-hover:text-[#F97316] transition-colors block">
                           {item.symbol}
                         </span>
                         <span className="text-[10px] text-[#6B7280] block font-mono">
@@ -417,12 +417,12 @@ export default function DashboardPage() {
                     </Link>
 
                     <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-right font-financial">
-                        <div className="text-sm font-bold text-[#111827] tabular-nums tracking-tight">
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-[#111827] tabular-nums tracking-tight">
                           {formatStockPrice(item.price)}
                         </div>
                         <div
-                          className={`text-[11px] font-semibold tabular-nums ${itemPnl.colorClass}`}
+                          className={`text-[11px] font-medium tabular-nums ${itemPnl.colorClass}`}
                         >
                           {itemPnl.percentText}
                         </div>
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                       {/* Quick Buy Button */}
                       <button
                         onClick={() => handleQuickTrade(item.symbol, item.name, "BUY")}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded-[6px] bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] text-[10px] font-bold hover:bg-[#DCFCE7]"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded-[6px] bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] text-[10px] font-semibold hover:bg-[#DCFCE7]"
                       >
                         BUY
                       </button>
@@ -449,7 +449,7 @@ export default function DashboardPage() {
           <div className="pt-2 border-t border-[#E5E7EB] text-center">
             <Link
               href="/watchlist"
-              className="text-xs font-semibold text-[#F97316] hover:underline inline-flex items-center gap-1"
+              className="text-xs font-medium text-[#F97316] hover:underline inline-flex items-center gap-1"
             >
               <span>Manage your personal watchlist</span>
               <ChevronRight className="w-3.5 h-3.5" />

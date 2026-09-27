@@ -277,7 +277,7 @@ export function TradingViewChart({
       {isLoading && (
         <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex flex-col items-center justify-center z-10">
           <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2" />
-          <span className="text-xs font-semibold text-slate-600">Loading live chart data...</span>
+          <span className="text-xs font-medium text-slate-600">Loading live chart data...</span>
         </div>
       )}
 
@@ -287,7 +287,7 @@ export function TradingViewChart({
           <div className="p-3 rounded-full bg-amber-50 border border-amber-200 text-amber-600 mb-2">
             <AlertCircle className="w-5 h-5" />
           </div>
-          <h4 className="text-xs font-bold text-slate-800">
+          <h4 className="text-xs font-semibold text-slate-800">
             {error || "Market Data Feed Standby"}
           </h4>
           <p className="text-[11px] text-slate-500 max-w-sm mt-1 mb-3">
@@ -297,7 +297,7 @@ export function TradingViewChart({
           </p>
           <button
             onClick={fetchAndSetCandles}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-semibold shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-medium shadow-xs transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Retry Feed</span>

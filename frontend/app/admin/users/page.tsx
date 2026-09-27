@@ -68,12 +68,12 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-5 select-none">
       {/* Header */}
-      <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-[#E5E7EB] p-4 rounded-2xl shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl font-semibold tracking-tight text-[#111827] flex items-center gap-2">
             User Accounts &amp; RBAC Governance
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#6B7280] mt-0.5 font-normal">
             Manage trader accounts, roles (TRADER, ADMIN), and access permissions.
           </p>
         </div>
@@ -84,9 +84,9 @@ export default function AdminUsersPage() {
             placeholder="Search email, name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="text-xs"
+            className="text-xs font-normal"
           />
-          <Button type="submit" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 shadow-sm">
+          <Button type="submit" size="sm" className="bg-[#F97316] hover:bg-[#EA580C] text-white shrink-0 shadow-xs font-medium">
             Search
           </Button>
         </form>
@@ -107,16 +107,16 @@ export default function AdminUsersPage() {
         <TableBody>
           {users.map((u) => (
             <TableRow key={u.id}>
-              <TableCell className="font-semibold text-slate-900 font-mono text-xs">
+              <TableCell className="font-medium text-[#111827] font-mono text-xs">
                 {u.email}
               </TableCell>
-              <TableCell className="text-slate-700">{u.full_name || "—"}</TableCell>
+              <TableCell className="text-[#4B5563] font-normal">{u.full_name || "—"}</TableCell>
               <TableCell>
                 <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border ${
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border ${
                     u.role === "ADMIN"
                       ? "bg-purple-50 text-purple-700 border-purple-200"
-                      : "bg-indigo-50 text-indigo-700 border-indigo-200"
+                      : "bg-[#FFF7ED] text-[#EA580C] border-[#FED7AA]"
                   }`}
                 >
                   {u.role === "ADMIN" ? <ShieldCheck className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
@@ -128,13 +128,13 @@ export default function AdminUsersPage() {
                   {u.is_active ? "ACTIVE" : "INACTIVE"}
                 </Badge>
               </TableCell>
-              <TableCell className="text-xs text-slate-500 font-mono">
+              <TableCell className="text-xs text-[#6B7280] font-mono">
                 {formatDateTime(u.created_at)}
               </TableCell>
               <TableCell className="text-center">
                 <button
                   onClick={() => handleToggleStatus(u)}
-                  className={`px-2 py-1 rounded text-xs font-semibold transition-colors ${
+                  className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                     u.is_active
                       ? "text-rose-600 hover:bg-rose-50 border border-rose-200"
                       : "text-emerald-700 hover:bg-emerald-50 border border-emerald-200"

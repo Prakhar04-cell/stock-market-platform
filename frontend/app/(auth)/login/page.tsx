@@ -172,7 +172,7 @@ export default function LoginPage() {
             {mobileStep === 1 && (
               <button
                 onClick={() => setMobileStep(2)}
-                className="text-xs font-semibold text-[#F97316] hover:underline"
+                className="text-xs font-medium text-[#F97316] hover:underline"
               >
                 Skip
               </button>
@@ -194,15 +194,15 @@ export default function LoginPage() {
               <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6">
                 {/* Logo Mark */}
                 <div className="flex flex-col items-center space-y-3">
-                  <div className="w-14 h-14 rounded-[12px] bg-[#0F172A] flex items-center justify-center text-white font-extrabold text-2xl tracking-tight shadow-md">
+                  <div className="w-14 h-14 rounded-[12px] bg-[#0F172A] flex items-center justify-center text-white font-semibold text-2xl tracking-tight shadow-md">
                     <span>B</span>
                     <span className="text-[#F97316]">R</span>
                   </div>
                   <div>
-                    <h1 className="text-2xl font-black tracking-tight text-[#111827]">
+                    <h1 className="text-2xl font-semibold tracking-tight text-[#111827]">
                       Bull<span className="text-[#F97316]">Run</span>
                     </h1>
-                    <span className="text-[11px] font-mono uppercase tracking-widest text-[#6B7280]">
+                    <span className="text-[11px] font-mono uppercase tracking-widest text-[#6B7280] font-normal">
                       Next-Gen Paper Trading
                     </span>
                   </div>
@@ -212,12 +212,12 @@ export default function LoginPage() {
                 <div className="w-full max-w-[320px] bg-[#F8FAFC] border border-[#E5E7EB] rounded-[12px] p-4 shadow-xs space-y-3">
                   <div className="flex items-center justify-between text-left">
                     <div>
-                      <span className="text-[11px] font-bold text-[#111827] block">NIFTY 50</span>
-                      <span className="text-xs font-mono font-bold text-[#111827] tabular-nums">
+                      <span className="text-[11px] font-medium text-[#111827] block">NIFTY 50</span>
+                      <span className="text-xs font-mono font-semibold text-[#111827] tabular-nums">
                         ₹23,350.25
                       </span>
                     </div>
-                    <span className="px-2 py-0.5 rounded-[4px] bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] text-[10px] font-bold font-mono">
+                    <span className="px-2 py-0.5 rounded-[4px] bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] text-[10px] font-medium font-mono">
                       +1.24% ▲
                     </span>
                   </div>
@@ -251,20 +251,20 @@ export default function LoginPage() {
                   </div>
 
                   <div className="pt-2 border-t border-[#E5E7EB] flex items-center justify-between text-[10px] text-[#6B7280]">
-                    <span className="flex items-center gap-1 font-semibold text-[#16A34A]">
+                    <span className="flex items-center gap-1 font-medium text-[#16A34A]">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
                       Virtual ₹1,00,000 Live
                     </span>
-                    <span>Zero Financial Risk</span>
+                    <span className="font-normal">Zero Financial Risk</span>
                   </div>
                 </div>
 
                 {/* Tagline & Feature Highlights */}
                 <div className="space-y-2">
-                  <h2 className="text-xl font-extrabold text-[#111827] tracking-tight">
+                  <h2 className="text-xl font-semibold text-[#111827] tracking-tight">
                     Invest Smarter. <span className="text-[#F97316]">Trade Better.</span>
                   </h2>
-                  <p className="text-xs text-[#4B5563] max-w-[280px] mx-auto leading-relaxed">
+                  <p className="text-xs text-[#4B5563] max-w-[280px] mx-auto leading-relaxed font-normal">
                     Master real Indian stock market mechanics with high-speed simulations and audited ledger accounting.
                   </p>
                 </div>
@@ -289,12 +289,12 @@ export default function LoginPage() {
               <div className="pt-4 space-y-3">
                 <Button
                   onClick={() => setMobileStep(2)}
-                  className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold text-sm rounded-[10px] py-3.5 min-h-[48px] shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
+                  className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-sm rounded-[10px] py-3.5 min-h-[48px] shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
                 >
                   <span>Continue to Sign In</span>
                   <ArrowRight className="w-4 h-4" />
                 </Button>
-                <p className="text-center text-[11px] text-[#6B7280]">
+                <p className="text-center text-[11px] text-[#6B7280] font-normal">
                   Swipe left or tap to continue
                 </p>
               </div>
@@ -307,19 +307,19 @@ export default function LoginPage() {
               <div className="space-y-5">
                 {/* Header branding */}
                 <div className="text-center space-y-1 pt-1">
-                  <div className="w-10 h-10 rounded-[10px] bg-[#0F172A] flex items-center justify-center text-white font-black text-base mx-auto shadow-xs">
+                  <div className="w-10 h-10 rounded-[10px] bg-[#0F172A] flex items-center justify-center text-white font-semibold text-base mx-auto shadow-xs">
                     <span>B</span>
                     <span className="text-[#F97316]">R</span>
                   </div>
-                  <h2 className="text-xl font-bold text-[#111827] pt-1">Welcome Back</h2>
-                  <p className="text-xs text-[#6B7280]">
+                  <h2 className="text-xl font-semibold text-[#111827] pt-1">Welcome Back</h2>
+                  <p className="text-xs text-[#6B7280] font-normal">
                     Sign in to continue to BullRun
                   </p>
                 </div>
 
                 {/* Error Banner */}
                 {errorMessage && (
-                  <div className="p-3 rounded-[8px] bg-rose-50 border border-rose-200 text-[#DC2626] text-xs flex items-center gap-2">
+                  <div className="p-3 rounded-[8px] bg-rose-50 border border-rose-200 text-[#DC2626] text-xs flex items-center gap-2 font-normal">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>{errorMessage}</span>
                   </div>
@@ -327,7 +327,7 @@ export default function LoginPage() {
 
                 {/* Social Notice */}
                 {socialNotice && (
-                  <div className="p-3 rounded-[8px] bg-[#FFF7ED] border border-[#FED7AA] text-[#EA580C] text-xs flex items-center gap-2">
+                  <div className="p-3 rounded-[8px] bg-[#FFF7ED] border border-[#FED7AA] text-[#EA580C] text-xs flex items-center gap-2 font-normal">
                     <Info className="w-4 h-4 shrink-0" />
                     <span>{socialNotice}</span>
                   </div>
@@ -339,7 +339,7 @@ export default function LoginPage() {
                   <div className="space-y-1">
                     <label
                       htmlFor="mobile-email"
-                      className="text-xs font-semibold text-[#374151] block"
+                      className="text-xs font-medium text-[#374151] block"
                     >
                       Email Address
                     </label>
@@ -351,7 +351,7 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="w-full px-3.5 py-3 rounded-[8px] border border-[#E5E7EB] text-sm text-[#111827] bg-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] transition-all min-h-[44px]"
+                      className="w-full px-3.5 py-3 rounded-[8px] border border-[#E5E7EB] text-sm text-[#111827] bg-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] transition-all min-h-[44px] font-normal"
                     />
                   </div>
 
@@ -359,7 +359,7 @@ export default function LoginPage() {
                   <div className="space-y-1">
                     <label
                       htmlFor="mobile-password"
-                      className="text-xs font-semibold text-[#374151] block"
+                      className="text-xs font-medium text-[#374151] block"
                     >
                       Password
                     </label>
@@ -372,7 +372,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="w-full pl-3.5 pr-11 py-3 rounded-[8px] border border-[#E5E7EB] text-sm text-[#111827] bg-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] transition-all min-h-[44px]"
+                        className="w-full pl-3.5 pr-11 py-3 rounded-[8px] border border-[#E5E7EB] text-sm text-[#111827] bg-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] transition-all min-h-[44px] font-normal"
                       />
                       <button
                         type="button"
@@ -402,7 +402,7 @@ export default function LoginPage() {
                     </label>
                     <Link
                       href="/forgot-password"
-                      className="text-xs text-[#F97316] hover:underline font-semibold"
+                      className="text-xs text-[#F97316] hover:underline font-medium"
                     >
                       Forgot password?
                     </Link>
@@ -412,7 +412,7 @@ export default function LoginPage() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold text-sm rounded-[8px] py-3 min-h-[46px] shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
+                    className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-sm rounded-[8px] py-3 min-h-[46px] shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
                   >
                     {isLoading ? (
                       <span className="inline-flex items-center gap-2">
@@ -431,7 +431,7 @@ export default function LoginPage() {
                 {/* OR Divider */}
                 <div className="relative flex items-center justify-center my-3">
                   <div className="border-t border-[#E5E7EB] w-full" />
-                  <span className="bg-white px-3 text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider relative z-10">
+                  <span className="bg-white px-3 text-[11px] font-medium text-[#9CA3AF] uppercase tracking-wider relative z-10">
                     OR
                   </span>
                 </div>
@@ -441,7 +441,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => handleSocialClick("Google")}
-                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-[8px] border border-[#E5E7EB] bg-white text-xs font-semibold text-[#374151] hover:bg-[#F8FAFC] min-h-[44px] transition-colors"
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-[8px] border border-[#E5E7EB] bg-white text-xs font-medium text-[#374151] hover:bg-[#F8FAFC] min-h-[44px] transition-colors"
                   >
                     <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                       <path
@@ -467,7 +467,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => handleSocialClick("Apple")}
-                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-[8px] border border-[#E5E7EB] bg-white text-xs font-semibold text-[#374151] hover:bg-[#F8FAFC] min-h-[44px] transition-colors"
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-[8px] border border-[#E5E7EB] bg-white text-xs font-medium text-[#374151] hover:bg-[#F8FAFC] min-h-[44px] transition-colors"
                   >
                     <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
                       <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.38c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.57.65-1.07 1.72-.94 2.74 1 .08 2.03-.49 2.65-1.24z" />
@@ -484,10 +484,10 @@ export default function LoginPage() {
                   <div className="flex items-center gap-2">
                     <Info className="w-4 h-4 text-[#F97316] shrink-0" />
                     <span className="text-[11px]">
-                      Quick Test: <strong className="text-[#111827]">trader1@tradex.com</strong>
+                      Quick Test: <span className="font-medium text-[#111827]">trader1@tradex.com</span>
                     </span>
                   </div>
-                  <span className="text-[10px] font-semibold text-[#F97316] bg-[#FFF7ED] px-2 py-0.5 rounded border border-[#FED7AA]">
+                  <span className="text-[10px] font-medium text-[#F97316] bg-[#FFF7ED] px-2 py-0.5 rounded border border-[#FED7AA]">
                     Autofill
                   </span>
                 </div>
@@ -499,7 +499,7 @@ export default function LoginPage() {
                   Don&apos;t have an account?{" "}
                   <Link
                     href="/register"
-                    className="text-[#F97316] hover:underline font-bold"
+                    className="text-[#F97316] hover:underline font-medium"
                   >
                     Sign Up
                   </Link>
@@ -518,10 +518,10 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <h2 className="text-2xl font-black text-[#111827] tracking-tight">
+                  <h2 className="text-2xl font-semibold text-[#111827] tracking-tight">
                     Welcome to BullRun 👋
                   </h2>
-                  <p className="text-xs text-[#4B5563] max-w-[260px] mx-auto">
+                  <p className="text-xs text-[#4B5563] max-w-[260px] mx-auto font-normal">
                     Your smarter trading journey starts here. Your sandbox is ready.
                   </p>
                 </div>
@@ -529,23 +529,23 @@ export default function LoginPage() {
                 {/* Account Summary Card */}
                 <div className="w-full max-w-[320px] bg-[#F8FAFC] border border-[#E5E7EB] rounded-[12px] p-4 text-left space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-[#6B7280]">Virtual Capital</span>
-                    <span className="px-2 py-0.5 rounded-[4px] bg-[#F0FDF4] text-[#16A34A] text-[10px] font-bold">
+                    <span className="text-xs text-[#6B7280] font-normal">Virtual Capital</span>
+                    <span className="px-2 py-0.5 rounded-[4px] bg-[#F0FDF4] text-[#16A34A] text-[10px] font-medium">
                       ● Active
                     </span>
                   </div>
-                  <div className="font-mono text-2xl font-bold text-[#111827] tabular-nums">
+                  <div className="font-mono text-2xl font-semibold text-[#111827] tabular-nums">
                     {formatINR(100000)}
                   </div>
 
                   <div className="pt-2 border-t border-[#E5E7EB] space-y-1.5 text-xs text-[#4B5563]">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span>Account Status</span>
-                      <span className="font-semibold text-[#111827]">Phase 1 Sandbox</span>
+                      <span className="font-normal">Account Status</span>
+                      <span className="font-medium text-[#111827]">Phase 1 Sandbox</span>
                     </div>
                     <div className="flex items-center justify-between text-[11px]">
-                      <span>Market Feeds</span>
-                      <span className="font-semibold text-[#16A34A]">NSE &amp; BSE Online</span>
+                      <span className="font-normal">Market Feeds</span>
+                      <span className="font-medium text-[#16A34A]">NSE &amp; BSE Online</span>
                     </div>
                   </div>
                 </div>
@@ -555,7 +555,7 @@ export default function LoginPage() {
               <div className="space-y-2.5 pt-4">
                 <Button
                   onClick={() => router.push("/explore")}
-                  className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold text-sm rounded-[10px] py-3.5 min-h-[48px] shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
+                  className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-sm rounded-[10px] py-3.5 min-h-[48px] shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
                 >
                   <span>Explore Markets</span>
                   <ArrowRight className="w-4 h-4" />
@@ -564,7 +564,7 @@ export default function LoginPage() {
                 <Button
                   variant="outline"
                   onClick={() => router.push("/dashboard")}
-                  className="w-full border-[#E5E7EB] text-[#111827] hover:bg-[#F8FAFC] font-semibold text-sm rounded-[10px] py-3 min-h-[46px] transition-all"
+                  className="w-full border-[#E5E7EB] text-[#111827] hover:bg-[#F8FAFC] font-medium text-sm rounded-[10px] py-3 min-h-[46px] transition-all"
                 >
                   Go to Dashboard
                 </Button>
@@ -582,16 +582,16 @@ export default function LoginPage() {
           {/* Brand Header */}
           <div className="text-center space-y-1">
             <Link href="/" className="inline-flex items-center gap-2">
-              <div className="w-8 h-8 rounded-[8px] bg-[#0F172A] flex items-center justify-center text-white font-extrabold text-sm tracking-tight shadow-xs">
+              <div className="w-8 h-8 rounded-[8px] bg-[#0F172A] flex items-center justify-center text-white font-semibold text-sm tracking-tight shadow-xs">
                 <span>B</span>
                 <span className="text-[#F97316]">R</span>
               </div>
-              <span className="text-xl font-bold tracking-tight text-[#111827]">
+              <span className="text-xl font-semibold tracking-tight text-[#111827]">
                 Bull<span className="text-[#F97316]">Run</span>
               </span>
             </Link>
-            <h2 className="text-lg font-bold text-[#111827] pt-2">Welcome Back</h2>
-            <p className="text-xs text-[#6B7280]">
+            <h2 className="text-lg font-semibold text-[#111827] pt-2">Welcome Back</h2>
+            <p className="text-xs text-[#6B7280] font-normal">
               Sign in to access your virtual paper wallet and trading terminal
             </p>
           </div>
@@ -599,7 +599,7 @@ export default function LoginPage() {
           {/* Form Card */}
           <div className="rounded-[10px] border border-[#E5E7EB] bg-white p-6 space-y-4 shadow-xs">
             {errorMessage && (
-              <div className="p-3 rounded-[8px] bg-rose-50 border border-rose-200 text-[#DC2626] text-xs flex items-center gap-2">
+              <div className="p-3 rounded-[8px] bg-rose-50 border border-rose-200 text-[#DC2626] text-xs flex items-center gap-2 font-normal">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMessage}</span>
               </div>
@@ -609,7 +609,7 @@ export default function LoginPage() {
               <div className="space-y-1">
                 <label
                   htmlFor="desktop-email"
-                  className="text-xs font-semibold text-[#374151] block"
+                  className="text-xs font-medium text-[#374151] block"
                 >
                   Email Address
                 </label>
@@ -622,7 +622,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoFocus
-                  className="w-full px-3.5 py-2.5 rounded-[8px] border border-[#E5E7EB] text-sm text-[#111827] bg-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-[8px] border border-[#E5E7EB] text-sm text-[#111827] bg-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] transition-all font-normal"
                 />
               </div>
 
@@ -630,13 +630,13 @@ export default function LoginPage() {
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="desktop-password"
-                    className="text-xs font-semibold text-[#374151]"
+                    className="text-xs font-medium text-[#374151]"
                   >
                     Password
                   </label>
                   <Link
                     href="/forgot-password"
-                    className="text-xs text-[#F97316] hover:underline font-semibold"
+                    className="text-xs text-[#F97316] hover:underline font-medium"
                   >
                     Forgot password?
                   </Link>
@@ -650,7 +650,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full pl-3.5 pr-10 py-2.5 rounded-[8px] border border-[#E5E7EB] text-sm text-[#111827] bg-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] transition-all"
+                    className="w-full pl-3.5 pr-10 py-2.5 rounded-[8px] border border-[#E5E7EB] text-sm text-[#111827] bg-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] transition-all font-normal"
                   />
                   <button
                     type="button"
@@ -671,7 +671,7 @@ export default function LoginPage() {
                 type="submit"
                 size="lg"
                 disabled={isLoading}
-                className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold text-xs rounded-[8px] py-2.5"
+                className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-xs rounded-[8px] py-2.5"
               >
                 {isLoading ? "Signing In..." : "Sign In to BullRun"}
                 <ArrowRight className="w-4 h-4 ml-1.5" />
@@ -686,10 +686,10 @@ export default function LoginPage() {
               <Info className="w-4 h-4 text-[#F97316] shrink-0 mt-0.5" />
               <div className="space-y-0.5 flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#111827]">Phase 1 Sandbox Accounts</span>
-                  <span className="text-[10px] text-[#F97316] font-semibold underline">Autofill</span>
+                  <span className="font-semibold text-[#111827]">Phase 1 Sandbox Accounts</span>
+                  <span className="text-[10px] text-[#F97316] font-medium underline">Autofill</span>
                 </div>
-                <span className="font-mono text-[11px] block">Trader: trader1@tradex.com (Pass: Password123!)</span>
+                <span className="font-mono text-[11px] block font-normal">Trader: trader1@tradex.com (Pass: Password123!)</span>
               </div>
             </div>
           </div>
@@ -697,7 +697,7 @@ export default function LoginPage() {
           {/* Footer */}
           <p className="text-center text-xs text-[#6B7280]">
             Don&apos;t have an account yet?{" "}
-            <Link href="/register" className="text-[#F97316] hover:underline font-semibold">
+            <Link href="/register" className="text-[#F97316] hover:underline font-medium">
               Create a free paper account
             </Link>
           </p>

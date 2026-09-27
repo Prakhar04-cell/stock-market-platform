@@ -126,9 +126,9 @@ export function WatchlistDock({
             <button
               key={num}
               onClick={() => setActiveListTab(num)}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                 activeListTab === num
-                  ? "bg-white text-indigo-600 shadow-xs border border-slate-200/80"
+                  ? "bg-white text-indigo-600 shadow-xs border border-slate-200/80 font-semibold"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -150,7 +150,7 @@ export function WatchlistDock({
             placeholder="Filter stocks in watchlist..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white transition-all shadow-2xs"
+            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white transition-all shadow-2xs font-normal"
           />
         </div>
       </div>
@@ -172,25 +172,25 @@ export function WatchlistDock({
             >
               <div className="min-w-0 pr-2">
                 <div className="flex items-center gap-1.5">
-                  <span className={`text-xs font-bold ${isSelected ? "text-indigo-600" : "text-slate-900"}`}>
+                  <span className={`text-xs font-semibold ${isSelected ? "text-indigo-600" : "text-slate-900"}`}>
                     {stock.symbol}
                   </span>
                   <span className="text-[9px] px-1 py-0.2 rounded bg-slate-100 text-slate-500 border border-slate-200 font-mono">
                     {stock.exchange}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 truncate max-w-[130px]" title={stock.name}>
+                <p className="text-[11px] text-slate-500 truncate max-w-[130px] font-normal" title={stock.name}>
                   {stock.name}
                 </p>
               </div>
 
               {/* Price & Change */}
-              <div className="text-right font-financial shrink-0">
-                <span className="text-sm font-bold text-[#111827] block tabular-nums tracking-tight">
+              <div className="text-right shrink-0">
+                <span className="text-sm font-semibold text-[#111827] block tabular-nums tracking-tight">
                   {stock.price}
                 </span>
                 <span
-                  className={`text-[10.5px] font-bold tabular-nums ${
+                  className={`text-[10.5px] font-medium tabular-nums ${
                     stock.isPositive === undefined
                       ? "text-slate-400"
                       : stock.isPositive
@@ -209,7 +209,7 @@ export function WatchlistDock({
                     e.stopPropagation();
                     onQuickTrade(stock, "BUY");
                   }}
-                  className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                  className="px-2 py-1 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
                   title="Buy"
                 >
                   B
@@ -219,7 +219,7 @@ export function WatchlistDock({
                     e.stopPropagation();
                     onQuickTrade(stock, "SELL");
                   }}
-                  className="px-2 py-1 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors"
+                  className="px-2 py-1 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors"
                   title="Sell"
                 >
                   S

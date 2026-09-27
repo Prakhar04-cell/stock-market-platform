@@ -28,23 +28,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen bg-slate-50/60 text-slate-900">
       {/* Admin Sidebar */}
-      <aside className="hidden md:flex flex-col w-60 border-r border-slate-200/90 bg-white p-3 shrink-0 min-h-screen select-none">
+      <aside className="hidden md:flex flex-col w-60 border-r border-[#E5E7EB] bg-white p-3 shrink-0 min-h-screen select-none">
         <Link href="/admin" className="flex items-center gap-3 px-3 py-3 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-sm">
-            TX
+          <div className="w-8 h-8 rounded-lg bg-[#0F172A] flex items-center justify-center text-white font-semibold text-sm shadow-xs">
+            <span>B</span>
+            <span className="text-[#F97316]">R</span>
           </div>
           <div>
-            <span className="text-base font-bold tracking-tight text-slate-900 flex items-center gap-1">
-              Admin<span className="text-indigo-600">Portal</span>
+            <span className="text-base font-semibold tracking-tight text-[#111827] flex items-center gap-1">
+              Admin<span className="text-[#F97316]">Portal</span>
             </span>
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest block font-mono">
+            <span className="text-[10px] text-[#6B7280] uppercase tracking-widest block font-mono font-normal">
               Governance
             </span>
           </div>
         </Link>
 
         <div className="space-y-0.5 flex-1">
-          <div className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+          <div className="px-3 text-[10px] font-medium text-[#6B7280] uppercase tracking-wider mb-2">
             Governance &amp; Controls
           </div>
           {adminNav.map((item) => {
@@ -55,13 +56,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 h-11 rounded-lg text-xs font-semibold transition-all",
+                  "flex items-center gap-3 px-3 h-11 rounded-lg text-xs font-medium transition-all",
                   isActive
-                    ? "bg-indigo-50 text-indigo-700 border-l-2 border-indigo-600"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    ? "bg-[#FFF7ED] text-[#EA580C] border-l-2 border-[#F97316]"
+                    : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
                 )}
               >
-                <Icon className={cn("w-4 h-4", isActive ? "text-indigo-600" : "text-slate-400")} />
+                <Icon className={cn("w-4 h-4", isActive ? "text-[#F97316]" : "text-[#9CA3AF]")} />
                 <span>{item.name}</span>
               </Link>
             );
@@ -69,10 +70,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Back to Trading App link */}
-        <div className="pt-3 border-t border-slate-100">
+        <div className="pt-3 border-t border-[#E5E7EB]">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2.5 px-3 h-9 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+            className="flex items-center gap-2.5 px-3 h-9 rounded-lg text-xs font-medium text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Trading App</span>

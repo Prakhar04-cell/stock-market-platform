@@ -31,7 +31,7 @@ export function MetricCard({
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">{title}</span>
+        <span className="text-[11px] font-medium text-[#6B7280] uppercase tracking-wider">{title}</span>
         {Icon && (
           <div className="p-1.5 rounded-[6px] bg-[#F8FAFC] border border-[#E5E7EB] text-[#111827]">
             <Icon className="w-3.5 h-3.5" />
@@ -40,7 +40,7 @@ export function MetricCard({
       </div>
 
       <div className="mt-2 flex items-baseline justify-between gap-2">
-        <div className="font-financial text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111827] tabular-nums leading-tight">
+        <div className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#111827] tabular-nums leading-tight">
           {value}
         </div>
         {statusBadge}
@@ -51,7 +51,7 @@ export function MetricCard({
           {change && (
             <span
               className={cn(
-                "font-financial font-bold text-[13px] tracking-tight tabular-nums leading-none",
+                "font-medium text-[13px] tracking-tight tabular-nums leading-none",
                 isPositive === true && "text-[#16A34A]",
                 isPositive === false && "text-[#DC2626]",
                 isPositive === undefined && "text-[#4B5563]"
@@ -60,7 +60,7 @@ export function MetricCard({
               {change}
             </span>
           )}
-          {subtitle && <span className="text-[11px] text-[#6B7280] truncate">{subtitle}</span>}
+          {subtitle && <span className="text-[11px] text-[#6B7280] truncate font-normal">{subtitle}</span>}
         </div>
       )}
     </div>

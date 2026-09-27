@@ -66,7 +66,7 @@ export function BottomToolsDock({
     >
       <div className="flex items-center gap-1 px-1">
         <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 pl-1">
+        <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 pl-1">
           Pro Tools
         </span>
       </div>
@@ -79,7 +79,7 @@ export function BottomToolsDock({
           <button
             key={tool.id}
             onClick={tool.action}
-            className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all border border-transparent hover:border-slate-200 active:scale-95"
+            className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all border border-transparent hover:border-slate-200 active:scale-95"
           >
             <div className={`p-1 rounded-lg border ${tool.color} transition-transform group-hover:scale-105`}>
               <Icon className="w-3.5 h-3.5" />
@@ -87,7 +87,7 @@ export function BottomToolsDock({
             <span>{tool.label}</span>
 
             {tool.badge && (
-              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                 {tool.badge}
               </span>
             )}

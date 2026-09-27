@@ -44,10 +44,10 @@ export function ChartContainer({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-slate-900 leading-tight">
+              <span className="text-sm font-semibold text-slate-900 leading-tight">
                 {isPortfolio ? "Portfolio Trajectory" : `${cleanSymbol} Real-Time Chart`}
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="text-[10px] px-2 py-0.5 rounded font-mono font-medium bg-slate-100 text-slate-600 border border-slate-200">
                 NSE
               </span>
             </div>
@@ -72,7 +72,7 @@ export function ChartContainer({
                   : "bg-slate-300"
               )}
             />
-            <span className="text-[10px] font-semibold text-slate-500">
+            <span className="text-[10px] font-medium text-slate-500">
               {connectionState === "CONNECTED"
                 ? "LIVE STREAM"
                 : connectionState === "CONNECTING"
@@ -91,9 +91,9 @@ export function ChartContainer({
               key={intvl.value}
               onClick={() => setActiveInterval(intvl.value)}
               className={cn(
-                "px-2.5 py-1 text-xs font-semibold rounded-lg transition-all select-none",
+                "px-2.5 py-1 text-xs font-medium rounded-lg transition-all select-none",
                 activeInterval === intvl.value
-                  ? "bg-white text-indigo-600 shadow-xs font-bold"
+                  ? "bg-white text-indigo-600 shadow-xs font-semibold"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               )}
             >

@@ -35,7 +35,7 @@ export function BottomNav() {
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center w-full py-1 text-[10px] font-medium transition-colors",
-              isActive ? "text-[#F97316] font-bold" : "text-[#6B7280] hover:text-[#111827]"
+              isActive ? "text-[#F97316] font-semibold" : "text-[#6B7280] hover:text-[#111827]"
             )}
           >
             <Icon

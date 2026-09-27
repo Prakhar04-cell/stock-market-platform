@@ -54,25 +54,25 @@ export default function AdminOverviewPage() {
   return (
     <div className="space-y-5 select-none">
       {/* Header */}
-      <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-[#E5E7EB] p-4 rounded-2xl shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl font-semibold tracking-tight text-[#111827] flex items-center gap-2">
             Governance &amp; Operations Overview
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#6B7280] mt-0.5 font-normal">
             Real-time platform operations, active traders, and security governance.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Link href="/admin/users">
-            <Button variant="outline" size="sm" className="border-slate-200 text-slate-700 text-xs hover:bg-slate-50">
+            <Button variant="outline" size="sm" className="border-[#E5E7EB] text-[#4B5563] text-xs hover:bg-[#F8FAFC] font-medium">
               <Users className="w-3.5 h-3.5 mr-1" />
               Manage Users
             </Button>
           </Link>
           <Link href="/admin/monitoring">
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm">
+            <Button size="sm" className="bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-medium shadow-xs">
               <Activity className="w-3.5 h-3.5 mr-1" />
               System Health
             </Button>
@@ -127,13 +127,13 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* Audit Logs Section */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-5 space-y-4 shadow-card">
+      <div className="rounded-2xl border border-[#E5E7EB] bg-white p-5 space-y-4 shadow-card">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-indigo-600" />
-            <h3 className="text-sm font-bold text-slate-900">Governance Audit Trail</h3>
+            <ShieldCheck className="w-4 h-4 text-[#F97316]" />
+            <h3 className="text-sm font-semibold text-[#111827]">Governance Audit Trail</h3>
           </div>
-          <span className="text-xs text-slate-400 font-mono">Immutable Compliance Log</span>
+          <span className="text-xs text-[#6B7280] font-mono font-normal">Immutable Compliance Log</span>
         </div>
 
         {auditLogs.length > 0 ? (
@@ -151,14 +151,14 @@ export default function AdminOverviewPage() {
               {auditLogs.map((log) => (
                 <TableRow key={log.id}>
                   <TableCell>
-                    <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                    <span className="font-mono text-xs font-medium text-[#EA580C] bg-[#FFF7ED] px-2 py-0.5 rounded border border-[#FED7AA]">
                       {log.action}
                     </span>
                   </TableCell>
-                  <TableCell className="text-xs text-slate-700">{log.entity_type}</TableCell>
-                  <TableCell className="font-mono text-xs text-slate-500">{log.user_id || "System"}</TableCell>
-                  <TableCell className="font-mono text-xs text-slate-500">{log.ip_address || "127.0.0.1"}</TableCell>
-                  <TableCell className="text-xs text-slate-500 font-mono">{formatDateTime(log.created_at)}</TableCell>
+                  <TableCell className="text-xs text-[#4B5563]">{log.entity_type}</TableCell>
+                  <TableCell className="font-mono text-xs text-[#6B7280]">{log.user_id || "System"}</TableCell>
+                  <TableCell className="font-mono text-xs text-[#6B7280]">{log.ip_address || "127.0.0.1"}</TableCell>
+                  <TableCell className="text-xs text-[#6B7280] font-mono">{formatDateTime(log.created_at)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

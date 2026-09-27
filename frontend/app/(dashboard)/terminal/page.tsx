@@ -191,7 +191,7 @@ export default function TerminalPage() {
       {/* 1. Terminal Top Ribbon / Instrument Selector */}
       <div className="bg-white border border-[#E5E7EB] rounded-2xl p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 overflow-x-auto py-1">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#111827] text-white text-xs font-bold shrink-0">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#111827] text-white text-xs font-medium shrink-0">
             <Activity className="w-3.5 h-3.5 text-[#4F46E5]" />
             <span>TERMINAL</span>
           </div>
@@ -202,9 +202,9 @@ export default function TerminalPage() {
               <button
                 key={inst.symbol}
                 onClick={() => setSelectedSymbol(inst.symbol)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
                   selectedSymbol === inst.symbol
-                    ? "bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE] shadow-2xs font-bold"
+                    ? "bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE] shadow-2xs font-semibold"
                     : "bg-[#F7F8FA] text-[#4B5563] border border-[#E5E7EB] hover:text-[#111827] hover:bg-[#E5E7EB]"
                 }`}
               >
@@ -217,8 +217,8 @@ export default function TerminalPage() {
         {/* Selected Instrument Live Quote Display */}
         <div className="flex items-center gap-4 shrink-0 font-mono">
           <div>
-            <div className="text-xs text-[#6B7280]">Real-Time LTP</div>
-            <div className="text-base font-bold text-[#111827] tabular-nums">
+            <div className="text-xs text-[#6B7280] font-normal">Real-Time LTP</div>
+            <div className="text-base font-semibold text-[#111827] tabular-nums">
               {quote ? formatStockPrice(quote.ltp) : "Fetching..."}
             </div>
           </div>
@@ -227,9 +227,9 @@ export default function TerminalPage() {
             const pnl = formatPnL(quote.change ?? 0, quote.change_percent);
             return (
               <div className="text-right">
-                <div className="text-xs text-[#6B7280]">1D Movement</div>
+                <div className="text-xs text-[#6B7280] font-normal">1D Movement</div>
                 <div
-                  className={`text-xs font-bold tabular-nums flex items-center justify-end gap-0.5 ${pnl.colorClass}`}
+                  className={`text-xs font-semibold tabular-nums flex items-center justify-end gap-0.5 ${pnl.colorClass}`}
                 >
                   {pnl.percentText}
                 </div>
@@ -239,7 +239,7 @@ export default function TerminalPage() {
 
           <div className="h-6 w-[1px] bg-[#E5E7EB]" />
 
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#00A86B] bg-[#ECFDF5] px-2.5 py-1 rounded-full border border-[#A7F3D0]">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#00A86B] bg-[#ECFDF5] px-2.5 py-1 rounded-full border border-[#A7F3D0]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
             <span>PAPER MODE</span>
           </div>
@@ -255,26 +255,26 @@ export default function TerminalPage() {
           {/* Quick HUD Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-white border border-[#E5E7EB] rounded-xl p-3 shadow-xs">
             <div>
-              <span className="text-[#6B7280] text-[11px] block">Day High</span>
-              <span className="font-mono font-bold text-[#00A86B] block">
+              <span className="text-[#6B7280] text-[11px] block font-normal">Day High</span>
+              <span className="font-mono font-semibold text-[#00A86B] block">
                 {quote?.high ? formatStockPrice(quote.high) : "--"}
               </span>
             </div>
             <div>
-              <span className="text-[#6B7280] text-[11px] block">Day Low</span>
-              <span className="font-mono font-bold text-[#EF4444] block">
+              <span className="text-[#6B7280] text-[11px] block font-normal">Day Low</span>
+              <span className="font-mono font-semibold text-[#EF4444] block">
                 {quote?.low ? formatStockPrice(quote.low) : "--"}
               </span>
             </div>
             <div>
-              <span className="text-[#6B7280] text-[11px] block">Volume</span>
-              <span className="font-mono font-bold text-[#111827] block">
+              <span className="text-[#6B7280] text-[11px] block font-normal">Volume</span>
+              <span className="font-mono font-semibold text-[#111827] block">
                 {quote?.volume ? formatIndianNumber(quote.volume) : "--"}
               </span>
             </div>
             <div>
-              <span className="text-[#6B7280] text-[11px] block">Execution Engine</span>
-              <span className="font-mono font-bold text-[#4F46E5] block">
+              <span className="text-[#6B7280] text-[11px] block font-normal">Execution Engine</span>
+              <span className="font-mono font-semibold text-[#4F46E5] block">
                 TradeX Paper v3
               </span>
             </div>
@@ -303,9 +303,9 @@ export default function TerminalPage() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setActiveTab("POSITIONS")}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                 activeTab === "POSITIONS"
-                  ? "bg-white text-[#111827] shadow-xs"
+                  ? "bg-white text-[#111827] shadow-xs font-semibold"
                   : "text-[#6B7280] hover:text-[#111827]"
               }`}
             >
@@ -313,9 +313,9 @@ export default function TerminalPage() {
             </button>
             <button
               onClick={() => setActiveTab("ORDERS")}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                 activeTab === "ORDERS"
-                  ? "bg-white text-[#111827] shadow-xs"
+                  ? "bg-white text-[#111827] shadow-xs font-semibold"
                   : "text-[#6B7280] hover:text-[#111827]"
               }`}
             >
@@ -325,7 +325,7 @@ export default function TerminalPage() {
 
           <button
             onClick={loadOrdersAndPositions}
-            className="flex items-center gap-1 text-[11px] text-[#4F46E5] font-semibold hover:underline"
+            className="flex items-center gap-1 text-[11px] text-[#4F46E5] font-medium hover:underline"
           >
             <RotateCcw className="w-3 h-3" />
             <span>Refresh</span>
@@ -339,7 +339,7 @@ export default function TerminalPage() {
               {positions.length === 0 ? (
                 <div className="py-8 text-center text-xs text-[#6B7280] space-y-1">
                   <p className="font-semibold text-[#111827]">No active positions in paper account</p>
-                  <p className="text-[11px] text-[#9CA3AF]">
+                  <p className="text-[11px] text-[#9CA3AF] font-normal">
                     Use the Order Pad on the right to simulate BUY or SELL trades.
                   </p>
                 </div>
@@ -347,11 +347,11 @@ export default function TerminalPage() {
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-[#E5E7EB] text-[#6B7280] uppercase text-[10px]">
-                      <th className="pb-2 font-semibold">Instrument</th>
-                      <th className="pb-2 font-semibold">Qty</th>
-                      <th className="pb-2 font-semibold">Avg Price</th>
-                      <th className="pb-2 font-semibold">LTP</th>
-                      <th className="pb-2 font-semibold text-right">Unrealized P&amp;L</th>
+                      <th className="pb-2 font-medium">Instrument</th>
+                      <th className="pb-2 font-medium">Qty</th>
+                      <th className="pb-2 font-medium">Avg Price</th>
+                      <th className="pb-2 font-medium">LTP</th>
+                      <th className="pb-2 font-medium text-right">Unrealized P&amp;L</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -360,18 +360,18 @@ export default function TerminalPage() {
 
                       return (
                         <tr key={pos.stock_symbol} className="hover:bg-[#F9FAFB] transition-colors">
-                          <td className="py-2.5 font-bold text-[#111827] font-mono">
+                          <td className="py-2.5 font-semibold text-[#111827] font-mono">
                             {pos.stock_symbol}
                           </td>
-                          <td className="py-2.5 font-mono text-[#111827]">{pos.quantity}</td>
-                          <td className="py-2.5 font-mono text-[#4B5563]">
+                          <td className="py-2.5 font-mono text-[#111827] font-normal">{pos.quantity}</td>
+                          <td className="py-2.5 font-mono text-[#4B5563] font-normal">
                             {formatStockPrice(pos.average_buy_price)}
                           </td>
-                          <td className="py-2.5 font-mono text-[#111827]">
+                          <td className="py-2.5 font-mono text-[#111827] font-semibold">
                             {formatStockPrice(pos.current_price)}
                           </td>
                           <td
-                            className={`py-2.5 font-mono font-bold text-right tabular-nums ${posPnl.colorClass}`}
+                            className={`py-2.5 font-mono font-semibold text-right tabular-nums ${posPnl.colorClass}`}
                           >
                             {posPnl.amountText} ({posPnl.percentText})
                           </td>
@@ -389,7 +389,7 @@ export default function TerminalPage() {
               {orders.length === 0 ? (
                 <div className="py-8 text-center text-xs text-[#6B7280] space-y-1">
                   <p className="font-semibold text-[#111827]">No recent orders executed</p>
-                  <p className="text-[11px] text-[#9CA3AF]">
+                  <p className="text-[11px] text-[#9CA3AF] font-normal">
                     Simulated paper orders will appear in this book immediately upon placement.
                   </p>
                 </div>
@@ -397,29 +397,29 @@ export default function TerminalPage() {
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-[#E5E7EB] text-[#6B7280] uppercase text-[10px]">
-                      <th className="pb-2 font-semibold">Time</th>
-                      <th className="pb-2 font-semibold">Instrument</th>
-                      <th className="pb-2 font-semibold">Side</th>
-                      <th className="pb-2 font-semibold">Type</th>
-                      <th className="pb-2 font-semibold">Qty</th>
-                      <th className="pb-2 font-semibold">Exec Price</th>
-                      <th className="pb-2 font-semibold text-right">Status</th>
+                      <th className="pb-2 font-medium">Time</th>
+                      <th className="pb-2 font-medium">Instrument</th>
+                      <th className="pb-2 font-medium">Side</th>
+                      <th className="pb-2 font-medium">Type</th>
+                      <th className="pb-2 font-medium">Qty</th>
+                      <th className="pb-2 font-medium">Exec Price</th>
+                      <th className="pb-2 font-medium text-right">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-mono">
                     {orders.map((ord) => (
                       <tr key={ord.id} className="hover:bg-[#F9FAFB] transition-colors">
-                        <td className="py-2 text-[#6B7280] text-[11px]">
+                        <td className="py-2 text-[#6B7280] text-[11px] font-normal">
                           {new Date(ord.created_at).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
                             second: "2-digit",
                           })}
                         </td>
-                        <td className="py-2 font-bold text-[#111827]">{ord.stock_symbol}</td>
+                        <td className="py-2 font-semibold text-[#111827]">{ord.stock_symbol}</td>
                         <td className="py-2">
                           <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                               ord.side === "BUY"
                                 ? "bg-emerald-50 text-[#00A86B]"
                                 : "bg-rose-50 text-[#EF4444]"
@@ -428,13 +428,13 @@ export default function TerminalPage() {
                             {ord.side}
                           </span>
                         </td>
-                        <td className="py-2 text-[#4B5563] text-[11px]">{ord.order_type}</td>
-                        <td className="py-2 text-[#111827]">{ord.quantity}</td>
-                        <td className="py-2 text-[#111827]">
+                        <td className="py-2 text-[#4B5563] text-[11px] font-normal">{ord.order_type}</td>
+                        <td className="py-2 text-[#111827] font-normal">{ord.quantity}</td>
+                        <td className="py-2 text-[#111827] font-semibold">
                           {ord.average_execution_price ? formatStockPrice(ord.average_execution_price) : (ord.price ? formatStockPrice(ord.price) : "--")}
                         </td>
                         <td className="py-2 text-right">
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#00A86B] font-bold">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#00A86B] font-medium">
                             {ord.status}
                           </span>
                         </td>

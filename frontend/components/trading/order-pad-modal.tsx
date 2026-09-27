@@ -208,7 +208,7 @@ export function OrderPad({
       <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-sm text-[#111827]">{cleanSymbol}</span>
+            <span className="font-semibold text-sm text-[#111827]">{cleanSymbol}</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#F3F4F6] text-[#6B7280] font-mono">
               NSE
             </span>
@@ -218,7 +218,7 @@ export function OrderPad({
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-[6px] bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] text-[10.5px] font-bold">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-[6px] bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] text-[10.5px] font-medium">
           <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
           <span>PAPER TRADING</span>
         </div>
@@ -232,7 +232,7 @@ export function OrderPad({
           </div>
 
           <div>
-            <h4 className="font-bold text-base text-[#111827]">Order Executed</h4>
+            <h4 className="font-semibold text-base text-[#111827]">Order Executed</h4>
             <p className="text-xs text-[#6B7280] mt-0.5">
               Simulated {confirmedOrder.side} executed via Paper Engine
             </p>
@@ -241,25 +241,25 @@ export function OrderPad({
           <div className="p-3.5 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] text-left text-xs space-y-1.5 font-mono">
             <div className="flex justify-between">
               <span className="text-[#6B7280]">Instrument:</span>
-              <span className="font-bold text-[#111827]">{cleanSymbol}</span>
+              <span className="font-semibold text-[#111827]">{cleanSymbol}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#6B7280]">Side &amp; Qty:</span>
-              <span className="font-bold text-[#111827]">{confirmedOrder.side} × {confirmedOrder.quantity}</span>
+              <span className="font-semibold text-[#111827]">{confirmedOrder.side} × {confirmedOrder.quantity}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#6B7280]">Executed Price:</span>
-              <span className="font-bold text-[#111827]">
+              <span className="font-semibold text-[#111827]">
                 {formatStockPrice(confirmedOrder.average_execution_price || effectivePrice)}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#6B7280]">Order ID:</span>
-              <span className="text-[#F97316] font-semibold">{confirmedOrder.id ? confirmedOrder.id.slice(0, 12) : "BR-FILLED"}</span>
+              <span className="text-[#F97316] font-medium">{confirmedOrder.id ? confirmedOrder.id.slice(0, 12) : "BR-FILLED"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#6B7280]">Status:</span>
-              <span className="text-[#16A34A] font-bold">{confirmedOrder.status}</span>
+              <span className="text-[#16A34A] font-medium">{confirmedOrder.status}</span>
             </div>
           </div>
 
@@ -297,7 +297,7 @@ export function OrderPad({
             <button
               type="button"
               onClick={() => setSide("BUY")}
-              className={`py-2 rounded-[6px] text-xs font-bold transition-all ${
+              className={`py-2 rounded-[6px] text-xs font-semibold transition-all ${
                 side === "BUY"
                   ? "bg-[#16A34A] text-white shadow-xs"
                   : "text-[#6B7280] hover:text-[#111827]"
@@ -308,7 +308,7 @@ export function OrderPad({
             <button
               type="button"
               onClick={() => setSide("SELL")}
-              className={`py-2 rounded-[6px] text-xs font-bold transition-all ${
+              className={`py-2 rounded-[6px] text-xs font-semibold transition-all ${
                 side === "SELL"
                   ? "bg-[#DC2626] text-white shadow-xs"
                   : "text-[#6B7280] hover:text-[#111827]"
@@ -320,14 +320,14 @@ export function OrderPad({
 
           {/* Order Type Toggle: MARKET / LIMIT */}
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#4B5563]">Order Type</span>
+            <span className="text-xs font-medium text-[#4B5563]">Order Type</span>
             <div className="flex items-center gap-1 bg-[#F8FAFC] p-0.5 rounded-[6px] border border-[#E5E7EB]">
               <button
                 type="button"
                 onClick={() => setOrderType("MARKET")}
-                className={`px-3 py-1 text-xs font-semibold rounded-[4px] transition-all ${
+                className={`px-3 py-1 text-xs font-medium rounded-[4px] transition-all ${
                   orderType === "MARKET"
-                    ? "bg-white text-[#111827] shadow-xs font-bold"
+                    ? "bg-white text-[#111827] shadow-xs font-semibold"
                     : "text-[#6B7280] hover:text-[#111827]"
                 }`}
               >
@@ -336,9 +336,9 @@ export function OrderPad({
               <button
                 type="button"
                 onClick={() => setOrderType("LIMIT")}
-                className={`px-3 py-1 text-xs font-semibold rounded-[4px] transition-all ${
+                className={`px-3 py-1 text-xs font-medium rounded-[4px] transition-all ${
                   orderType === "LIMIT"
-                    ? "bg-white text-[#111827] shadow-xs font-bold"
+                    ? "bg-white text-[#111827] shadow-xs font-semibold"
                     : "text-[#6B7280] hover:text-[#111827]"
                 }`}
               >
@@ -350,7 +350,7 @@ export function OrderPad({
           {/* Quantity Stepper */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center text-xs">
-              <span className="font-semibold text-[#4B5563]">Quantity</span>
+              <span className="font-medium text-[#4B5563]">Quantity</span>
               <span className="text-[11px] text-[#6B7280]">Lot: 1</span>
             </div>
             <div className="flex items-center border border-[#E5E7EB] rounded-[8px] overflow-hidden bg-white">
@@ -367,7 +367,7 @@ export function OrderPad({
                 min="1"
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full text-center font-mono font-bold text-sm text-[#111827] focus:outline-none tabular-nums"
+                className="w-full text-center font-mono font-medium text-sm text-[#111827] focus:outline-none tabular-nums"
               />
               <button
                 type="button"
@@ -382,17 +382,17 @@ export function OrderPad({
           {/* Price Input (active if LIMIT, otherwise live LTP displayed) */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center text-xs">
-              <span className="font-semibold text-[#4B5563]">
+              <span className="font-medium text-[#4B5563]">
                 {orderType === "MARKET" ? "Market Price (LTP)" : "Limit Price"}
               </span>
               {ltp && (
-                <span className="text-xs font-financial font-bold text-[#16A34A] tabular-nums tracking-tight">
+                <span className="text-xs font-semibold text-[#16A34A] tabular-nums tracking-tight">
                   Live: {formatStockPrice(ltp)}
                 </span>
               )}
             </div>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-financial font-bold text-xs text-[#6B7280]">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-medium text-xs text-[#6B7280]">
                 ₹
               </span>
               <input
@@ -401,7 +401,7 @@ export function OrderPad({
                 disabled={orderType === "MARKET"}
                 value={orderType === "MARKET" ? (ltp ? ltp.toFixed(2) : "Fetching...") : price}
                 onChange={(e) => setPrice(e.target.value)}
-                className={`w-full pl-7 pr-3 py-2 border rounded-[8px] font-financial font-bold text-sm text-[#111827] tabular-nums focus:outline-none transition-all ${
+                className={`w-full pl-7 pr-3 py-2 border rounded-[8px] font-semibold text-sm text-[#111827] tabular-nums focus:outline-none transition-all ${
                   orderType === "MARKET"
                     ? "bg-[#F8FAFC] border-[#E5E7EB] text-[#6B7280]"
                     : "bg-white border-[#E5E7EB] focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316]"
@@ -413,7 +413,7 @@ export function OrderPad({
           {/* Available Virtual Balance */}
           <div className="p-2.5 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] flex justify-between items-center text-xs">
             <span className="text-[#6B7280]">Available Virtual Balance</span>
-            <span className="financial-num font-bold text-sm text-[#111827] tabular-nums tracking-tight">
+            <span className="financial-num font-semibold text-sm text-[#111827] tabular-nums tracking-tight">
               {formatINR(availableBalance)}
             </span>
           </div>
@@ -422,7 +422,7 @@ export function OrderPad({
           <div className="space-y-1.5 pt-1 text-xs border-t border-[#E5E7EB]">
             <div className="flex justify-between text-[#6B7280]">
               <span>Estimated Turnover</span>
-              <span className="financial-num font-bold text-xs text-[#111827] tabular-nums">
+              <span className="financial-num font-semibold text-xs text-[#111827] tabular-nums">
                 {formatINR(turnover)}
               </span>
             </div>
@@ -436,36 +436,36 @@ export function OrderPad({
                 <span>Charges &amp; Taxes</span>
                 {showChargesDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               </button>
-              <span className="financial-num font-bold text-xs text-[#111827] tabular-nums">
+              <span className="financial-num font-semibold text-xs text-[#111827] tabular-nums">
                 {formatINR(chargesBreakdown.totalCharges)}
               </span>
             </div>
 
             {/* Collapsible simulated charges breakdown */}
             {showChargesDetails && (
-              <div className="p-2 rounded-[6px] bg-[#F8FAFC] space-y-1 text-[10.5px] font-financial text-[#6B7280]">
+              <div className="p-2 rounded-[6px] bg-[#F8FAFC] space-y-1 text-[10.5px] text-[#6B7280]">
                 <div className="flex justify-between">
                   <span>Simulated Brokerage (max ₹20):</span>
-                  <span className="financial-num font-bold">{formatINR(chargesBreakdown.brokerage)}</span>
+                  <span className="financial-num font-medium">{formatINR(chargesBreakdown.brokerage)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>STT / CTT (0.1%):</span>
-                  <span className="financial-num font-bold">{formatINR(chargesBreakdown.stt)}</span>
+                  <span className="financial-num font-medium">{formatINR(chargesBreakdown.stt)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Exchange Turnover (0.00345%):</span>
-                  <span className="financial-num font-bold">{formatINR(chargesBreakdown.turnoverCharges)}</span>
+                  <span className="financial-num font-medium">{formatINR(chargesBreakdown.turnoverCharges)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>GST (18% on Brokerage+Turnover):</span>
-                  <span className="financial-num font-bold">{formatINR(chargesBreakdown.gst)}</span>
+                  <span className="financial-num font-medium">{formatINR(chargesBreakdown.gst)}</span>
                 </div>
               </div>
             )}
 
-            <div className="flex justify-between text-sm font-bold text-[#111827] pt-1 border-t border-[#E5E7EB]">
+            <div className="flex justify-between text-sm font-medium text-[#111827] pt-1 border-t border-[#E5E7EB]">
               <span>Total Margin Required</span>
-              <span className="financial-num font-extrabold text-base text-[#111827] tabular-nums tracking-tight">
+              <span className="financial-num font-semibold text-base text-[#111827] tabular-nums tracking-tight">
                 {formatINR(totalAmount)}
               </span>
             </div>

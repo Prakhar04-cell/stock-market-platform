@@ -58,7 +58,7 @@ export function Sidebar() {
       <div className="space-y-6">
         {/* Trader Navigation Section */}
         <div>
-          <div className="px-3 pb-2 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">
+          <div className="px-3 pb-2 text-[10px] font-medium text-[#9CA3AF] uppercase tracking-wider">
             Trading Desk
           </div>
           <div className="space-y-0.5">
@@ -79,7 +79,7 @@ export function Sidebar() {
                   className={cn(
                     "flex items-center justify-between px-3 py-2 rounded-[8px] text-[13px] font-medium transition-all group",
                     isActive
-                      ? "bg-[#FFF7ED] text-[#111827] font-bold border-l-2 border-[#F97316]"
+                      ? "bg-[#FFF7ED] text-[#111827] font-semibold border-l-2 border-[#F97316]"
                       : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
                   )}
                 >
@@ -93,7 +93,7 @@ export function Sidebar() {
                     <span>{item.name}</span>
                   </div>
                   {item.badge && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-[4px] bg-[#FFF7ED] text-[#EA580C]">
+                    <span className="text-[10px] font-medium px-1.5 py-0.2 rounded-[4px] bg-[#FFF7ED] text-[#EA580C]">
                       {item.badge}
                     </span>
                   )}
@@ -105,7 +105,7 @@ export function Sidebar() {
 
         {/* Separator & Admin Section */}
         <div className="pt-2 border-t border-[#E5E7EB]">
-          <div className="px-3 pb-2 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider flex items-center justify-between">
+          <div className="px-3 pb-2 text-[10px] font-medium text-[#9CA3AF] uppercase tracking-wider flex items-center justify-between">
             <span>Administration</span>
             <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-[#6B7280]">
               OPS
@@ -123,7 +123,7 @@ export function Sidebar() {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-[8px] text-[13px] font-medium transition-all group",
                     isActive
-                      ? "bg-[#FFF7ED] text-[#111827] font-bold border-l-2 border-[#F97316]"
+                      ? "bg-[#FFF7ED] text-[#111827] font-semibold border-l-2 border-[#F97316]"
                       : "text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
                   )}
                 >
@@ -143,7 +143,7 @@ export function Sidebar() {
 
       {/* Bottom Compact Environment Badge */}
       <div className="p-3 rounded-[10px] bg-[#F8FAFC] border border-[#E5E7EB] text-center space-y-1">
-        <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#16A34A]">
+        <div className="flex items-center justify-center gap-1.5 text-[11px] font-semibold text-[#16A34A]">
           <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
           <span>Paper Engine Active</span>
         </div>

@@ -225,10 +225,10 @@ export default function StockDetailPage() {
           <div className="flex items-center gap-2.5">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
             <div>
-              <h4 className="text-xs font-bold text-amber-900">
+              <h4 className="text-xs font-semibold text-amber-900">
                 Primary Market Feed Offline
               </h4>
-              <p className="text-[11px] text-amber-700">
+              <p className="text-[11px] text-amber-700 font-normal">
                 Primary Upstox token is expired. Connect Upstox to resume primary real-time stream.
               </p>
             </div>
@@ -237,7 +237,7 @@ export default function StockDetailPage() {
             href="/api/v1/upstox/auth/login"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-colors shrink-0"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium shadow-xs transition-colors shrink-0"
           >
             <span>Authorize Upstox</span>
             <ExternalLink className="w-3 h-3" />
@@ -249,13 +249,13 @@ export default function StockDetailPage() {
       <div className="flex items-center justify-between">
         <Link
           href="/explore"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6B7280] hover:text-[#111827] transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#6B7280] hover:text-[#111827] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Explore / Markets</span>
         </Link>
 
-        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#00A86B] text-[11px] font-bold">
+        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#00A86B] text-[11px] font-medium">
           <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse" />
           <span>Paper Execution Active</span>
         </div>
@@ -264,32 +264,32 @@ export default function StockDetailPage() {
       {/* Main Stock Header Bar */}
       <div className="bg-white border border-[#E5E7EB] p-5 rounded-2xl shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] flex items-center justify-center font-bold text-[#111827] text-base font-mono shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] flex items-center justify-center font-semibold text-[#111827] text-base font-mono shrink-0">
             {symbol.slice(0, 2)}
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold tracking-tight text-[#111827] leading-none">
+              <h1 className="text-xl font-semibold tracking-tight text-[#111827] leading-none">
                 {symbol}
               </h1>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-[#F7F8FA] text-[#6B7280] border border-[#E5E7EB] font-mono font-bold">
+              <span className="text-[10px] px-2 py-0.5 rounded bg-[#F7F8FA] text-[#6B7280] border border-[#E5E7EB] font-mono font-medium">
                 {stock?.exchange_code || "NSE"}
               </span>
               {quote?.status === "FALLBACK" ? (
-                <span className="text-[10.5px] px-2.5 py-0.5 rounded-full bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] font-bold">
+                <span className="text-[10.5px] px-2.5 py-0.5 rounded-full bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] font-medium">
                   ● MARKET DATA: FALLBACK
                 </span>
               ) : quote?.status === "LIVE" ? (
-                <span className="text-[10.5px] px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#00A86B] font-bold">
+                <span className="text-[10.5px] px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#00A86B] font-medium">
                   ● LIVE
                 </span>
               ) : (
-                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">
+                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
                   {quote?.status || "INITIALIZING"}
                 </span>
               )}
             </div>
-            <p className="text-xs text-[#6B7280] mt-1">
+            <p className="text-xs text-[#6B7280] mt-1 font-normal">
               {stock?.name || `${symbol} Equities Ltd`}
             </p>
           </div>
@@ -298,7 +298,7 @@ export default function StockDetailPage() {
         {/* Live LTP & Price Movements */}
         <div className="flex items-center gap-6">
           <div className="text-left md:text-right">
-            <div className="financial-num text-3xl sm:text-4xl lg:text-[44px] font-extrabold text-[#111827] tracking-tight tabular-nums leading-[1.1]">
+            <div className="financial-num text-3xl sm:text-4xl lg:text-[44px] font-semibold text-[#111827] tracking-tight tabular-nums leading-[1.1]">
               {numLtp !== null
                 ? formatStockPrice(numLtp)
                 : "₹ --"}
@@ -309,7 +309,7 @@ export default function StockDetailPage() {
                 <div
                   className={`mt-1 flex items-center md:justify-end gap-1.5 ${pnl.colorClass}`}
                 >
-                  <span className="font-financial font-bold text-sm sm:text-base tabular-nums tracking-tight">
+                  <span className="font-semibold text-sm sm:text-base tabular-nums tracking-tight">
                     {pnl.amountText}
                   </span>
                   <span className="financial-pnl-pct">
@@ -324,9 +324,9 @@ export default function StockDetailPage() {
           <button
             onClick={toggleWatchlist}
             disabled={watchlistLoading}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
               inWatchlist
-                ? "bg-[#EEF2FF] border-[#C7D2FE] text-[#4F46E5]"
+                ? "bg-[#EEF2FF] border-[#C7D2FE] text-[#4F46E5] font-semibold"
                 : "bg-white border-[#E5E7EB] text-[#4B5563] hover:text-[#111827] hover:bg-[#F7F8FA]"
             }`}
           >
@@ -346,27 +346,27 @@ export default function StockDetailPage() {
           {/* Performance Sliders: Day Range & 52-Week Range */}
           <div className="bg-white border border-[#E5E7EB] p-5 rounded-2xl shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-2.5">
-              <h3 className="text-xs font-bold text-[#111827] uppercase tracking-wider">
+              <h3 className="text-xs font-semibold text-[#111827] uppercase tracking-wider">
                 Performance Range
               </h3>
-              <span className="text-[11px] text-[#6B7280]">Live Price Position</span>
+              <span className="text-[11px] text-[#6B7280] font-normal">Live Price Position</span>
             </div>
 
             {/* Day Low / High Range */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-xs">
                 <div>
-                  <span className="text-[10px] text-[#6B7280] block">Today&apos;s Low</span>
-                  <span className="font-financial font-bold text-xs text-[#DC2626] tabular-nums tracking-tight">
+                  <span className="text-[10px] text-[#6B7280] block font-normal">Today&apos;s Low</span>
+                  <span className="font-semibold text-xs text-[#DC2626] tabular-nums tracking-tight">
                     {formatStockPrice(dayLow)}
                   </span>
                 </div>
-                <div className="text-center font-financial text-[11px] font-bold text-[#111827] tabular-nums">
+                <div className="text-center text-[11px] font-medium text-[#111827] tabular-nums">
                   LTP: {numLtp ? formatStockPrice(numLtp) : "--"}
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-[#6B7280] block">Today&apos;s High</span>
-                  <span className="font-financial font-bold text-xs text-[#16A34A] tabular-nums tracking-tight">
+                  <span className="text-[10px] text-[#6B7280] block font-normal">Today&apos;s High</span>
+                  <span className="font-semibold text-xs text-[#16A34A] tabular-nums tracking-tight">
                     {formatStockPrice(dayHigh)}
                   </span>
                 </div>
@@ -389,17 +389,17 @@ export default function StockDetailPage() {
             <div className="space-y-1.5 pt-2">
               <div className="flex justify-between items-center text-xs">
                 <div>
-                  <span className="text-[10px] text-[#6B7280] block">52-Week Low</span>
-                  <span className="font-financial font-bold text-xs text-[#4B5563] tabular-nums tracking-tight">
+                  <span className="text-[10px] text-[#6B7280] block font-normal">52-Week Low</span>
+                  <span className="font-semibold text-xs text-[#4B5563] tabular-nums tracking-tight">
                     {formatStockPrice(yearLow)}
                   </span>
                 </div>
-                <div className="text-center font-financial text-[11px] font-bold text-[#111827] tabular-nums">
+                <div className="text-center text-[11px] font-medium text-[#111827] tabular-nums">
                   52W Span
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-[#6B7280] block">52-Week High</span>
-                  <span className="font-financial font-bold text-xs text-[#4B5563] tabular-nums tracking-tight">
+                  <span className="text-[10px] text-[#6B7280] block font-normal">52-Week High</span>
+                  <span className="font-semibold text-xs text-[#4B5563] tabular-nums tracking-tight">
                     {formatStockPrice(yearHigh)}
                   </span>
                 </div>
@@ -422,73 +422,73 @@ export default function StockDetailPage() {
           {/* Fundamentals Grid (Honest values or '--', never fake) */}
           <div className="bg-white border border-[#E5E7EB] p-5 rounded-2xl shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-2.5">
-              <h3 className="text-xs font-bold text-[#111827] uppercase tracking-wider">
+              <h3 className="text-xs font-semibold text-[#111827] uppercase tracking-wider">
                 Fundamentals
               </h3>
-              <span className="text-[11px] text-[#6B7280]">
+              <span className="text-[11px] text-[#6B7280] font-normal">
                 NSE Reported Metrics
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
-                <span className="text-[#6B7280] text-[11px] block">Market Cap</span>
-                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
+                <span className="text-[#6B7280] text-[11px] block font-normal">Market Cap</span>
+                <span className="financial-num-sm font-semibold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.market_cap ? formatLakhCrore(Number(stock.market_cap)) : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
-                <span className="text-[#6B7280] text-[11px] block">P/E Ratio</span>
-                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
+                <span className="text-[#6B7280] text-[11px] block font-normal">P/E Ratio</span>
+                <span className="financial-num-sm font-semibold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.pe_ratio ? Number(stock.pe_ratio).toFixed(2) : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
-                <span className="text-[#6B7280] text-[11px] block">P/B Ratio</span>
-                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
+                <span className="text-[#6B7280] text-[11px] block font-normal">P/B Ratio</span>
+                <span className="financial-num-sm font-semibold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.pb_ratio ? Number(stock.pb_ratio).toFixed(2) : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
-                <span className="text-[#6B7280] text-[11px] block">ROE</span>
-                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
+                <span className="text-[#6B7280] text-[11px] block font-normal">ROE</span>
+                <span className="financial-num-sm font-semibold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.roe ? `${Number(stock.roe).toFixed(2)}%` : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
-                <span className="text-[#6B7280] text-[11px] block">ROCE</span>
-                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
+                <span className="text-[#6B7280] text-[11px] block font-normal">ROCE</span>
+                <span className="financial-num-sm font-semibold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.roce ? `${Number(stock.roce).toFixed(2)}%` : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
-                <span className="text-[#6B7280] text-[11px] block">EPS (TTM)</span>
-                <span className="financial-num-sm font-bold text-[#111827] mt-0.5 block tabular-nums">
+                <span className="text-[#6B7280] text-[11px] block font-normal">EPS (TTM)</span>
+                <span className="financial-num-sm font-semibold text-[#111827] mt-0.5 block tabular-nums">
                   {stock?.eps ? formatStockPrice(Number(stock.eps)) : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
-                <span className="text-[#6B7280] text-[11px] block">Dividend Yield</span>
-                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                <span className="text-[#6B7280] text-[11px] block font-normal">Dividend Yield</span>
+                <span className="font-mono font-semibold text-[#111827] text-sm mt-0.5 block tabular-nums">
                   {stock?.dividend_yield ? `${Number(stock.dividend_yield).toFixed(2)}%` : "--"}
                 </span>
               </div>
 
               <div className="p-3 bg-[#F7F8FA] rounded-xl border border-[#E5E7EB]">
-                <span className="text-[#6B7280] text-[11px] block">Volume (Today)</span>
-                <span className="font-mono font-bold text-[#111827] text-sm mt-0.5 block tabular-nums">
+                <span className="text-[#6B7280] text-[11px] block font-normal">Volume (Today)</span>
+                <span className="font-mono font-semibold text-[#111827] text-sm mt-0.5 block tabular-nums">
                   {quote?.volume ? formatIndianNumber(Number(quote.volume)) : "--"}
                 </span>
               </div>
             </div>
 
-            <div className="p-2.5 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] text-[10.5px] text-[#6B7280] flex items-center gap-2">
+            <div className="p-2.5 rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] text-[10.5px] text-[#6B7280] flex items-center gap-2 font-normal">
               <Info className="w-3.5 h-3.5 text-[#4F46E5] shrink-0" />
               <span>
                 Fundamentals are sourced from audited public disclosures. Values showing &quot;--&quot; indicate metric is not reported by the exchange provider.
@@ -498,7 +498,7 @@ export default function StockDetailPage() {
 
           {/* Similar & Related Peer Stocks */}
           <div className="bg-white border border-[#E5E7EB] p-5 rounded-2xl shadow-xs space-y-3">
-            <h3 className="text-xs font-bold text-[#111827] uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-[#111827] uppercase tracking-wider">
               Similar &amp; Peer Instruments
             </h3>
 
@@ -510,17 +510,17 @@ export default function StockDetailPage() {
                   className="p-3 rounded-xl border border-[#E5E7EB] bg-[#F7F8FA] hover:border-[#4F46E5] transition-all group block"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-xs text-[#111827] group-hover:text-[#4F46E5] transition-colors">
+                    <span className="font-semibold text-xs text-[#111827] group-hover:text-[#4F46E5] transition-colors">
                       {peer}
                     </span>
                     <span className="text-[9px] px-1 rounded bg-white text-[#6B7280] font-mono border border-[#E5E7EB]">
                       NSE
                     </span>
                   </div>
-                  <span className="text-[10px] text-[#6B7280] block truncate">
+                  <span className="text-[10px] text-[#6B7280] block truncate font-normal">
                     {peer} Equities Ltd
                   </span>
-                  <div className="mt-2 flex items-center justify-between text-[11px] text-[#4F46E5] font-semibold">
+                  <div className="mt-2 flex items-center justify-between text-[11px] text-[#4F46E5] font-medium">
                     <span>View Chart</span>
                     <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                   </div>
@@ -550,7 +550,7 @@ export default function StockDetailPage() {
             setMobileOrderSide("BUY");
             setMobileOrderModalOpen(true);
           }}
-          className="flex-1 py-2.5 rounded-xl bg-[#00A86B] text-white font-bold text-xs shadow-xs"
+          className="flex-1 py-2.5 rounded-xl bg-[#00A86B] text-white font-semibold text-xs shadow-xs"
         >
           BUY (PAPER)
         </button>
@@ -559,7 +559,7 @@ export default function StockDetailPage() {
             setMobileOrderSide("SELL");
             setMobileOrderModalOpen(true);
           }}
-          className="flex-1 py-2.5 rounded-xl bg-[#EF4444] text-white font-bold text-xs shadow-xs"
+          className="flex-1 py-2.5 rounded-xl bg-[#EF4444] text-white font-semibold text-xs shadow-xs"
         >
           SELL (PAPER)
         </button>
