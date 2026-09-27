@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TypedDict
 from fastapi import APIRouter, Depends, Query, status
 
 from urllib.parse import unquote
@@ -85,7 +85,11 @@ async def get_index_ticker():
     Returns real values for configured headline indices:
     NIFTY 50, SENSEX, BANKNIFTY, MIDCPNIFTY, FINNIFTY.
     """
-    indices_config = [
+    class IndexConfig(TypedDict):
+        name: str
+        aliases: List[str]
+
+    indices_config: List[IndexConfig] = [
         {"name": "NIFTY 50", "aliases": ["NIFTY 50", "NSE_INDEX|Nifty 50", "NIFTY50", "NIFTY"]},
         {"name": "SENSEX", "aliases": ["SENSEX", "BSE_INDEX|SENSEX"]},
         {"name": "BANKNIFTY", "aliases": ["BANKNIFTY", "NIFTY BANK", "NSE_INDEX|Nifty Bank"]},
@@ -175,7 +179,7 @@ async def get_market_movers():
                 "change": chg,
                 "change_percent": chg_pct,
                 "is_positive": chg >= 0,
-                "volume": int(q.volume or 0),
+                "volume": q.volume or 0,
                 "status": q.status,
                 "source": getattr(q, "source", "UPSTOX"),
             })
