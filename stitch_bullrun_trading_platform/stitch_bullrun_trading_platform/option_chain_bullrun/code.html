@@ -1,0 +1,613 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error-container": "#ffdad6",
+          "secondary-fixed": "#dce2f7",
+          "tertiary-fixed-dim": "#62df7d",
+          "surface-container-highest": "#e1e2e4",
+          "surface-container-high": "#e7e8ea",
+          "surface-tint": "#4d44e3",
+          "on-secondary-container": "#5c6274",
+          "outline-variant": "#c7c4d8",
+          "primary-fixed-dim": "#c3c0ff",
+          "outline": "#777587",
+          "tertiary-container": "#00702f",
+          "on-tertiary": "#ffffff",
+          "tertiary": "#005522",
+          "surface-dim": "#d9dadc",
+          "secondary": "#575e70",
+          "on-tertiary-fixed-variant": "#005320",
+          "surface-container": "#edeef0",
+          "surface-variant": "#e1e2e4",
+          "primary-container": "#4f46e5",
+          "on-error-container": "#93000a",
+          "on-background": "#191c1e",
+          "on-error": "#ffffff",
+          "on-secondary": "#ffffff",
+          "primary-fixed": "#e2dfff",
+          "surface-container-lowest": "#ffffff",
+          "surface-container-low": "#f2f4f6",
+          "inverse-primary": "#c3c0ff",
+          "background": "#f8f9fb",
+          "on-secondary-fixed": "#141b2b",
+          "on-tertiary-container": "#78f591",
+          "surface": "#f8f9fb",
+          "on-surface": "#191c1e",
+          "on-tertiary-fixed": "#002109",
+          "on-secondary-fixed-variant": "#404758",
+          "surface-bright": "#f8f9fb",
+          "on-primary-fixed-variant": "#3323cc",
+          "on-primary": "#ffffff",
+          "secondary-container": "#d9dff5",
+          "on-primary-fixed": "#0f0069",
+          "primary": "#3525cd",
+          "inverse-surface": "#2e3132",
+          "secondary-fixed-dim": "#c0c6db",
+          "on-primary-container": "#dad7ff",
+          "error": "#ba1a1a",
+          "on-surface-variant": "#464555",
+          "inverse-on-surface": "#f0f1f3",
+          "tertiary-fixed": "#7ffc97"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "space-lg": "1.5rem",
+          "space-md": "1rem",
+          "margin": "1.5rem",
+          "space-sm": "0.5rem",
+          "gutter": "1rem",
+          "space-xs": "0.25rem",
+          "space-xl": "2rem"
+        },
+        "fontFamily": {
+          "body-md": ["Work Sans"],
+          "tabular-data": ["Work Sans"],
+          "label-md": ["Work Sans"],
+          "headline-sm": ["Work Sans"],
+          "body-lg": ["Work Sans"],
+          "headline-xl": ["Work Sans"],
+          "label-sm": ["Work Sans"],
+          "headline-lg": ["Work Sans"],
+          "headline-md": ["Work Sans"],
+          "body-sm": ["Work Sans"]
+        },
+        "fontSize": {
+          "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+          "tabular-data": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+          "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+          "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+          "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+          "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+          "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+          "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+          "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+          "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+        }
+      }
+    }
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@100..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"></head><body class="bg-surface font-body-md text-on-surface"><header class="fixed top-0 left-0 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex items-center justify-between px-space-xl"><div class="flex items-center gap-space-lg"><img alt="BullRun Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_jSrXZityA6DebTcw55vtDhhZUd0MFdGGRb6IF1-tMVDnnFsuujPjivFjAOFN-rAclxccNjQ-Mf5AcIN1sPYmV_zaypAoqGD0hM2fgPG-gJnruMb_faq8LI6TiWgCEpNaNzE7_mKF6FYVwJDiuL81IT1nAY1TPR99faLbO51WYqrWj1yH3J-cjRaC9AcLfGEkCtpUwhViiq0oa1G2rWCGMI7UJ9jQS9OWW8skBAEZFLv2PJpJjFqT"><span class="font-headline-sm tracking-tight text-on-surface">BullRun</span><nav class="hidden xl:flex items-center gap-space-sm ml-space-lg" data-active-classes="bg-primary-container text-on-primary-container font-medium rounded-lg"><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="dashboard" href="#">Dashboard</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="explore" href="#">Explore</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="holdings" href="#">Holdings</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="positions" href="#">Positions</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="orders" href="#">Orders</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="watchlist" href="#">Watchlist</a></nav></div><div class="flex items-center gap-space-md"><div class="relative hidden md:block w-64"><span class="absolute inset-y-0 left-0 flex items-center pl-space-md pointer-events-none"><span class="material-symbols-outlined text-outline text-[18px]">search</span></span><input class="w-full pl-10 pr-space-md py-space-xs bg-surface-container-low rounded-lg text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Search symbols, assets..." type="text"></div><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-space-xs bg-tertiary-container/10 rounded-full text-tertiary text-label-sm"><span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span><span>LIVE MARKET</span></div><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-space-xs bg-secondary-container text-on-secondary-container rounded-lg text-label-sm font-medium"><span>Paper Trade</span></div><button class="relative p-space-xs rounded-full hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/30"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-medium text-label-md">BR</div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface"><div class="flex flex-col w-full min-h-screen bg-surface text-on-surface">
+<div class="flex flex-col px-space-xl py-space-md gap-space-lg">
+<!-- Top Bar: Asset Selector & Expiry Pills -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<!-- Underlying Assets -->
+<div class="flex items-center gap-space-sm overflow-x-auto pb-space-xs">
+<button class="px-space-md py-space-xs rounded-lg bg-primary text-on-primary font-label-md shadow-sm transition-all">NIFTY</button>
+<button class="px-space-md py-space-xs rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-label-md transition-all">BANKNIFTY</button>
+<button class="px-space-md py-space-xs rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-label-md transition-all">FINNIFTY</button>
+<button class="px-space-md py-space-xs rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-label-md transition-all">RELIANCE</button>
+<button class="px-space-md py-space-xs rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-label-md transition-all">TCS</button>
+</div>
+<!-- Expiry Date Selector Pills -->
+<div class="flex items-center gap-space-xs overflow-x-auto pb-space-xs">
+<span class="text-label-sm text-outline mr-space-xs uppercase tracking-wider">Expiry:</span>
+<button class="px-space-md py-space-xs rounded-full bg-primary-container text-on-primary-container font-label-sm shadow-sm">25 Apr 2024 (Current)</button>
+<button class="px-space-md py-space-xs rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-label-sm">02 May 2024</button>
+<button class="px-space-md py-space-xs rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-label-sm">09 May 2024</button>
+<button class="px-space-md py-space-xs rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-label-sm">30 May 2024</button>
+<button class="px-space-md py-space-xs rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-label-sm">27 Jun 2024</button>
+</div>
+</div>
+<!-- Live Underlying Spot Price Summary Card -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-gutter">
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<span class="text-label-sm text-outline">Spot Price</span>
+<div class="flex items-baseline gap-space-xs mt-space-xs">
+<span class="text-headline-sm text-on-surface">₹22,510.40</span>
+</div>
+<span class="text-body-sm text-tertiary font-medium mt-1">+124.50 (+0.56%)</span>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<span class="text-label-sm text-outline">VWAP</span>
+<div class="flex items-baseline gap-space-xs mt-space-xs">
+<span class="text-headline-sm text-on-surface">₹22,485.20</span>
+</div>
+<span class="text-body-sm text-outline mt-1">Volume Weighted</span>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<span class="text-label-sm text-outline">PCR (Put-Call Ratio)</span>
+<div class="flex items-baseline gap-space-xs mt-space-xs">
+<span class="text-headline-sm text-tertiary">1.18</span>
+<span class="text-label-sm bg-tertiary-container/20 text-tertiary px-1.5 py-0.5 rounded">Bullish</span>
+</div>
+<span class="text-body-sm text-outline mt-1">High call writing at OTM</span>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<span class="text-label-sm text-outline">Max Pain</span>
+<div class="flex items-baseline gap-space-xs mt-space-xs">
+<span class="text-headline-sm text-on-surface">22,500</span>
+</div>
+<span class="text-body-sm text-outline mt-1">Strongest OI convergence</span>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<span class="text-label-sm text-outline">India VIX</span>
+<div class="flex items-baseline gap-space-xs mt-space-xs">
+<span class="text-headline-sm text-on-surface">12.45</span>
+</div>
+<span class="text-body-sm text-error mt-1">-2.1% (Low Volatility)</span>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<span class="text-label-sm text-outline">Day's Range</span>
+<div class="flex items-baseline gap-space-xs mt-space-xs">
+<span class="text-body-lg font-medium text-on-surface">22,380 - 22,540</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary h-full w-[72%]"></div>
+</div>
+</div>
+</div>
+<!-- Filters & Controls Bar -->
+<div class="flex flex-wrap items-center justify-between gap-space-md bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
+<div class="flex items-center gap-space-md flex-wrap">
+<div class="flex items-center gap-space-xs">
+<span class="text-label-sm text-outline">Strikes Range:</span>
+<select class="bg-surface-container-low text-on-surface text-body-md px-space-sm py-space-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-primary">
+<option>±5 Strikes</option>
+<option>±10 Strikes</option>
+<option>±20 Strikes</option>
+<option selected="">All Strikes</option>
+</select>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="text-label-sm text-outline">View Mode:</span>
+<div class="inline-flex bg-surface-container-low p-1 rounded-lg">
+<button class="px-space-md py-1 text-label-sm bg-surface-container-lowest shadow-sm rounded-md text-on-surface font-medium">Calls &amp; Puts</button>
+<button class="px-space-md py-1 text-label-sm text-outline hover:text-on-surface transition-colors">Calls Only</button>
+<button class="px-space-md py-1 text-label-sm text-outline hover:text-on-surface transition-colors">Puts Only</button>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-space-sm pointer-events-none">
+<span class="material-symbols-outlined text-outline text-[16px]">filter_list</span>
+</span>
+<input class="pl-9 pr-space-md py-1 bg-surface-container-low rounded-lg text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-1 focus:ring-primary w-48" placeholder="Filter strike or symbol..." type="text">
+</div>
+<button class="flex items-center gap-space-xs px-space-md py-1 bg-surface-container-low hover:bg-surface-container text-on-surface rounded-lg text-label-sm font-medium transition-colors">
+<span class="material-symbols-outlined text-[16px]">settings</span>
+<span>Columns</span>
+</button>
+</div>
+</div>
+<!-- Dual-Sided Option Chain Data Table -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-tabular-data whitespace-nowrap">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant text-label-sm border-b border-surface-container">
+<!-- Calls Headers -->
+<th class="py-2.5 px-space-md text-center bg-primary-container/10 text-primary-fixed-variant font-semibold tracking-wider" colspan="10">CALLS (CE)</th>
+<!-- Center Strike -->
+<th class="py-2.5 px-space-md text-center bg-surface-container-high text-on-surface font-bold tracking-wider border-x border-surface-container" rowspan="2">STRIKE</th>
+<!-- Puts Headers -->
+<th class="py-2.5 px-space-md text-center bg-error-container/20 text-on-error-container font-semibold tracking-wider" colspan="10">PUTS (PE)</th>
+</tr>
+<tr class="bg-surface-container-low/50 text-on-surface-variant text-[11px]">
+<!-- Calls Columns -->
+<th class="py-2 px-3 text-right">OI</th>
+<th class="py-2 px-3 text-right">Chg OI</th>
+<th class="py-2 px-3 text-right">Volume</th>
+<th class="py-2 px-3 text-right">IV</th>
+<th class="py-2 px-3 text-right">Bid Qty</th>
+<th class="py-2 px-3 text-right">Bid</th>
+<th class="py-2 px-3 text-right">Ask</th>
+<th class="py-2 px-3 text-right">Ask Qty</th>
+<th class="py-2 px-3 text-right">LTP</th>
+<th class="py-2 px-3 text-right">Chg %</th>
+<!-- Puts Columns -->
+<th class="py-2 px-3 text-left">Chg %</th>
+<th class="py-2 px-3 text-left">LTP</th>
+<th class="py-2 px-3 text-left">Bid Qty</th>
+<th class="py-2 px-3 text-left">Bid</th>
+<th class="py-2 px-3 text-left">Ask</th>
+<th class="py-2 px-3 text-left">Ask Qty</th>
+<th class="py-2 px-3 text-left">IV</th>
+<th class="py-2 px-3 text-left">Volume</th>
+<th class="py-2 px-3 text-left">Chg OI</th>
+<th class="py-2 px-3 text-left">OI</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container/60">
+<!-- Strike 22,300 (ITM Call, OTM Put) -->
+<tr class="hover:bg-surface-container-low/80 transition-colors bg-primary-container/5">
+<!-- Calls -->
+<td class="py-2.5 px-3 text-right font-medium">14,25,800</td>
+<td class="py-2.5 px-3 text-right text-tertiary">+1,24,300</td>
+<td class="py-2.5 px-3 text-right text-outline">4,52,100</td>
+<td class="py-2.5 px-3 text-right text-outline">14.2%</td>
+<td class="py-2.5 px-3 text-right text-outline">1,200</td>
+<td class="py-2.5 px-3 text-right text-on-surface">220.50</td>
+<td class="py-2.5 px-3 text-right font-semibold text-on-surface">221.00</td>
+<td class="py-2.5 px-3 text-right text-outline">3,400</td>
+<td class="py-2.5 px-3 text-right font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22300 CE', '220.75')">220.75</td>
+<td class="py-2.5 px-3 text-right text-tertiary">+12.4%</td>
+<!-- Center Strike -->
+<td class="py-2.5 px-4 text-center font-bold text-on-surface bg-surface-container-high/60 border-x border-surface-container">22,300</td>
+<!-- Puts -->
+<td class="py-2.5 px-3 text-left text-error">-8.2%</td>
+<td class="py-2.5 px-3 text-left font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22300 PE', '14.25')">14.25</td>
+<td class="py-2.5 px-3 text-left text-outline">8,500</td>
+<td class="py-2.5 px-3 text-left text-on-surface">14.00</td>
+<td class="py-2.5 px-3 text-left font-semibold text-on-surface">14.30</td>
+<td class="py-2.5 px-3 text-left text-outline">2,100</td>
+<td class="py-2.5 px-3 text-left text-outline">16.8%</td>
+<td class="py-2.5 px-3 text-left text-outline">1,12,400</td>
+<td class="py-2.5 px-3 text-left text-error">-45,200</td>
+<td class="py-2.5 px-3 text-left font-medium">3,42,100</td>
+</tr>
+<!-- Strike 22,350 -->
+<tr class="hover:bg-surface-container-low/80 transition-colors bg-primary-container/5">
+<td class="py-2.5 px-3 text-right font-medium">18,92,400</td>
+<td class="py-2.5 px-3 text-right text-tertiary">+2,15,000</td>
+<td class="py-2.5 px-3 text-right text-outline">6,84,200</td>
+<td class="py-2.5 px-3 text-right text-outline">13.8%</td>
+<td class="py-2.5 px-3 text-right text-outline">2,500</td>
+<td class="py-2.5 px-3 text-right text-on-surface">172.00</td>
+<td class="py-2.5 px-3 text-right font-semibold text-on-surface">172.50</td>
+<td class="py-2.5 px-3 text-right text-outline">1,800</td>
+<td class="py-2.5 px-3 text-right font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22350 CE', '172.25')">172.25</td>
+<td class="py-2.5 px-3 text-right text-tertiary">+9.8%</td>
+<td class="py-2.5 px-4 text-center font-bold text-on-surface bg-surface-container-high/60 border-x border-surface-container">22,350</td>
+<td class="py-2.5 px-3 text-left text-error">-14.5%</td>
+<td class="py-2.5 px-3 text-left font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22350 PE', '22.10')">22.10</td>
+<td class="py-2.5 px-3 text-left text-outline">4,200</td>
+<td class="py-2.5 px-3 text-left text-on-surface">21.90</td>
+<td class="py-2.5 px-3 text-left font-semibold text-on-surface">22.25</td>
+<td class="py-2.5 px-3 text-left text-outline">3,500</td>
+<td class="py-2.5 px-3 text-left text-outline">16.1%</td>
+<td class="py-2.5 px-3 text-left text-outline">2,45,000</td>
+<td class="py-2.5 px-3 text-left text-error">-18,400</td>
+<td class="py-2.5 px-3 text-left font-medium">5,12,000</td>
+</tr>
+<!-- Strike 22,400 -->
+<tr class="hover:bg-surface-container-low/80 transition-colors bg-primary-container/5">
+<td class="py-2.5 px-3 text-right font-medium">32,41,000</td>
+<td class="py-2.5 px-3 text-right text-tertiary">+5,42,100</td>
+<td class="py-2.5 px-3 text-right text-outline">14,21,000</td>
+<td class="py-2.5 px-3 text-right text-outline">13.5%</td>
+<td class="py-2.5 px-3 text-right text-outline">4,100</td>
+<td class="py-2.5 px-3 text-right text-on-surface">125.00</td>
+<td class="py-2.5 px-3 text-right font-semibold text-on-surface">125.40</td>
+<td class="py-2.5 px-3 text-right text-outline">5,200</td>
+<td class="py-2.5 px-3 text-right font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22400 CE', '125.20')">125.20</td>
+<td class="py-2.5 px-3 text-right text-tertiary">+6.5%</td>
+<td class="py-2.5 px-4 text-center font-bold text-on-surface bg-surface-container-high/60 border-x border-surface-container">22,400</td>
+<td class="py-2.5 px-3 text-left text-error">-22.1%</td>
+<td class="py-2.5 px-3 text-left font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22400 PE', '35.50')">35.50</td>
+<td class="py-2.5 px-3 text-left text-outline">1,800</td>
+<td class="py-2.5 px-3 text-left text-on-surface">35.30</td>
+<td class="py-2.5 px-3 text-left font-semibold text-on-surface">35.60</td>
+<td class="py-2.5 px-3 text-left text-outline">4,000</td>
+<td class="py-2.5 px-3 text-left text-outline">15.5%</td>
+<td class="py-2.5 px-3 text-left text-outline">4,85,000</td>
+<td class="py-2.5 px-3 text-left text-error">-62,100</td>
+<td class="py-2.5 px-3 text-left font-medium">9,41,200</td>
+</tr>
+<!-- Strike 22,450 -->
+<tr class="hover:bg-surface-container-low/80 transition-colors bg-primary-container/5">
+<td class="py-2.5 px-3 text-right font-medium">48,90,200</td>
+<td class="py-2.5 px-3 text-right text-tertiary">+8,12,000</td>
+<td class="py-2.5 px-3 text-right text-outline">28,50,400</td>
+<td class="py-2.5 px-3 text-right text-outline">13.1%</td>
+<td class="py-2.5 px-3 text-right text-outline">1,500</td>
+<td class="py-2.5 px-3 text-right text-on-surface">82.10</td>
+<td class="py-2.5 px-3 text-right font-semibold text-on-surface">82.30</td>
+<td class="py-2.5 px-3 text-right text-outline">2,200</td>
+<td class="py-2.5 px-3 text-right font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22450 CE', '82.20')">82.20</td>
+<td class="py-2.5 px-3 text-right text-tertiary">+2.1%</td>
+<td class="py-2.5 px-4 text-center font-bold text-on-surface bg-surface-container-high/60 border-x border-surface-container">22,450</td>
+<td class="py-2.5 px-3 text-left text-error">-31.4%</td>
+<td class="py-2.5 px-3 text-left font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22450 PE', '54.00')">54.00</td>
+<td class="py-2.5 px-3 text-left text-outline">3,100</td>
+<td class="py-2.5 px-3 text-left text-on-surface">53.80</td>
+<td class="py-2.5 px-3 text-left font-semibold text-on-surface">54.10</td>
+<td class="py-2.5 px-3 text-left text-outline">1,900</td>
+<td class="py-2.5 px-3 text-left text-outline">14.9%</td>
+<td class="py-2.5 px-3 text-left text-outline">8,92,000</td>
+<td class="py-2.5 px-3 text-left text-error">-1,14,000</td>
+<td class="py-2.5 px-3 text-left font-medium">14,20,500</td>
+</tr>
+<!-- Strike 22,500 [ATM Strike - Highlighted] -->
+<tr class="hover:bg-primary-fixed/20 transition-colors bg-primary-fixed/10 font-medium">
+<!-- Calls -->
+<td class="py-3 px-3 text-right font-bold">89,45,200</td>
+<td class="py-3 px-3 text-right text-tertiary">+18,40,200</td>
+<td class="py-3 px-3 text-right text-on-surface">65,40,100</td>
+<td class="py-3 px-3 text-right text-on-surface">12.8%</td>
+<td class="py-3 px-3 text-right text-outline">5,000</td>
+<td class="py-3 px-3 text-right text-on-surface">45.50</td>
+<td class="py-3 px-3 text-right font-semibold text-on-surface">45.70</td>
+<td class="py-3 px-3 text-right text-outline">6,500</td>
+<td class="py-3 px-3 text-right font-extrabold text-primary cursor-pointer hover:underline" onclick="openOrderModal('NIFTY 22500 CE', '45.60')">45.60</td>
+<td class="py-3 px-3 text-right text-error">-4.5%</td>
+<!-- Center Strike ATM -->
+<td class="py-3 px-4 text-center font-extrabold text-primary bg-primary-fixed/40 border-x border-primary/20 text-body-lg">
+                22,500 <span class="block text-[10px] text-primary uppercase font-bold tracking-tighter">ATM</span>
+</td>
+<!-- Puts -->
+<td class="py-3 px-3 text-left text-tertiary">+15.2%</td>
+<td class="py-3 px-3 text-left font-extrabold text-primary cursor-pointer hover:underline" onclick="openOrderModal('NIFTY 22500 PE', '85.20')">85.20</td>
+<td class="py-3 px-3 text-left text-outline">2,400</td>
+<td class="py-3 px-3 text-left text-on-surface">85.00</td>
+<td class="py-3 px-3 text-left font-semibold text-on-surface">85.40</td>
+<td class="py-3 px-3 text-left text-outline">4,100</td>
+<td class="py-3 px-3 text-left text-on-surface">14.1%</td>
+<td class="py-3 px-3 text-left text-on-surface">18,45,000</td>
+<td class="py-3 px-3 text-left text-tertiary">+4,21,000</td>
+<td class="py-3 px-3 text-left font-bold">42,10,000</td>
+</tr>
+<!-- Strike 22,550 (OTM Call, ITM Put) -->
+<tr class="hover:bg-surface-container-low/80 transition-colors bg-error-container/5">
+<td class="py-2.5 px-3 text-right font-medium">94,12,000</td>
+<td class="py-2.5 px-3 text-right text-tertiary">+22,10,000</td>
+<td class="py-2.5 px-3 text-right text-outline">42,10,000</td>
+<td class="py-2.5 px-3 text-right text-outline">13.0%</td>
+<td class="py-2.5 px-3 text-right text-outline">3,200</td>
+<td class="py-2.5 px-3 text-right text-on-surface">22.10</td>
+<td class="py-2.5 px-3 text-right font-semibold text-on-surface">22.30</td>
+<td class="py-2.5 px-3 text-right text-outline">1,200</td>
+<td class="py-2.5 px-3 text-right font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22550 CE', '22.20')">22.20</td>
+<td class="py-2.5 px-3 text-right text-error">-15.2%</td>
+<td class="py-2.5 px-4 text-center font-bold text-on-surface bg-surface-container-high/60 border-x border-surface-container">22,550</td>
+<td class="py-2.5 px-3 text-left text-tertiary">+8.4%</td>
+<td class="py-2.5 px-3 text-left font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22550 PE', '124.50')">124.50</td>
+<td class="py-2.5 px-3 text-left text-outline">1,500</td>
+<td class="py-2.5 px-3 text-left text-on-surface">124.10</td>
+<td class="py-2.5 px-3 text-left font-semibold text-on-surface">124.80</td>
+<td class="py-2.5 px-3 text-left text-outline">2,800</td>
+<td class="py-2.5 px-3 text-left text-outline">13.9%</td>
+<td class="py-2.5 px-3 text-left text-outline">12,10,000</td>
+<td class="py-2.5 px-3 text-left text-tertiary">+1,82,000</td>
+<td class="py-2.5 px-3 text-left font-medium">28,50,000</td>
+</tr>
+<!-- Strike 22,600 -->
+<tr class="hover:bg-surface-container-low/80 transition-colors bg-error-container/5">
+<td class="py-2.5 px-3 text-right font-medium">1,12,40,000</td>
+<td class="py-2.5 px-3 text-right text-tertiary">+14,20,000</td>
+<td class="py-2.5 px-3 text-right text-outline">31,20,000</td>
+<td class="py-2.5 px-3 text-right text-outline">13.4%</td>
+<td class="py-2.5 px-3 text-right text-outline">4,100</td>
+<td class="py-2.5 px-3 text-right text-on-surface">10.50</td>
+<td class="py-2.5 px-3 text-right font-semibold text-on-surface">10.70</td>
+<td class="py-2.5 px-3 text-right text-outline">5,000</td>
+<td class="py-2.5 px-3 text-right font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22600 CE', '10.60')">10.60</td>
+<td class="py-2.5 px-3 text-right text-error">-28.4%</td>
+<td class="py-2.5 px-4 text-center font-bold text-on-surface bg-surface-container-high/60 border-x border-surface-container">22,600</td>
+<td class="py-2.5 px-3 text-left text-tertiary">+14.2%</td>
+<td class="py-2.5 px-3 text-left font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22600 PE', '172.00')">172.00</td>
+<td class="py-2.5 px-3 text-left text-outline">2,200</td>
+<td class="py-2.5 px-3 text-left text-on-surface">171.50</td>
+<td class="py-2.5 px-3 text-left font-semibold text-on-surface">172.50</td>
+<td class="py-2.5 px-3 text-left text-outline">1,900</td>
+<td class="py-2.5 px-3 text-left text-outline">13.7%</td>
+<td class="py-2.5 px-3 text-left text-outline">8,40,000</td>
+<td class="py-2.5 px-3 text-left text-tertiary">+95,000</td>
+<td class="py-2.5 px-3 text-left font-medium">18,20,000</td>
+</tr>
+<!-- Strike 22,650 -->
+<tr class="hover:bg-surface-container-low/80 transition-colors bg-error-container/5">
+<td class="py-2.5 px-3 text-right font-medium">68,40,000</td>
+<td class="py-2.5 px-3 text-right text-error">-2,10,000</td>
+<td class="py-2.5 px-3 text-right text-outline">14,20,000</td>
+<td class="py-2.5 px-3 text-right text-outline">14.1%</td>
+<td class="py-2.5 px-3 text-right text-outline">1,800</td>
+<td class="py-2.5 px-3 text-right text-on-surface">4.85</td>
+<td class="py-2.5 px-3 text-right font-semibold text-on-surface">5.00</td>
+<td class="py-2.5 px-3 text-right text-outline">3,500</td>
+<td class="py-2.5 px-3 text-right font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22650 CE', '4.90')">4.90</td>
+<td class="py-2.5 px-3 text-right text-error">-38.1%</td>
+<td class="py-2.5 px-4 text-center font-bold text-on-surface bg-surface-container-high/60 border-x border-surface-container">22,650</td>
+<td class="py-2.5 px-3 text-left text-tertiary">+22.4%</td>
+<td class="py-2.5 px-3 text-left font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22650 PE', '231.00')">231.00</td>
+<td class="py-2.5 px-3 text-left text-outline">900</td>
+<td class="py-2.5 px-3 text-left text-on-surface">230.20</td>
+<td class="py-2.5 px-3 text-left font-semibold text-on-surface">231.50</td>
+<td class="py-2.5 px-3 text-left text-outline">1,200</td>
+<td class="py-2.5 px-3 text-left text-outline">14.2%</td>
+<td class="py-2.5 px-3 text-left text-outline">4,10,000</td>
+<td class="py-2.5 px-3 text-left text-tertiary">+42,000</td>
+<td class="py-2.5 px-3 text-left font-medium">9,40,000</td>
+</tr>
+<!-- Strike 22,700 -->
+<tr class="hover:bg-surface-container-low/80 transition-colors bg-error-container/5">
+<td class="py-2.5 px-3 text-right font-medium">1,45,20,000</td>
+<td class="py-2.5 px-3 text-right text-tertiary">+8,40,000</td>
+<td class="py-2.5 px-3 text-right text-outline">18,90,000</td>
+<td class="py-2.5 px-3 text-right text-outline">14.8%</td>
+<td class="py-2.5 px-3 text-right text-outline">6,000</td>
+<td class="py-2.5 px-3 text-right text-on-surface">2.30</td>
+<td class="py-2.5 px-3 text-right font-semibold text-on-surface">2.45</td>
+<td class="py-2.5 px-3 text-right text-outline">4,200</td>
+<td class="py-2.5 px-3 text-right font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22700 CE', '2.35')">2.35</td>
+<td class="py-2.5 px-3 text-right text-error">-45.2%</td>
+<td class="py-2.5 px-4 text-center font-bold text-on-surface bg-surface-container-high/60 border-x border-surface-container">22,700</td>
+<td class="py-2.5 px-3 text-left text-tertiary">+35.0%</td>
+<td class="py-2.5 px-3 text-left font-bold text-on-surface cursor-pointer hover:text-primary transition-colors" onclick="openOrderModal('NIFTY 22700 PE', '285.00')">285.00</td>
+<td class="py-2.5 px-3 text-left text-outline">500</td>
+<td class="py-2.5 px-3 text-left text-on-surface">284.10</td>
+<td class="py-2.5 px-3 text-left font-semibold text-on-surface">286.00</td>
+<td class="py-2.5 px-3 text-left text-outline">800</td>
+<td class="py-2.5 px-3 text-left text-outline">15.1%</td>
+<td class="py-2.5 px-3 text-left text-outline">2,10,000</td>
+<td class="py-2.5 px-3 text-left text-tertiary">+18,000</td>
+<td class="py-2.5 px-3 text-left font-medium">5,10,000</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination / Footer Bar -->
+<div class="flex items-center justify-between p-space-md bg-surface-container-low border-t border-surface-container">
+<span class="text-label-sm text-outline">Showing 9 of 45 active strikes for expiry 25 Apr 2024</span>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-1 bg-surface-container-lowest text-on-surface rounded-lg text-label-sm shadow-sm disabled:opacity-50" disabled="">Previous</button>
+<span class="text-body-sm text-on-surface-variant font-medium">Page 1 of 5</span>
+<button class="px-space-md py-1 bg-surface-container-lowest hover:bg-surface-container text-on-surface rounded-lg text-label-sm shadow-sm transition-colors">Next</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Order Ticket Modal / Drawer (Hidden by default) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden" id="orderModal">
+<div class="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-surface-container animate-in fade-in zoom-in-95 duration-150">
+<!-- Modal Header -->
+<div class="flex items-center justify-between px-space-xl py-space-md bg-surface-container-low">
+<div class="flex items-center gap-space-sm">
+<span class="px-space-sm py-0.5 rounded text-label-sm bg-primary text-on-primary font-medium" id="modalActionTypeBadge">BUY</span>
+<h3 class="text-headline-sm text-on-surface" id="modalSymbolTitle">NIFTY 22500 CE</h3>
+</div>
+<button class="p-1 rounded-full hover:bg-surface-container text-outline hover:text-on-surface transition-colors" onclick="closeOrderModal()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-space-xl flex flex-col gap-space-lg">
+<!-- Buy / Sell Action Toggle -->
+<div class="grid grid-cols-2 gap-space-sm p-1 bg-surface-container-low rounded-xl">
+<button class="py-2 rounded-lg font-label-md bg-primary text-on-primary shadow-sm transition-all" id="buyTabBtn" onclick="setOrderAction('BUY')">Buy</button>
+<button class="py-2 rounded-lg font-label-md text-on-surface-variant hover:text-on-surface transition-all" id="sellTabBtn" onclick="setOrderAction('SELL')">Sell</button>
+</div>
+<!-- Product Type (Intraday vs Overnight) -->
+<div class="flex flex-col gap-space-xs">
+<label class="text-label-sm text-outline">Product Type</label>
+<div class="grid grid-cols-2 gap-space-sm">
+<button class="py-2 px-space-md rounded-lg border border-primary bg-primary-container/10 text-primary font-label-md text-center">Intraday (MIS)</button>
+<button class="py-2 px-space-md rounded-lg border border-surface-container text-on-surface-variant font-label-md text-center">Overnight (NRML)</button>
+</div>
+</div>
+<!-- Order Type (Market, Limit, SL) -->
+<div class="flex flex-col gap-space-xs">
+<label class="text-label-sm text-outline">Order Type</label>
+<div class="grid grid-cols-3 gap-space-xs">
+<button class="py-1.5 px-space-sm rounded-lg bg-surface-container-low text-on-surface font-label-sm text-center font-medium">Market</button>
+<button class="py-1.5 px-space-sm rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface-variant font-label-sm text-center">Limit</button>
+<button class="py-1.5 px-space-sm rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface-variant font-label-sm text-center">Stoploss</button>
+</div>
+</div>
+<!-- Inputs: Quantity / Lots & Price -->
+<div class="grid grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<label class="text-label-sm text-outline">Lots (1 Lot = 25 Qty)</label>
+<div class="flex items-center">
+<button class="px-3 py-2 bg-surface-container-low text-on-surface rounded-l-lg hover:bg-surface-container" onclick="adjustLots(-1)">-</button>
+<input class="w-full text-center py-2 bg-surface-container-low text-body-lg font-medium text-on-surface focus:outline-none" id="lotInput" max="100" min="1" type="number" value="1">
+<button class="px-3 py-2 bg-surface-container-low text-on-surface rounded-r-lg hover:bg-surface-container" onclick="adjustLots(1)">+</button>
+</div>
+<span class="text-body-sm text-outline" id="totalQuantityText">Total Qty: 25</span>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="text-label-sm text-outline">Limit Price (₹)</label>
+<input class="w-full px-space-md py-2 bg-surface-container-low rounded-lg text-body-lg font-medium text-on-surface focus:outline-none focus:ring-1 focus:ring-primary" id="priceInput" type="text" value="45.60">
+</div>
+</div>
+<!-- Estimated Margin & Charges -->
+<div class="bg-surface-container-low p-space-md rounded-xl flex flex-col gap-space-xs">
+<div class="flex justify-between items-center text-body-sm">
+<span class="text-outline">Estimated Margin Required</span>
+<span class="font-medium text-on-surface" id="marginRequiredText">₹1,140.00</span>
+</div>
+<div class="flex justify-between items-center text-body-sm">
+<span class="text-outline">Available Balance</span>
+<span class="font-medium text-tertiary">₹4,85,290.00</span>
+</div>
+</div>
+<!-- Execution Button -->
+<button class="w-full py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-label-md shadow-md transition-all" id="executeOrderBtn" onclick="executeOrder()">
+          Place Buy Order
+        </button>
+</div>
+</div>
+</div>
+<!-- Client-side Interactive Script -->
+<script>
+    function openOrderModal(symbol, price) {
+      document.getElementById('modalSymbolTitle').innerText = symbol;
+      document.getElementById('priceInput').value = price;
+      document.getElementById('orderModal').classList.remove('hidden');
+      updateMargin();
+    }
+
+    function closeOrderModal() {
+      document.getElementById('orderModal').classList.add('hidden');
+    }
+
+    function setOrderAction(action) {
+      const buyBtn = document.getElementById('buyTabBtn');
+      const sellBtn = document.getElementById('sellTabBtn');
+      const badge = document.getElementById('modalActionTypeBadge');
+      const execBtn = document.getElementById('executeOrderBtn');
+
+      if (action === 'BUY') {
+        buyBtn.className = "py-2 rounded-lg font-label-md bg-primary text-on-primary shadow-sm transition-all";
+        sellBtn.className = "py-2 rounded-lg font-label-md text-on-surface-variant hover:text-on-surface transition-all";
+        badge.className = "px-space-sm py-0.5 rounded text-label-sm bg-primary text-on-primary font-medium";
+        badge.innerText = "BUY";
+        execBtn.className = "w-full py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-label-md shadow-md transition-all";
+        execBtn.innerText = "Place Buy Order";
+      } else {
+        sellBtn.className = "py-2 rounded-lg font-label-md bg-error text-on-error shadow-sm transition-all";
+        buyBtn.className = "py-2 rounded-lg font-label-md text-on-surface-variant hover:text-on-surface transition-all";
+        badge.className = "px-space-sm py-0.5 rounded text-label-sm bg-error text-on-error font-medium";
+        badge.innerText = "SELL";
+        execBtn.className = "w-full py-3 bg-error hover:bg-error/90 text-on-error rounded-xl font-label-md shadow-md transition-all";
+        execBtn.innerText = "Place Sell Order";
+      }
+    }
+
+    function adjustLots(change) {
+      const lotInput = document.getElementById('lotInput');
+      let val = parseInt(lotInput.value) + change;
+      if (val < 1) val = 1;
+      lotInput.value = val;
+      updateMargin();
+    }
+
+    function updateMargin() {
+      const lots = parseInt(document.getElementById('lotInput').value) || 1;
+      const price = parseFloat(document.getElementById('priceInput').value) || 0;
+      const totalQty = lots * 25;
+      document.getElementById('totalQuantityText').innerText = "Total Qty: " + totalQty;
+      const totalMargin = (totalQty * price).toFixed(2);
+      document.getElementById('marginRequiredText').innerText = "₹" + Number(totalMargin).toLocaleString('en-IN');
+    }
+
+    function executeOrder() {
+      alert("Option order executed successfully!");
+      closeOrderModal();
+    }
+
+    document.getElementById('lotInput').addEventListener('input', updateMargin);
+    document.getElementById('priceInput').addEventListener('input', updateMargin);
+  </script>
+</div></main></body></html>

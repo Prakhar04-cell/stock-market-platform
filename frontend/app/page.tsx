@@ -2,157 +2,196 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, Shield, Zap, BarChart2, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[#111827] select-none">
+    <div className="min-h-screen flex flex-col bg-surface text-on-surface select-none">
       {/* Navigation Header */}
-      <header className="h-14 border-b border-[#E5E7EB] bg-white px-4 sm:px-8 lg:px-12 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-[8px] bg-[#0F172A] flex items-center justify-center text-white font-semibold text-sm tracking-tight">
-            <span className="text-white">B</span>
-            <span className="text-[#F97316]">R</span>
-          </div>
-          <div>
-            <span className="text-base font-semibold tracking-tight text-[#111827] flex items-center">
-              Bull<span className="text-[#F97316]">Run</span>
-            </span>
-            <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block font-mono font-normal">
-              Fintech Platform
-            </span>
-          </div>
+      <header className="fixed top-0 left-0 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex items-center justify-between px-space-lg lg:px-space-xl border-b border-outline-variant/20">
+        <div className="flex items-center gap-space-lg">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center font-bold text-label-md">
+              BR
+            </div>
+            <span className="font-headline-sm tracking-tight text-on-surface font-semibold">BullRun</span>
+          </Link>
+          <nav className="hidden xl:flex items-center gap-space-xs ml-space-lg">
+            <Link
+              href="/dashboard"
+              className="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors font-medium"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/explore"
+              className="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors font-medium"
+            >
+              Explore Markets
+            </Link>
+            <Link
+              href="/terminal"
+              className="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors font-medium"
+            >
+              Trading Terminal
+            </Link>
+            <Link
+              href="/option-chain"
+              className="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors font-medium"
+            >
+              Option Chain
+            </Link>
+          </nav>
         </div>
 
-        <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-[#4B5563]">
-          <Link href="/explore" className="hover:text-[#F97316] transition-colors">Explore Markets</Link>
-          <Link href="/terminal" className="hover:text-[#F97316] transition-colors">Trading Terminal</Link>
-          <Link href="/portfolio" className="hover:text-[#F97316] transition-colors">Portfolio</Link>
-          <Link href="/admin/monitoring" className="hover:text-[#F97316] transition-colors">Diagnostics</Link>
-        </nav>
-
-        <div className="flex items-center gap-2.5">
-          <Link href="/login">
-            <Button variant="ghost" size="sm" className="text-xs font-medium text-[#4B5563] hover:text-[#111827] rounded-[8px]">
-              Sign In
-            </Button>
+        <div className="flex items-center gap-space-sm">
+          <div className="hidden sm:flex items-center gap-space-xs px-space-sm py-space-xs bg-tertiary-container/10 rounded-full text-tertiary text-label-sm font-medium">
+            <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+            <span>LIVE NSE &amp; BSE</span>
+          </div>
+          <Link
+            href="/login"
+            className="px-space-md py-space-xs text-label-md font-medium text-on-surface hover:bg-surface-container rounded-lg transition-colors"
+          >
+            Sign In
           </Link>
-          <Link href="/register">
-            <Button size="sm" className="bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-medium rounded-[8px]">
-              Open Paper Account
-            </Button>
+          <Link
+            href="/login"
+            className="px-space-md py-space-xs bg-primary hover:bg-primary/90 text-on-primary text-label-md font-semibold rounded-lg transition-colors shadow-sm"
+          >
+            Open Free Account
           </Link>
         </div>
       </header>
 
       {/* Hero Section */}
-      <main className="flex-1">
-        <section className="px-4 sm:px-8 pt-12 pb-16 lg:pt-20 lg:pb-24 flex flex-col items-center text-center bg-white border-b border-[#E5E7EB]">
-          <div className="max-w-4xl mx-auto space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[6px] border border-[#FED7AA] bg-[#FFF7ED] text-[#EA580C] text-xs font-medium tracking-wide">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#F97316]" />
-              Phase 1 Foundation Live • Zero Financial Risk
+      <main className="flex-1 pt-16">
+        <section className="px-space-lg lg:px-space-xl pt-16 pb-20 lg:pt-24 lg:pb-32 flex flex-col items-center text-center bg-surface relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="max-w-4xl mx-auto space-y-6 relative z-10">
+            <div className="inline-flex items-center gap-2 px-space-md py-1 rounded-full bg-primary-fixed text-primary text-label-sm font-semibold tracking-wide">
+              <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+              <span>Next-Gen Indian Stock Trading Architecture</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-[#111827] leading-[1.15]">
-              Master Indian Stock Trading <span className="text-[#F97316]">With BullRun</span>
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-on-surface leading-[1.12]">
+              Trade Smarter, Faster, and Secure <span className="text-primary">with BullRun</span>
             </h1>
 
-            <p className="text-sm sm:text-base text-[#4B5563] max-w-2xl mx-auto leading-relaxed font-normal">
-              BullRun provides an original, high-performance paper-trading architecture. Experience real order-book mechanics, strict double-entry ledger auditing, and comprehensive portfolio analytics with zero real-money exposure.
+            <p className="text-base sm:text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
+              Experience lightning-fast execution, real-time Level-2 market depth, TradingView charts, and institutional risk management across NSE and BSE equities.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
-              <Link href="/register">
-                <Button size="lg" className="w-full sm:w-auto bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-xs rounded-[8px] px-6 py-2.5">
-                  Open Free Paper Account
-                  <ArrowRight className="w-4 h-4 ml-1.5" />
-                </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-space-md pt-4">
+              <Link
+                href="/login"
+                className="w-full sm:w-auto px-space-xl py-space-md bg-primary hover:bg-primary/90 text-on-primary font-semibold text-label-md rounded-xl shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2"
+              >
+                <span>Start Trading Now</span>
+                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
               </Link>
-              <Link href="/explore">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-[#E5E7EB] text-[#111827] hover:bg-[#F8FAFC] text-xs font-medium rounded-[8px] px-6 py-2.5">
-                  Explore Markets
-                </Button>
+              <Link
+                href="/explore"
+                className="w-full sm:w-auto px-space-xl py-space-md bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-semibold text-label-md rounded-xl transition-all"
+              >
+                Explore Live Markets
               </Link>
             </div>
 
-            <div className="pt-6 flex flex-wrap items-center justify-center gap-6 text-xs text-[#4B5563] font-normal">
+            {/* Trust Badges */}
+            <div className="pt-8 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-body-md text-on-surface-variant font-medium">
               <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
-                <span>₹1,00,000 Virtual Capital</span>
+                <span className="material-symbols-outlined text-tertiary text-[20px]">verified_user</span>
+                <span>SEBI Compliant Ledger</span>
               </span>
               <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
-                <span>NSE &amp; BSE Index Ticker Tape</span>
+                <span className="material-symbols-outlined text-tertiary text-[20px]">bolt</span>
+                <span>Sub-10ms Upstox Gateway</span>
               </span>
               <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
-                <span>Zero Brokerage / Zero Risk</span>
+                <span className="material-symbols-outlined text-tertiary text-[20px]">account_balance_wallet</span>
+                <span>₹10,00,000 Virtual Capital</span>
               </span>
             </div>
           </div>
         </section>
 
-        {/* Feature Highlights Grid */}
-        <section className="px-4 sm:px-8 py-14 lg:px-12 max-w-7xl mx-auto w-full">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
-              Engineered for Modern Indian Traders
+        {/* Feature Highlights Bento Grid */}
+        <section className="px-space-lg lg:px-space-xl py-16 max-w-7xl mx-auto w-full">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-label-sm uppercase tracking-wider text-outline font-semibold">
+              Built for Performance
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-on-surface mt-2">
+              Everything You Need to Master the Markets
             </h2>
-            <p className="text-xs text-[#6B7280] mt-1 font-normal">
-              Built from scratch with strict financial math, immutable double-entry ledgers, and fast UX.
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <article className="p-5 rounded-[10px] border border-[#E5E7EB] bg-white space-y-3">
-              <div className="w-9 h-9 rounded-[8px] bg-[#FFF7ED] border border-[#FED7AA] flex items-center justify-center text-[#EA580C]">
-                <BarChart2 className="w-4 h-4" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+            <div className="bg-surface-container-lowest p-space-xl rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between">
+              <div className="w-12 h-12 rounded-xl bg-primary-container/10 text-primary flex items-center justify-center mb-space-md">
+                <span className="material-symbols-outlined text-[24px]">candlestick_chart</span>
               </div>
-              <h3 className="text-sm font-semibold text-[#111827]">Dual Discovery &amp; Terminal Modes</h3>
-              <p className="text-xs text-[#6B7280] leading-relaxed font-normal">
-                Seamlessly switch between Groww-style market discovery (top movers, sector breadth, news) and an Upstox Pro-style interactive candlestick trading terminal.
+              <h3 className="font-headline-sm font-semibold text-on-surface mb-2">
+                TradingView Lightweight Charts
+              </h3>
+              <p className="text-body-md text-on-surface-variant leading-relaxed">
+                Full-featured interactive candlesticks, volume bars, EMA, RSI, and custom timeframe aggregation.
               </p>
-            </article>
+            </div>
 
-            <article className="p-5 rounded-[10px] border border-[#E5E7EB] bg-white space-y-3">
-              <div className="w-9 h-9 rounded-[8px] bg-[#F0FDF4] border border-[#BBF7D0] flex items-center justify-center text-[#16A34A]">
-                <Shield className="w-4 h-4" />
+            <div className="bg-surface-container-lowest p-space-xl rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between">
+              <div className="w-12 h-12 rounded-xl bg-tertiary-container/10 text-tertiary flex items-center justify-center mb-space-md">
+                <span className="material-symbols-outlined text-[24px]">stream</span>
               </div>
-              <h3 className="text-sm font-semibold text-[#111827]">Audited Paper Wallet</h3>
-              <p className="text-xs text-[#6B7280] leading-relaxed font-normal">
-                Every simulated fill updates an audited PostgreSQL double-entry transaction ledger with exact Python Decimal precision, ensuring trustworthy accounting.
+              <h3 className="font-headline-sm font-semibold text-on-surface mb-2">
+                Real-Time WebSocket Engine
+              </h3>
+              <p className="text-body-md text-on-surface-variant leading-relaxed">
+                Live streaming tick-by-tick market data backed by primary broker feed with automatic fallback failover.
               </p>
-            </article>
+            </div>
 
-            <article className="p-5 rounded-[10px] border border-[#E5E7EB] bg-white space-y-3">
-              <div className="w-9 h-9 rounded-[8px] bg-[#FFF7ED] border border-[#FED7AA] flex items-center justify-center text-[#EA580C]">
-                <Zap className="w-4 h-4" />
+            <div className="bg-surface-container-lowest p-space-xl rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between">
+              <div className="w-12 h-12 rounded-xl bg-secondary-container text-secondary flex items-center justify-center mb-space-md">
+                <span className="material-symbols-outlined text-[24px]">security</span>
               </div>
-              <h3 className="text-sm font-semibold text-[#111827]">Truthful Phase 1 Architecture</h3>
-              <p className="text-xs text-[#6B7280] leading-relaxed font-normal">
-                Never displays fabricated fake prices as real data. Live quotes and broker execution gateways are explicitly declared offline until verified Phase 2 integrations.
+              <h3 className="font-headline-sm font-semibold text-on-surface mb-2">
+                Double-Entry Ledger Audit
+              </h3>
+              <p className="text-body-md text-on-surface-variant leading-relaxed">
+                Bank-grade transaction accounting with virtual margin calculation, charges simulation, and zero real risk.
               </p>
-            </article>
+            </div>
           </div>
         </section>
       </main>
 
-      {/* Clean Professional Footer */}
-      <footer className="mt-auto border-t border-[#E5E7EB] bg-[#F8FAFC] px-4 sm:px-8 lg:px-12 py-6 text-xs text-[#6B7280]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* Footer */}
+      <footer className="border-t border-outline-variant/20 bg-surface-container-lowest py-space-xl px-space-lg lg:px-space-xl">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-space-md text-body-sm text-outline">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-[#111827]">BullRun</span>
-            <span>•</span>
-            <span className="font-normal">© 2026 BullRun Technologies Inc. All rights reserved.</span>
+            <span className="w-6 h-6 rounded bg-primary text-on-primary text-xs font-bold flex items-center justify-center">
+              BR
+            </span>
+            <span className="text-on-surface font-semibold">BullRun Trading Platform</span>
+            <span>• © 2025</span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-5 font-normal">
-            <Link href="/explore" className="hover:text-[#111827] transition-colors">Explore</Link>
-            <Link href="/terminal" className="hover:text-[#111827] transition-colors">Terminal</Link>
-            <Link href="/portfolio" className="hover:text-[#111827] transition-colors">Portfolio</Link>
-            <Link href="/admin/monitoring" className="hover:text-[#111827] transition-colors">Diagnostics</Link>
+          <div className="flex items-center gap-space-lg">
+            <Link href="/dashboard" className="hover:text-primary transition-colors">
+              Dashboard
+            </Link>
+            <Link href="/explore" className="hover:text-primary transition-colors">
+              Explore
+            </Link>
+            <Link href="/terminal" className="hover:text-primary transition-colors">
+              Terminal
+            </Link>
+            <Link href="/admin" className="hover:text-primary transition-colors">
+              Admin
+            </Link>
           </div>
         </div>
       </footer>

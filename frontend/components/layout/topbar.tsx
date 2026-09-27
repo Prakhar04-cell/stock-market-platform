@@ -288,59 +288,54 @@ export function Topbar() {
 
   // Navigation Items
   const navTabs = [
-    { name: "Stocks", href: "/stocks/NIFTY%2050", isActive: pathname.startsWith("/stocks") },
+    { name: "Dashboard", href: "/dashboard", isActive: pathname === "/dashboard" },
     { name: "Explore", href: "/explore", isActive: pathname === "/explore" },
-    { name: "Holdings", href: "/portfolio", isActive: pathname === "/portfolio" && currentTab !== "positions" },
-    { name: "Positions", href: "/portfolio?tab=positions", isActive: pathname === "/portfolio" && currentTab === "positions" },
+    { name: "Holdings", href: "/holdings", isActive: pathname === "/holdings" || (pathname === "/portfolio" && currentTab !== "positions") },
+    { name: "Positions", href: "/positions", isActive: pathname === "/positions" || (pathname === "/portfolio" && currentTab === "positions") },
     { name: "Orders", href: "/orders", isActive: pathname === "/orders" },
     { name: "Watchlist", href: "/watchlist", isActive: pathname === "/watchlist" },
+    { name: "Option Chain", href: "/option-chain", isActive: pathname === "/option-chain" },
+    { name: "Terminal", href: "/terminal", isActive: pathname === "/terminal" },
   ];
 
   return (
     <>
-      <header className="h-14 bg-white border-b border-[#E5E7EB] px-4 sm:px-6 flex items-center sticky top-0 z-40 select-none">
-        <nav aria-label="Main Navigation" className="w-full flex items-center justify-between">
-          {/* 1. Left: Brand Logo & Main Navigation Tabs */}
-          <div className="flex items-center gap-6 shrink-0">
-            <Link href="/dashboard" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-[8px] bg-[#0F172A] flex items-center justify-center text-white shadow-none group-hover:bg-[#F97316] transition-colors">
-                <span className="font-semibold text-sm tracking-tight text-white">BR</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[17px] font-semibold tracking-tight text-[#111827] leading-none">
-                  Bull<span className="text-[#F97316]">Run</span>
-                </span>
-                <span className="text-[9.5px] text-[#6B7280] font-normal tracking-wide">
-                  Markets
-                </span>
-              </div>
-            </Link>
+      <header className="fixed top-0 left-0 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex items-center justify-between px-space-md lg:px-space-xl border-b border-outline-variant/30 select-none">
+        {/* 1. Left: Brand Logo & Navigation */}
+        <div className="flex items-center gap-space-lg">
+          <Link href="/dashboard" className="flex items-center gap-space-sm group">
+            <img
+              alt="BullRun Logo"
+              className="h-8 w-auto object-contain"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_jSrXZityA6DebTcw55vtDhhZUd0MFdGGRb6IF1-tMVDnnFsuujPjivFjAOFN-rAclxccNjQ-Mf5AcIN1sPYmV_zaypAoqGD0hM2fgPG-gJnruMb_faq8LI6TiWgCEpNaNzE7_mKF6FYVwJDiuL81IT1nAY1TPR99faLbO51WYqrWj1yH3J-cjRaC9AcLfGEkCtpUwhViiq0oa1G2rWCGMI7UJ9jQS9OWW8skBAEZFLv2PJpJjFqT"
+            />
+            <span className="font-headline-sm tracking-tight text-on-surface">BullRun</span>
+          </Link>
 
-            {/* Top Desktop Navigation Links with Active Indicators */}
-            <div className="hidden xl:flex items-center space-x-1">
-              {navTabs.map((tab) => (
-                <Link
-                  key={tab.name}
-                  href={tab.href}
-                  className={`relative px-3 py-4 text-[13px] font-medium transition-colors flex items-center ${
-                    tab.isActive
-                      ? "text-[#111827] font-semibold"
-                      : "text-[#6B7280] hover:text-[#111827]"
-                  }`}
-                >
-                  <span>{tab.name}</span>
-                  {tab.isActive && (
-                    <span className="absolute bottom-0 left-3 right-3 h-[2.5px] bg-[#F97316] rounded-t-full" />
-                  )}
-                </Link>
-              ))}
-            </div>
-          </div>
+          <nav className="hidden xl:flex items-center gap-space-xs ml-space-sm">
+            {navTabs.map((tab) => (
+              <Link
+                key={tab.name}
+                href={tab.href}
+                className={`px-space-md py-space-xs transition-colors rounded-lg text-body-md ${
+                  tab.isActive
+                    ? "bg-primary-container text-on-primary-container font-medium"
+                    : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
+                }`}
+              >
+                {tab.name}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        {/* 2. Center: Global Search Bar + Terminal Action Button */}
-        <div className="flex-1 max-w-lg mx-3 sm:mx-6 flex items-center gap-2 relative">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-[#9CA3AF] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        {/* 2. Center/Right: Search, Live Feed, Paper Trade, Notifications, Profile */}
+        <div className="flex items-center gap-space-md">
+          {/* Search Box */}
+          <div className="relative hidden md:block w-64 lg:w-72">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-space-md pointer-events-none">
+              <span className="material-symbols-outlined text-outline text-[18px]">search</span>
+            </span>
             <input
               ref={searchInputRef}
               type="text"
@@ -350,8 +345,8 @@ export function Topbar() {
                 if (results.length > 0 || searchQuery.trim()) setIsOpen(true);
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Search stocks, indices, ETFs (Press /)"
-              className="w-full pl-9 pr-14 py-1.5 rounded-[8px] bg-[#F8FAFC] border border-[#E5E7EB] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#F97316] focus:bg-white focus:ring-2 focus:ring-[#FFF7ED] transition-all font-normal"
+              placeholder="Search symbols, assets..."
+              className="w-full pl-10 pr-space-md py-space-xs bg-surface-container-low rounded-lg text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:ring-1 focus:ring-primary transition-all font-normal"
             />
             {searchQuery ? (
               <button
@@ -360,30 +355,15 @@ export function Topbar() {
                   setResults([]);
                   setIsOpen(false);
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#4B5563]"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             ) : (
-              <kbd className="hidden sm:inline-flex absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-white border border-[#E5E7EB] text-[10px] font-mono text-[#9CA3AF] pointer-events-none">
-                ⌘K
+              <kbd className="hidden lg:inline-flex absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-surface-container text-[10px] font-mono text-outline pointer-events-none">
+                /
               </kbd>
             )}
-          </div>
-
-          {/* Dedicated Terminal Button */}
-          <Link
-            href="/terminal"
-            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] border text-xs font-medium transition-all shrink-0 ${
-              pathname === "/terminal"
-                ? "bg-[#0F172A] text-white border-[#0F172A]"
-                : "bg-white text-[#111827] border-[#E5E7EB] hover:bg-[#F8FAFC] hover:border-[#D1D5DB]"
-            }`}
-            title="Open Dedicated Full-Screen Trading Terminal"
-          >
-            <TerminalIcon className="w-3.5 h-3.5 text-[#F97316]" />
-            <span>Terminal</span>
-          </Link>
 
           {/* Autocomplete Dropdown with Category Tabs */}
           {isOpen && (
@@ -481,63 +461,39 @@ export function Topbar() {
           )}
         </div>
 
-        {/* 3. Right: Paper Trading Badge, Notifications, Market Status, Profile */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Market Status Pill */}
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#F8FAFC] border border-[#E5E7EB] text-[#4B5563]">
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                isMarketConnected ? "bg-[#16A34A] animate-pulse" : "bg-slate-400"
-              }`}
-            />
-            <span>{isMarketConnected ? "● LIVE FEED" : "○ FEED DISCONNECTED"}</span>
+          {/* LIVE MARKET Indicator */}
+          <div className="hidden lg:flex items-center gap-space-xs px-space-sm py-space-xs bg-tertiary-container/10 rounded-full text-tertiary text-label-sm">
+            <span className={`w-2 h-2 rounded-full ${isMarketConnected ? "bg-tertiary animate-pulse" : "bg-error"}`} />
+            <span>LIVE MARKET</span>
           </div>
 
-          {/* Paper Trading Indicator Badge (Clickable modal) */}
+          {/* Paper Trade Badge */}
           <button
             onClick={() => setIsPaperModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FFF7ED] border border-[#FDBA74] text-[#EA580C] text-xs font-medium hover:bg-[#FFEDD5] transition-colors"
-            title="Click to view Paper Trading details"
+            className="hidden lg:flex items-center gap-space-xs px-space-sm py-space-xs bg-secondary-container text-on-secondary-container rounded-lg text-label-sm font-medium hover:opacity-90 transition-opacity"
+            title={`Virtual Margin Available: ${formatINR(wallet ? Number(wallet.available_balance) : 100000)}`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#F97316] animate-pulse" />
-            <span className="hidden sm:inline">PAPER TRADING</span>
-            <span className="sm:hidden">PAPER</span>
+            <span>Paper Trade</span>
           </button>
 
-          {/* Virtual Balance Display */}
-          <button
-            onClick={() => setIsPaperModalOpen(true)}
-            className="hidden md:flex flex-col items-end px-2.5 py-0.5 rounded-[8px] hover:bg-[#F8FAFC] transition-colors"
-            title={`Available Virtual Margin: ${formatINR(wallet ? Number(wallet.available_balance) : 100000)}`}
-          >
-            <span className="text-[10px] font-normal text-[#6B7280] leading-none">
-              Virtual Margin
-            </span>
-            <span className="text-xs font-semibold font-mono text-[#111827] tabular-nums">
-              {formatCompactINR(wallet ? Number(wallet.available_balance) : 100000)}
-            </span>
-          </button>
-
-          {/* Notifications Dropdown */}
+          {/* Notifications Button */}
           <div className="relative" ref={notifRef}>
             <button
               onClick={() => setIsNotifOpen(!isNotifOpen)}
-              className="p-2 rounded-[8px] text-[#6B7280] hover:text-[#111827] hover:bg-[#F8FAFC] relative transition-colors"
+              className="relative p-space-xs rounded-full hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors flex items-center justify-center"
               aria-label="Notifications"
             >
-              <Bell className="w-4 h-4" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#DC2626]" />
-              )}
+              <span className="material-symbols-outlined text-[20px]">notifications</span>
+              {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full" />}
             </button>
 
             {isNotifOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white border border-[#E5E7EB] rounded-[10px] shadow-dropdown z-50 overflow-hidden text-xs">
-                <div className="p-3 border-b border-[#E5E7EB] flex items-center justify-between bg-[#F8FAFC]">
+              <div className="absolute right-0 mt-2 w-80 bg-surface-container-lowest border border-outline-variant/40 rounded-xl shadow-lg z-50 overflow-hidden text-xs">
+                <div className="p-3 border-b border-outline-variant/30 flex items-center justify-between bg-surface-container-low">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-[#111827]">Notifications</span>
+                    <span className="font-semibold text-on-surface">Notifications</span>
                     {unreadCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-[#FFF7ED] text-[#F97316] font-medium text-[10px]">
+                      <span className="px-1.5 py-0.2 rounded-full bg-error-container text-error font-medium text-[10px]">
                         {unreadCount} new
                       </span>
                     )}
@@ -545,7 +501,7 @@ export function Topbar() {
                   {unreadCount > 0 && (
                     <button
                       onClick={handleMarkAllRead}
-                      className="text-[11px] text-[#F97316] hover:underline font-medium"
+                      className="text-[11px] text-primary hover:underline font-medium"
                     >
                       Mark all read
                     </button>
@@ -598,100 +554,117 @@ export function Topbar() {
                   )}
                 </div>
 
-                <div className="p-2 border-t border-[#E5E7EB] bg-[#F8FAFC] text-center">
+                <div className="p-2 border-t border-outline-variant/30 bg-surface-container-low text-center">
                   <Link
-                    href="/orders"
+                    href="/notifications"
                     onClick={() => setIsNotifOpen(false)}
-                    className="text-[11px] text-[#F97316] font-medium hover:underline"
+                    className="text-[11px] text-primary font-medium hover:underline"
                   >
-                    View order execution history →
+                    View all notifications &amp; alerts →
                   </Link>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="h-5 w-[1px] bg-[#E5E7EB]" />
-
           {/* Profile Dropdown */}
           <div className="relative" ref={profileRef}>
-            <button
+            <div
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-1.5 pl-1.5 py-1 rounded-full hover:bg-[#F8FAFC] transition-colors"
+              className="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/30 cursor-pointer"
             >
-              <div className="w-7 h-7 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-semibold text-xs shadow-none">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-medium text-label-md">
                 BR
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-[#9CA3AF]" />
-            </button>
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary">
+                <span className="material-symbols-outlined text-[18px]">person</span>
+              </div>
+            </div>
 
             {isProfileOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E5E7EB] rounded-[10px] shadow-dropdown z-50 py-1 text-xs">
-                <div className="px-3.5 py-2.5 border-b border-[#E5E7EB]">
-                  <p className="font-semibold text-[#111827]">BullRun Trader</p>
-                  <p className="text-[11px] text-[#6B7280] font-mono">Paper Account Active</p>
+              <div className="absolute right-0 mt-2 w-56 bg-surface-container-lowest border border-outline-variant/40 rounded-xl shadow-lg z-50 py-1 text-xs">
+                <div className="px-3.5 py-2.5 border-b border-outline-variant/30">
+                  <p className="font-semibold text-on-surface">BullRun Trader</p>
+                  <p className="text-[11px] text-outline font-mono">Paper Account Active</p>
                 </div>
 
                 <Link
-                  href="/explore"
+                  href="/profile"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
+                  className="flex items-center gap-2 px-3.5 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#6B7280]" />
-                  <span>Explore Markets</span>
+                  <span className="material-symbols-outlined text-[16px]">account_circle</span>
+                  <span>My Profile &amp; Settings</span>
                 </Link>
 
                 <Link
-                  href="/portfolio"
+                  href="/holdings"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
+                  className="flex items-center gap-2 px-3.5 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
                 >
-                  <WalletIcon className="w-3.5 h-3.5 text-[#6B7280]" />
-                  <span>Portfolio Holdings</span>
+                  <span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+                  <span>Holdings Portfolio</span>
+                </Link>
+
+                <Link
+                  href="/positions"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center gap-2 px-3.5 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
+                >
+                  <span className="material-symbols-outlined text-[16px]">show_chart</span>
+                  <span>Open Positions</span>
                 </Link>
 
                 <Link
                   href="/orders"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
+                  className="flex items-center gap-2 px-3.5 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
                 >
-                  <Activity className="w-3.5 h-3.5 text-[#6B7280]" />
+                  <span className="material-symbols-outlined text-[16px]">receipt_long</span>
                   <span>Order Book</span>
                 </Link>
 
                 <Link
                   href="/terminal"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
+                  className="flex items-center gap-2 px-3.5 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
                 >
-                  <TerminalIcon className="w-3.5 h-3.5 text-[#F97316]" />
-                  <span className="font-medium text-[#111827]">Trading Terminal</span>
+                  <span className="material-symbols-outlined text-[16px] text-primary">terminal</span>
+                  <span className="font-medium text-on-surface">Pro Terminal</span>
                 </Link>
 
                 <Link
-                  href="/admin/monitoring"
+                  href="/set-up-mpin"
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-[#4B5563] hover:text-[#111827] hover:bg-[#F8FAFC]"
+                  className="flex items-center gap-2 px-3.5 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#6B7280]" />
-                  <span>System Monitoring</span>
+                  <span className="material-symbols-outlined text-[16px]">password</span>
+                  <span>Security &amp; MPIN</span>
                 </Link>
 
-                <div className="border-t border-[#E5E7EB] my-1" />
+                <Link
+                  href="/admin"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center gap-2 px-3.5 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
+                >
+                  <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
+                  <span>Admin Dashboard</span>
+                </Link>
+
+                <div className="border-t border-outline-variant/30 my-1" />
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 w-full px-3.5 py-2 text-[#DC2626] hover:bg-rose-50 text-left font-medium"
+                  className="flex items-center gap-2 w-full px-3.5 py-2 text-error hover:bg-error-container/20 text-left font-medium"
                 >
-                  <LogOut className="w-3.5 h-3.5 text-[#DC2626]" />
+                  <span className="material-symbols-outlined text-[16px]">logout</span>
                   <span>Log out</span>
                 </button>
               </div>
             )}
           </div>
         </div>
-      </nav>
-    </header>
+      </header>
 
       {/* Paper Trading Information Modal */}
       {isPaperModalOpen && (

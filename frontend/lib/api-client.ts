@@ -19,7 +19,8 @@ export interface ApiResponse<T = any> {
   success?: boolean;
 }
 
-interface CustomRequestInit extends RequestInit {
+interface CustomRequestInit extends Omit<RequestInit, "body"> {
+  body?: any;
   _isRetry?: boolean;
 }
 
@@ -76,8 +77,20 @@ export async function apiRequest<T = any>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
+  let serializedBody = options.body;
+  if (
+    options.body !== undefined &&
+    typeof options.body === "object" &&
+    !(typeof FormData !== "undefined" && options.body instanceof FormData) &&
+    !(typeof Blob !== "undefined" && options.body instanceof Blob) &&
+    !(typeof ArrayBuffer !== "undefined" && options.body instanceof ArrayBuffer)
+  ) {
+    serializedBody = JSON.stringify(options.body);
+  }
+
   const response = await fetch(url, {
     ...options,
+    body: serializedBody,
     headers,
   });
 

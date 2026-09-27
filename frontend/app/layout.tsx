@@ -22,7 +22,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-[#FFFFFF] text-[#111827] font-sans antialiased selection:bg-[#F97316]/20 selection:text-[#111827]">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        />
+      </head>
+      <body className="min-h-screen bg-surface text-on-surface font-sans antialiased selection:bg-primary/20 selection:text-primary">
         {children}
       </body>
     </html>

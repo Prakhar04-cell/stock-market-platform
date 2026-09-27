@@ -12,6 +12,8 @@ export interface ChartContainerProps {
   className?: string;
   isPortfolio?: boolean;
   height?: number;
+  timeframe?: string;
+  chartType?: "area" | "candle";
 }
 
 export function ChartContainer({
@@ -19,9 +21,11 @@ export function ChartContainer({
   className,
   isPortfolio = false,
   height = 380,
+  timeframe,
+  chartType,
 }: ChartContainerProps) {
   const cleanSymbol = normalizeStockSymbol(symbol);
-  const [activeInterval, setActiveInterval] = useState("1D");
+  const [activeInterval, setActiveInterval] = useState(timeframe || "1D");
   const intervals = [
     { label: "1m", value: "1m" },
     { label: "5m", value: "5m" },

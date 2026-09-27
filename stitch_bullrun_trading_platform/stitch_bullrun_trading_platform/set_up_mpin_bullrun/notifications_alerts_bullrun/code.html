@@ -1,0 +1,636 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error-container": "#ffdad6",
+          "secondary-fixed": "#dce2f7",
+          "tertiary-fixed-dim": "#62df7d",
+          "surface-container-highest": "#e1e2e4",
+          "surface-container-high": "#e7e8ea",
+          "surface-tint": "#4d44e3",
+          "on-secondary-container": "#5c6274",
+          "outline-variant": "#c7c4d8",
+          "primary-fixed-dim": "#c3c0ff",
+          "outline": "#777587",
+          "tertiary-container": "#00702f",
+          "on-tertiary": "#ffffff",
+          "tertiary": "#005522",
+          "surface-dim": "#d9dadc",
+          "secondary": "#575e70",
+          "on-tertiary-fixed-variant": "#005320",
+          "surface-container": "#edeef0",
+          "surface-variant": "#e1e2e4",
+          "primary-container": "#4f46e5",
+          "on-error-container": "#93000a",
+          "on-background": "#191c1e",
+          "on-error": "#ffffff",
+          "on-secondary": "#ffffff",
+          "primary-fixed": "#e2dfff",
+          "surface-container-lowest": "#ffffff",
+          "surface-container-low": "#f2f4f6",
+          "inverse-primary": "#c3c0ff",
+          "background": "#f8f9fb",
+          "on-secondary-fixed": "#141b2b",
+          "on-tertiary-container": "#78f591",
+          "surface": "#f8f9fb",
+          "on-surface": "#191c1e",
+          "on-tertiary-fixed": "#002109",
+          "on-secondary-fixed-variant": "#404758",
+          "surface-bright": "#f8f9fb",
+          "on-primary-fixed-variant": "#3323cc",
+          "on-primary": "#ffffff",
+          "secondary-container": "#d9dff5",
+          "on-primary-fixed": "#0f0069",
+          "primary": "#3525cd",
+          "inverse-surface": "#2e3132",
+          "secondary-fixed-dim": "#c0c6db",
+          "on-primary-container": "#dad7ff",
+          "error": "#ba1a1a",
+          "on-surface-variant": "#464555",
+          "inverse-on-surface": "#f0f1f3",
+          "tertiary-fixed": "#7ffc97"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "space-lg": "1.5rem",
+          "space-md": "1rem",
+          "margin": "1.5rem",
+          "space-sm": "0.5rem",
+          "gutter": "1rem",
+          "space-xs": "0.25rem",
+          "space-xl": "2rem"
+        },
+        "fontFamily": {
+          "body-md": ["Work Sans"],
+          "tabular-data": ["Work Sans"],
+          "label-md": ["Work Sans"],
+          "headline-sm": ["Work Sans"],
+          "body-lg": ["Work Sans"],
+          "headline-xl": ["Work Sans"],
+          "label-sm": ["Work Sans"],
+          "headline-lg": ["Work Sans"],
+          "headline-md": ["Work Sans"],
+          "body-sm": ["Work Sans"]
+        },
+        "fontSize": {
+          "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+          "tabular-data": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+          "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+          "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+          "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+          "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+          "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+          "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+          "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+          "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+        }
+      }
+    }
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@100..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"></head><body class="bg-surface font-body-md text-on-surface"><header class="fixed top-0 left-0 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex items-center justify-between px-space-xl"><div class="flex items-center gap-space-lg"><img alt="BullRun Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_jSrXZityA6DebTcw55vtDhhZUd0MFdGGRb6IF1-tMVDnnFsuujPjivFjAOFN-rAclxccNjQ-Mf5AcIN1sPYmV_zaypAoqGD0hM2fgPG-gJnruMb_faq8LI6TiWgCEpNaNzE7_mKF6FYVwJDiuL81IT1nAY1TPR99faLbO51WYqrWj1yH3J-cjRaC9AcLfGEkCtpUwhViiq0oa1G2rWCGMI7UJ9jQS9OWW8skBAEZFLv2PJpJjFqT"><span class="font-headline-sm tracking-tight text-on-surface">BullRun</span><nav class="hidden xl:flex items-center gap-space-sm ml-space-lg" data-active-classes="bg-primary-container text-on-primary-container font-medium rounded-lg"><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="dashboard" href="#">Dashboard</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="explore" href="#">Explore</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="holdings" href="#">Holdings</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="positions" href="#">Positions</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="orders" href="#">Orders</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="watchlist" href="#">Watchlist</a></nav></div><div class="flex items-center gap-space-md"><div class="relative hidden md:block w-64"><span class="absolute inset-y-0 left-0 flex items-center pl-space-md pointer-events-none"><span class="material-symbols-outlined text-outline text-[18px]">search</span></span><input class="w-full pl-10 pr-space-md py-space-xs bg-surface-container-low rounded-lg text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Search symbols, assets..." type="text"></div><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-space-xs bg-tertiary-container/10 rounded-full text-tertiary text-label-sm"><span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span><span>LIVE MARKET</span></div><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-space-xs bg-secondary-container text-on-secondary-container rounded-lg text-label-sm font-medium"><span>Paper Trade</span></div><button class="relative p-space-xs rounded-full hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/30"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-medium text-label-md">BR</div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface"><div class="flex flex-col w-full pb-space-xl">
+<!-- Top Banner / Header Segment -->
+<div class="px-space-xl pt-space-xl pb-space-lg bg-surface-container-lowest flex flex-col md:flex-row md:items-center justify-between gap-space-lg shadow-sm">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="px-space-sm py-space-xs bg-primary-container text-on-primary-container rounded-lg text-label-sm font-medium">Notifications &amp; Alerts</span>
+<span class="text-outline text-label-sm">Updated 2m ago</span>
+</div>
+<h1 class="text-headline-xl text-on-surface">Activity Center</h1>
+<p class="text-body-md text-on-surface-variant max-w-2xl">Manage your real-time price triggers, order execution logs, and automated portfolio notifications in one unified stream.</p>
+</div>
+<div class="flex flex-wrap items-center gap-space-md">
+<button class="px-space-md py-space-sm bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-label-md rounded-xl transition-colors flex items-center gap-space-xs" onclick="markAllRead()">
+<span class="material-symbols-outlined text-[18px]">done_all</span>
+<span>Mark all as read</span>
+</button>
+<button class="px-space-md py-space-sm bg-primary text-on-primary text-label-md rounded-xl transition-all hover:opacity-95 shadow-sm flex items-center gap-space-xs" onclick="openPreferencesModal()">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+<span>Preferences</span>
+</button>
+</div>
+</div>
+<!-- Main Content Area -->
+<div class="max-w-7xl w-full mx-auto px-space-xl pt-space-xl flex flex-col gap-space-xl">
+<!-- Overview Stats & Quick Triggers Bar -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between gap-space-md relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 w-20 h-20 bg-primary/5 rounded-full pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<span class="text-body-sm text-outline font-medium uppercase tracking-wider">Unread Alerts</span>
+<span class="w-8 h-8 rounded-full bg-error-container text-on-error-container flex items-center justify-center text-label-md font-semibold">4</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<span class="text-headline-md text-on-surface">12 Total</span>
+<span class="text-body-sm text-tertiary font-medium flex items-center">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span> +2 today
+          </span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between gap-space-md relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 w-20 h-20 bg-tertiary-container/10 rounded-full pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<span class="text-body-sm text-outline font-medium uppercase tracking-wider">Active Price Triggers</span>
+<span class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-label-md font-semibold">8</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<span class="text-headline-md text-on-surface">3 Near Target</span>
+<span class="text-body-sm text-on-surface-variant">Monitoring 24/7</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between gap-space-md relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 w-20 h-20 bg-primary-fixed/20 rounded-full pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<span class="text-body-sm text-outline font-medium uppercase tracking-wider">Trade Executions</span>
+<span class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-label-md font-semibold">18</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<span class="text-headline-md text-on-surface">100% Filled</span>
+<span class="text-body-sm text-tertiary font-medium">Zero Slippage</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between gap-space-md relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 w-20 h-20 bg-error/10 rounded-full pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<span class="text-body-sm text-outline font-medium uppercase tracking-wider">System Status</span>
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse"></span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<span class="text-headline-md text-on-surface">All Systems</span>
+<span class="text-body-sm text-tertiary font-medium">Operational</span>
+</div>
+</div>
+</div>
+<!-- Main Navigation Tabs & Filter Row -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md bg-surface-container-lowest p-space-sm rounded-xl shadow-sm">
+<div class="flex items-center gap-space-xs overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
+<button class="tab-btn active px-space-md py-space-sm rounded-lg text-label-md font-medium transition-all bg-primary text-on-primary whitespace-nowrap" onclick="filterTab('all')">All Notifications</button>
+<button class="tab-btn px-space-md py-space-sm rounded-lg text-label-md font-medium transition-all text-on-surface-variant hover:bg-surface-container whitespace-nowrap" onclick="filterTab('price')">Price Alerts</button>
+<button class="tab-btn px-space-md py-space-sm rounded-lg text-label-md font-medium transition-all text-on-surface-variant hover:bg-surface-container whitespace-nowrap" onclick="filterTab('order')">Order Updates</button>
+<button class="tab-btn px-space-md py-space-sm rounded-lg text-label-md font-medium transition-all text-on-surface-variant hover:bg-surface-container whitespace-nowrap" onclick="filterTab('trade')">Trade Executions</button>
+<button class="tab-btn px-space-md py-space-sm rounded-lg text-label-md font-medium transition-all text-on-surface-variant hover:bg-surface-container whitespace-nowrap" onclick="filterTab('portfolio')">Portfolio</button>
+<button class="tab-btn px-space-md py-space-sm rounded-lg text-label-md font-medium transition-all text-on-surface-variant hover:bg-surface-container whitespace-nowrap" onclick="filterTab('news')">Market News</button>
+<button class="tab-btn px-space-md py-space-sm rounded-lg text-label-md font-medium transition-all text-on-surface-variant hover:bg-surface-container whitespace-nowrap" onclick="filterTab('system')">System</button>
+</div>
+<div class="flex items-center gap-space-sm px-space-sm">
+<button class="p-space-xs rounded-lg bg-surface-container text-on-surface transition-colors" id="feedViewBtn" onclick="toggleViewMode('feed')" title="Notification Feed">
+<span class="material-symbols-outlined text-[20px]">view_agenda</span>
+</button>
+<button class="p-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" id="tableViewBtn" onclick="toggleViewMode('table')" title="Price Alerts Management">
+<span class="material-symbols-outlined text-[20px]">monitoring</span>
+</button>
+</div>
+</div>
+<!-- Notification Feed View -->
+<div class="flex flex-col gap-space-md" id="notificationFeedContainer">
+<!-- Notification Item 1 - Unread Price Alert -->
+<div class="notification-card bg-surface-container-lowest p-space-lg rounded-xl shadow-sm hover:shadow-md transition-all flex items-start gap-space-md relative overflow-hidden group" data-category="price">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-on-primary-fixed shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+<div class="flex-1 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="text-headline-sm text-on-surface">Reliance Industries Target Reached</span>
+<span class="px-space-xs py-0.5 bg-primary-container/20 text-primary rounded text-label-sm font-medium">RELIANCE</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+<span class="text-body-sm text-outline">10 mins ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant">Price crossed above your target of <strong class="text-on-surface">₹2,850.00</strong>. Current trading price is <strong class="text-tertiary">₹2,856.40 (+1.45%)</strong>.</p>
+<div class="flex items-center gap-space-md mt-space-xs">
+<button class="text-label-md text-primary hover:underline flex items-center gap-1">
+<span>View Chart</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+<button class="text-label-md text-on-surface-variant hover:text-on-surface">Dismiss</button>
+</div>
+</div>
+</div>
+<!-- Notification Item 2 - Unread Trade Execution -->
+<div class="notification-card bg-surface-container-lowest p-space-lg rounded-xl shadow-sm hover:shadow-md transition-all flex items-start gap-space-md relative overflow-hidden group" data-category="trade">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+<div class="w-10 h-10 rounded-xl bg-tertiary-container/10 text-tertiary flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex-1 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="text-headline-sm text-on-surface">Buy Order Executed Successfully</span>
+<span class="px-space-xs py-0.5 bg-tertiary-container/20 text-tertiary rounded text-label-sm font-medium">TATA MOTORS</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+<span class="text-body-sm text-outline">45 mins ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant">Limit order for 50 shares executed at <strong class="text-on-surface">₹945.50</strong>. Total debit: <strong class="text-on-surface">₹47,275.00</strong>.</p>
+<div class="flex items-center gap-space-md mt-space-xs">
+<button class="text-label-md text-primary hover:underline flex items-center gap-1">
+<span>View Order Details</span>
+<span class="material-symbols-outlined text-[16px]">receipt</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Notification Item 3 - Read Order Update -->
+<div class="notification-card bg-surface-container-lowest/70 p-space-lg rounded-xl shadow-sm hover:shadow-md transition-all flex items-start gap-space-md relative overflow-hidden group opacity-85" data-category="order">
+<div class="w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]">pending_actions</span>
+</div>
+<div class="flex-1 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="text-headline-sm text-on-surface">GTC Order Modified</span>
+<span class="px-space-xs py-0.5 bg-surface-container text-on-surface-variant rounded text-label-sm font-medium">INFY</span>
+</div>
+<span class="text-body-sm text-outline">3 hours ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant">Your Good-Till-Cancelled stop loss price has been successfully updated to <strong class="text-on-surface">₹1,420.00</strong>.</p>
+</div>
+</div>
+<!-- Notification Item 4 - Market News -->
+<div class="notification-card bg-surface-container-lowest p-space-lg rounded-xl shadow-sm hover:shadow-md transition-all flex items-start gap-space-md relative overflow-hidden group" data-category="news">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+<div class="w-10 h-10 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">newspaper</span>
+</div>
+<div class="flex-1 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="text-headline-sm text-on-surface">RBI Monetary Policy Announcement</span>
+<span class="px-space-xs py-0.5 bg-secondary-container text-on-secondary-container rounded text-label-sm font-medium">MACRO</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+<span class="text-body-sm text-outline">5 hours ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant">Repo rate kept unchanged at 6.5%. Banking and auto sectors show strong resilience in morning trades following governor speech.</p>
+<div class="flex items-center gap-space-md mt-space-xs">
+<button class="text-label-md text-primary hover:underline flex items-center gap-1">
+<span>Read Full Report</span>
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Notification Item 5 - Portfolio Alert -->
+<div class="notification-card bg-surface-container-lowest/70 p-space-lg rounded-xl shadow-sm hover:shadow-md transition-all flex items-start gap-space-md relative overflow-hidden group opacity-85" data-category="portfolio">
+<div class="w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]">pie_chart</span>
+</div>
+<div class="flex-1 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="text-headline-sm text-on-surface">Weekly Portfolio Summary</span>
+<span class="px-space-xs py-0.5 bg-surface-container text-on-surface-variant rounded text-label-sm font-medium">ANALYTICS</span>
+</div>
+<span class="text-body-sm text-outline">Yesterday</span>
+</div>
+<p class="text-body-md text-on-surface-variant">Your portfolio gained <strong class="text-tertiary">+₹14,820.50 (+3.2%)</strong> this week, outperforming the Nifty 50 benchmark by 1.1%.</p>
+</div>
+</div>
+<!-- Notification Item 6 - System Notice -->
+<div class="notification-card bg-surface-container-lowest/70 p-space-lg rounded-xl shadow-sm hover:shadow-md transition-all flex items-start gap-space-md relative overflow-hidden group opacity-85" data-category="system">
+<div class="w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]">shield</span>
+</div>
+<div class="flex-1 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="text-headline-sm text-on-surface">Scheduled Maintenance Notice</span>
+<span class="px-space-xs py-0.5 bg-surface-container text-on-surface-variant rounded text-label-sm font-medium">SYSTEM</span>
+</div>
+<span class="text-body-sm text-outline">2 days ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant">BullRun trading servers will undergo routine security patching this Sunday from 02:00 AM to 04:00 AM IST. Trading will remain paused.</p>
+</div>
+</div>
+</div>
+<!-- Price Alert Management Section (Hidden by default, toggled via table button or filter) -->
+<div class="hidden flex flex-col gap-space-lg" id="priceAlertsManagementContainer">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md bg-surface-container-lowest p-space-lg rounded-xl shadow-sm">
+<div>
+<h2 class="text-headline-md text-on-surface">Active Price Triggers &amp; Watchlist Alarms</h2>
+<p class="text-body-sm text-on-surface-variant">Set custom threshold conditions to receive SMS, Push, and Email notifications instantly.</p>
+</div>
+<button class="px-space-md py-space-sm bg-primary text-on-primary text-label-md rounded-xl transition-all hover:opacity-95 flex items-center gap-space-xs self-start sm:self-auto" onclick="openCreateAlertModal()">
+<span class="material-symbols-outlined text-[18px]">add_alarm</span>
+<span>+ Create Alert</span>
+</button>
+</div>
+<!-- Price Alerts Table Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-outline text-label-sm uppercase tracking-wider">
+<th class="py-space-md px-space-lg font-medium">Asset / Ticker</th>
+<th class="py-space-md px-space-lg font-medium">Current Price</th>
+<th class="py-space-md px-space-lg font-medium">Target Price</th>
+<th class="py-space-md px-space-lg font-medium">Condition</th>
+<th class="py-space-md px-space-lg font-medium">Status</th>
+<th class="py-space-md px-space-lg font-medium text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low text-body-md text-on-surface">
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-lg font-medium flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed text-label-sm font-bold">RE</div>
+<div>
+<div>Reliance Industries</div>
+<div class="text-body-sm text-outline font-normal">NSE: RELIANCE</div>
+</div>
+</td>
+<td class="py-space-md px-space-lg tabular-nums">₹2,856.40</td>
+<td class="py-space-md px-space-lg tabular-nums font-semibold text-primary">₹2,850.00</td>
+<td class="py-space-md px-space-lg">
+<span class="px-space-xs py-0.5 bg-secondary-container text-on-secondary-container rounded text-label-sm">Crosses Above</span>
+</td>
+<td class="py-space-md px-space-lg">
+<span class="inline-flex items-center gap-space-xs px-space-xs py-0.5 bg-tertiary-container/20 text-tertiary rounded text-label-sm font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Triggered
+                  </span>
+</td>
+<td class="py-space-md px-space-lg text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Edit Alert"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Disable"><span class="material-symbols-outlined text-[18px]">notifications_off</span></button>
+<button class="p-1.5 rounded hover:bg-surface-container text-error hover:text-error" title="Delete"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-lg font-medium flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed text-label-sm font-bold">TC</div>
+<div>
+<div>Tata Consultancy Services</div>
+<div class="text-body-sm text-outline font-normal">NSE: TCS</div>
+</div>
+</td>
+<td class="py-space-md px-space-lg tabular-nums">₹3,920.00</td>
+<td class="py-space-md px-space-lg tabular-nums font-semibold text-primary">₹3,800.00</td>
+<td class="py-space-md px-space-lg">
+<span class="px-space-xs py-0.5 bg-secondary-container text-on-secondary-container rounded text-label-sm">Falls Below</span>
+</td>
+<td class="py-space-md px-space-lg">
+<span class="inline-flex items-center gap-space-xs px-space-xs py-0.5 bg-primary-container/20 text-primary rounded text-label-sm font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span> Active
+                  </span>
+</td>
+<td class="py-space-md px-space-lg text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Edit Alert"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Disable"><span class="material-symbols-outlined text-[18px]">notifications_off</span></button>
+<button class="p-1.5 rounded hover:bg-surface-container text-error hover:text-error" title="Delete"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-lg font-medium flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed text-label-sm font-bold">INF</div>
+<div>
+<div>Infosys Limited</div>
+<div class="text-body-sm text-outline font-normal">NSE: INFY</div>
+</div>
+</td>
+<td class="py-space-md px-space-lg tabular-nums">₹1,450.25</td>
+<td class="py-space-md px-space-lg tabular-nums font-semibold text-primary">₹1,500.00</td>
+<td class="py-space-md px-space-lg">
+<span class="px-space-xs py-0.5 bg-secondary-container text-on-secondary-container rounded text-label-sm">Rises Above</span>
+</td>
+<td class="py-space-md px-space-lg">
+<span class="inline-flex items-center gap-space-xs px-space-xs py-0.5 bg-primary-container/20 text-primary rounded text-label-sm font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span> Active
+                  </span>
+</td>
+<td class="py-space-md px-space-lg text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Edit Alert"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Disable"><span class="material-symbols-outlined text-[18px]">notifications_off</span></button>
+<button class="p-1.5 rounded hover:bg-surface-container text-error hover:text-error" title="Delete"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-lg font-medium flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center text-label-sm font-bold">ZOM</div>
+<div>
+<div>Zomato Limited</div>
+<div class="text-body-sm text-outline font-normal">NSE: ZOMATO</div>
+</div>
+</td>
+<td class="py-space-md px-space-lg tabular-nums">₹194.80</td>
+<td class="py-space-md px-space-lg tabular-nums font-semibold text-primary">₹180.00</td>
+<td class="py-space-md px-space-lg">
+<span class="px-space-xs py-0.5 bg-secondary-container text-on-secondary-container rounded text-label-sm">Falls Below</span>
+</td>
+<td class="py-space-md px-space-lg">
+<span class="inline-flex items-center gap-space-xs px-space-xs py-0.5 bg-surface-container text-outline rounded text-label-sm font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Paused
+                  </span>
+</td>
+<td class="py-space-md px-space-lg text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Edit Alert"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface" title="Enable"><span class="material-symbols-outlined text-[18px]">notifications_active</span></button>
+<button class="p-1.5 rounded hover:bg-surface-container text-error hover:text-error" title="Delete"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<!-- Preferences Modal (Hidden initially) -->
+<div class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-50 flex items-center justify-center p-space-md hidden" id="preferencesModal">
+<div class="bg-surface-container-lowest max-w-lg w-full rounded-2xl shadow-xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+<div class="p-space-lg border-b border-surface-container flex items-center justify-between">
+<h3 class="text-headline-md text-on-surface">Notification Preferences</h3>
+<button class="p-space-xs rounded-full hover:bg-surface-container text-on-surface-variant" onclick="closePreferencesModal()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="p-space-lg flex flex-col gap-space-lg max-h-[716px] overflow-y-auto">
+<div class="flex flex-col gap-space-xs">
+<span class="text-label-md text-on-surface font-semibold">Delivery Channels</span>
+<div class="flex items-center justify-between py-space-xs">
+<span class="text-body-md text-on-surface-variant">Push Notifications (Mobile App &amp; Web)</span>
+<input checked="" class="w-4 h-4 text-primary rounded focus:ring-primary accent-primary" type="checkbox">
+</div>
+<div class="flex items-center justify-between py-space-xs">
+<span class="text-body-md text-on-surface-variant">Instant Email Alerts</span>
+<input checked="" class="w-4 h-4 text-primary rounded focus:ring-primary accent-primary" type="checkbox">
+</div>
+<div class="flex items-center justify-between py-space-xs">
+<span class="text-body-md text-on-surface-variant">SMS Trade Confirmations</span>
+<input checked="" class="w-4 h-4 text-primary rounded focus:ring-primary accent-primary" type="checkbox">
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<span class="text-label-md text-on-surface font-semibold">Alert Categories</span>
+<div class="flex items-center justify-between py-space-xs">
+<span class="text-body-md text-on-surface-variant">Price Triggers &amp; Thresholds</span>
+<input checked="" class="w-4 h-4 text-primary rounded focus:ring-primary accent-primary" type="checkbox">
+</div>
+<div class="flex items-center justify-between py-space-xs">
+<span class="text-body-md text-on-surface-variant">Order Execution &amp; Fills</span>
+<input checked="" class="w-4 h-4 text-primary rounded focus:ring-primary accent-primary" type="checkbox">
+</div>
+<div class="flex items-center justify-between py-space-xs">
+<span class="text-body-md text-on-surface-variant">Margin &amp; Risk Warnings</span>
+<input checked="" class="w-4 h-4 text-primary rounded focus:ring-primary accent-primary" type="checkbox">
+</div>
+<div class="flex items-center justify-between py-space-xs">
+<span class="text-body-md text-on-surface-variant">Morning Market News Digest</span>
+<input class="w-4 h-4 text-primary rounded focus:ring-primary accent-primary" type="checkbox">
+</div>
+</div>
+</div>
+<div class="p-space-lg bg-surface-container-low flex items-center justify-end gap-space-md">
+<button class="px-space-md py-space-sm text-on-surface-variant hover:text-on-surface text-label-md" onclick="closePreferencesModal()">Cancel</button>
+<button class="px-space-md py-space-sm bg-primary text-on-primary text-label-md rounded-xl hover:opacity-95" onclick="savePreferences()">Save Preferences</button>
+</div>
+</div>
+</div>
+<!-- Create Alert Modal (Hidden initially) -->
+<div class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-50 flex items-center justify-center p-space-md hidden" id="createAlertModal">
+<div class="bg-surface-container-lowest max-w-md w-full rounded-2xl shadow-xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+<div class="p-space-lg border-b border-surface-container flex items-center justify-between">
+<h3 class="text-headline-md text-on-surface">Create Price Alert</h3>
+<button class="p-space-xs rounded-full hover:bg-surface-container text-on-surface-variant" onclick="closeCreateAlertModal()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="p-space-lg flex flex-col gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<label class="text-label-sm text-on-surface-variant">Select Asset / Symbol</label>
+<select class="w-full px-space-md py-space-sm bg-surface-container-low rounded-xl text-body-md text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+<option>RELIANCE - Reliance Industries Ltd (₹2,856.40)</option>
+<option>TCS - Tata Consultancy Services (₹3,920.00)</option>
+<option>INFY - Infosys Limited (₹1,450.25)</option>
+<option>ZOMATO - Zomato Limited (₹194.80)</option>
+<option>TATAMOTORS - Tata Motors Ltd (₹945.50)</option>
+</select>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="text-label-sm text-on-surface-variant">Condition</label>
+<select class="w-full px-space-md py-space-sm bg-surface-container-low rounded-xl text-body-md text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+<option>Crosses Above</option>
+<option>Falls Below</option>
+<option>Rises Above</option>
+<option>Daily Change % Greater Than</option>
+</select>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="text-label-sm text-on-surface-variant">Target Price (₹)</label>
+<input class="w-full px-space-md py-space-sm bg-surface-container-low rounded-xl text-body-md text-on-surface focus:outline-none focus:ring-1 focus:ring-primary" placeholder="e.g. 2900.00" type="text">
+</div>
+</div>
+<div class="p-space-lg bg-surface-container-low flex items-center justify-end gap-space-md">
+<button class="px-space-md py-space-sm text-on-surface-variant hover:text-on-surface text-label-md" onclick="closeCreateAlertModal()">Cancel</button>
+<button class="px-space-md py-space-sm bg-primary text-on-primary text-label-md rounded-xl hover:opacity-95" onclick="submitNewAlert()">Set Alert</button>
+</div>
+</div>
+</div>
+<script>
+    function filterTab(category) {
+      // Update tab active classes
+      const buttons = document.querySelectorAll('.tab-btn');
+      buttons.forEach(btn => {
+        btn.classList.remove('bg-primary', 'text-on-primary');
+        btn.classList.add('text-on-surface-variant', 'hover:bg-surface-container');
+      });
+      event.currentTarget.classList.remove('text-on-surface-variant', 'hover:bg-surface-container');
+      event.currentTarget.classList.add('bg-primary', 'text-on-primary');
+
+      // If price tab is clicked, also show table or switch view
+      if(category === 'price') {
+        document.getElementById('notificationFeedContainer').style.display = 'none';
+        document.getElementById('priceAlertsManagementContainer').style.display = 'flex';
+        document.getElementById('tableViewBtn').classList.add('bg-surface-container', 'text-on-surface');
+        document.getElementById('feedViewBtn').classList.remove('bg-surface-container', 'text-on-surface');
+        return;
+      } else {
+        document.getElementById('priceAlertsManagementContainer').style.display = 'none';
+        document.getElementById('notificationFeedContainer').style.display = 'flex';
+        document.getElementById('tableViewBtn').classList.remove('bg-surface-container', 'text-on-surface');
+        document.getElementById('feedViewBtn').classList.add('bg-surface-container', 'text-on-surface');
+      }
+
+      // Filter items
+      const items = document.querySelectorAll('.notification-card');
+      items.forEach(item => {
+        if (category === 'all' || item.getAttribute('data-category') === category) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    function toggleViewMode(mode) {
+      const feedContainer = document.getElementById('notificationFeedContainer');
+      const tableContainer = document.getElementById('priceAlertsManagementContainer');
+      const feedBtn = document.getElementById('feedViewBtn');
+      const tableBtn = document.getElementById('tableViewBtn');
+
+      if (mode === 'table') {
+        feedContainer.style.display = 'none';
+        tableContainer.style.display = 'flex';
+        tableBtn.classList.add('bg-surface-container', 'text-on-surface');
+        feedBtn.classList.remove('bg-surface-container', 'text-on-surface');
+      } else {
+        tableContainer.style.display = 'none';
+        feedContainer.style.display = 'flex';
+        feedBtn.classList.add('bg-surface-container', 'text-on-surface');
+        tableBtn.classList.remove('bg-surface-container', 'text-on-surface');
+      }
+    }
+
+    function markAllRead() {
+      const cards = document.querySelectorAll('.notification-card');
+      cards.forEach(card => {
+        card.style.opacity = '0.8';
+        const indicator = card.querySelector('.w-2.5.h-2.5, .w-2.h-2.bg-primary');
+        if(indicator) indicator.remove();
+      });
+      alert('All notifications marked as read.');
+    }
+
+    function openPreferencesModal() {
+      document.getElementById('preferencesModal').classList.remove('hidden');
+    }
+
+    function closePreferencesModal() {
+      document.getElementById('preferencesModal').classList.add('hidden');
+    }
+
+    function savePreferences() {
+      closePreferencesModal();
+      alert('Notification preferences updated successfully.');
+    }
+
+    function openCreateAlertModal() {
+      document.getElementById('createAlertModal').classList.remove('hidden');
+    }
+
+    function closeCreateAlertModal() {
+      document.getElementById('createAlertModal').classList.add('hidden');
+    }
+
+    function submitNewAlert() {
+      closeCreateAlertModal();
+      alert('New price alert successfully created.');
+    }
+  </script>
+</div></main></body></html>

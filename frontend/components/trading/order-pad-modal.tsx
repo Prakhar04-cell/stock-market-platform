@@ -20,11 +20,14 @@ import {
 } from "lucide-react";
 
 export interface OrderPadProps {
-  stockId: string;
+  stockId?: string;
   symbol: string;
   stockName?: string;
+  companyName?: string;
   defaultSide?: "BUY" | "SELL";
-  onOrderPlaced?: () => void;
+  initialSide?: "BUY" | "SELL" | string;
+  onOrderPlaced?: () => void | Promise<void>;
+  onOrderSuccess?: () => void | Promise<void>;
   embedded?: boolean;
   onClose?: () => void;
 }
@@ -33,13 +36,18 @@ export function OrderPad({
   stockId,
   symbol,
   stockName,
-  defaultSide = "BUY",
+  companyName,
+  defaultSide,
+  initialSide,
   onOrderPlaced,
+  onOrderSuccess,
   embedded = false,
   onClose,
 }: OrderPadProps) {
   const cleanSymbol = normalizeStockSymbol(symbol);
-  const [side, setSide] = useState<"BUY" | "SELL">(defaultSide);
+  const resolvedSide: "BUY" | "SELL" =
+    (defaultSide || initialSide)?.toUpperCase() === "SELL" ? "SELL" : "BUY";
+  const [side, setSide] = useState<"BUY" | "SELL">(resolvedSide);
   const [orderType, setOrderType] = useState<"MARKET" | "LIMIT">("MARKET");
   const [quantity, setQuantity] = useState<number>(1);
   const [price, setPrice] = useState<string>("");
@@ -51,10 +59,13 @@ export function OrderPad({
   const [confirmedOrder, setConfirmedOrder] = useState<any | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Sync defaultSide
+  // Sync defaultSide / initialSide
   useEffect(() => {
-    setSide(defaultSide);
-  }, [defaultSide]);
+    const s = (defaultSide || initialSide)?.toUpperCase();
+    if (s === "BUY" || s === "SELL") {
+      setSide(s as "BUY" | "SELL");
+    }
+  }, [defaultSide, initialSide]);
 
   // Load wallet balance
   const loadWallet = useCallback(async () => {
@@ -184,6 +195,9 @@ export function OrderPad({
       if (onOrderPlaced) {
         onOrderPlaced();
       }
+      if (onOrderSuccess) {
+        onOrderSuccess();
+      }
     } catch (err: any) {
       const msg = err.message || "Failed to place paper order. Please verify virtual cash balance or holdings.";
       if (msg.includes("MARKET_DATA_UNAVAILABLE")) {
@@ -214,7 +228,7 @@ export function OrderPad({
             </span>
           </div>
           <span className="text-[11px] text-[#6B7280] block truncate max-w-[200px]">
-            {stockName || `${cleanSymbol} Equities`}
+            {stockName || companyName || `${cleanSymbol} Equities`}
           </span>
         </div>
 

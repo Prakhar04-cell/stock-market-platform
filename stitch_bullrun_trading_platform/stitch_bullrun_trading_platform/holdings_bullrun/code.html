@@ -1,0 +1,498 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error-container": "#ffdad6",
+          "secondary-fixed": "#dce2f7",
+          "tertiary-fixed-dim": "#62df7d",
+          "surface-container-highest": "#e1e2e4",
+          "surface-container-high": "#e7e8ea",
+          "surface-tint": "#4d44e3",
+          "on-secondary-container": "#5c6274",
+          "outline-variant": "#c7c4d8",
+          "primary-fixed-dim": "#c3c0ff",
+          "outline": "#777587",
+          "tertiary-container": "#00702f",
+          "on-tertiary": "#ffffff",
+          "tertiary": "#005522",
+          "surface-dim": "#d9dadc",
+          "secondary": "#575e70",
+          "on-tertiary-fixed-variant": "#005320",
+          "surface-container": "#edeef0",
+          "surface-variant": "#e1e2e4",
+          "primary-container": "#4f46e5",
+          "on-error-container": "#93000a",
+          "on-background": "#191c1e",
+          "on-error": "#ffffff",
+          "on-secondary": "#ffffff",
+          "primary-fixed": "#e2dfff",
+          "surface-container-lowest": "#ffffff",
+          "surface-container-low": "#f2f4f6",
+          "inverse-primary": "#c3c0ff",
+          "background": "#f8f9fb",
+          "on-secondary-fixed": "#141b2b",
+          "on-tertiary-container": "#78f591",
+          "surface": "#f8f9fb",
+          "on-surface": "#191c1e",
+          "on-tertiary-fixed": "#002109",
+          "on-secondary-fixed-variant": "#404758",
+          "surface-bright": "#f8f9fb",
+          "on-primary-fixed-variant": "#3323cc",
+          "on-primary": "#ffffff",
+          "secondary-container": "#d9dff5",
+          "on-primary-fixed": "#0f0069",
+          "primary": "#3525cd",
+          "inverse-surface": "#2e3132",
+          "secondary-fixed-dim": "#c0c6db",
+          "on-primary-container": "#dad7ff",
+          "error": "#ba1a1a",
+          "on-surface-variant": "#464555",
+          "inverse-on-surface": "#f0f1f3",
+          "tertiary-fixed": "#7ffc97"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "space-lg": "1.5rem",
+          "space-md": "1rem",
+          "margin": "1.5rem",
+          "space-sm": "0.5rem",
+          "gutter": "1rem",
+          "space-xs": "0.25rem",
+          "space-xl": "2rem"
+        },
+        "fontFamily": {
+          "body-md": ["Work Sans"],
+          "tabular-data": ["Work Sans"],
+          "label-md": ["Work Sans"],
+          "headline-sm": ["Work Sans"],
+          "body-lg": ["Work Sans"],
+          "headline-xl": ["Work Sans"],
+          "label-sm": ["Work Sans"],
+          "headline-lg": ["Work Sans"],
+          "headline-md": ["Work Sans"],
+          "body-sm": ["Work Sans"]
+        },
+        "fontSize": {
+          "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+          "tabular-data": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+          "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+          "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+          "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+          "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+          "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+          "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+          "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+          "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+        }
+      }
+    }
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@100..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"></head><body class="bg-surface font-body-md text-on-surface"><header class="fixed top-0 left-0 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex items-center justify-between px-space-xl"><div class="flex items-center gap-space-lg"><img alt="BullRun Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_jSrXZityA6DebTcw55vtDhhZUd0MFdGGRb6IF1-tMVDnnFsuujPjivFjAOFN-rAclxccNjQ-Mf5AcIN1sPYmV_zaypAoqGD0hM2fgPG-gJnruMb_faq8LI6TiWgCEpNaNzE7_mKF6FYVwJDiuL81IT1nAY1TPR99faLbO51WYqrWj1yH3J-cjRaC9AcLfGEkCtpUwhViiq0oa1G2rWCGMI7UJ9jQS9OWW8skBAEZFLv2PJpJjFqT"><span class="font-headline-sm tracking-tight text-on-surface">BullRun</span><nav class="hidden xl:flex items-center gap-space-sm ml-space-lg" data-active-classes="bg-primary-container text-on-primary-container font-medium rounded-lg"><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="dashboard" href="#">Dashboard</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="explore" href="#">Explore</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="holdings" href="#">Holdings</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="positions" href="#">Positions</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="orders" href="#">Orders</a><a class="px-space-md py-space-xs text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" data-path="watchlist" href="#">Watchlist</a></nav></div><div class="flex items-center gap-space-md"><div class="relative hidden md:block w-64"><span class="absolute inset-y-0 left-0 flex items-center pl-space-md pointer-events-none"><span class="material-symbols-outlined text-outline text-[18px]">search</span></span><input class="w-full pl-10 pr-space-md py-space-xs bg-surface-container-low rounded-lg text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Search symbols, assets..." type="text"></div><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-space-xs bg-tertiary-container/10 rounded-full text-tertiary text-label-sm"><span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span><span>LIVE MARKET</span></div><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-space-xs bg-secondary-container text-on-secondary-container rounded-lg text-label-sm font-medium"><span>Paper Trade</span></div><button class="relative p-space-xs rounded-full hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/30"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-medium text-label-md">BR</div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface"><div class="flex flex-col w-full pb-24">
+<div class="px-space-xl pt-space-xl pb-space-md flex flex-col md:flex-row md:items-center md:justify-between gap-space-md">
+<div>
+<span class="text-label-sm uppercase tracking-wider text-outline font-tabular-data">Portfolio Management</span>
+<h1 class="text-headline-lg text-on-surface mt-space-xs">Equity Holdings</h1>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-space-xs bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg text-label-md transition-colors flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Export CSV</span>
+</button>
+<button class="px-space-md py-space-xs bg-primary text-on-primary hover:bg-primary/90 rounded-lg text-label-md transition-colors flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Add Transaction</span>
+</button>
+</div>
+</div>
+<div class="px-space-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md mb-space-xl">
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-label-sm text-outline font-tabular-data uppercase tracking-wider">Total Investment</span>
+<span class="p-space-xs rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+</span>
+</div>
+<div class="mt-space-md">
+<div class="text-headline-md font-tabular-data text-on-surface">₹10,50,000.00</div>
+<div class="text-body-sm text-outline mt-space-xs">Across 14 Active Stocks</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-label-sm text-outline font-tabular-data uppercase tracking-wider">Current Value</span>
+<span class="p-space-xs rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">trending_up</span>
+</span>
+</div>
+<div class="mt-space-md">
+<div class="text-headline-md font-tabular-data text-on-surface">₹12,45,680.50</div>
+<div class="text-body-sm text-tertiary font-tabular-data mt-space-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+<span>+₹1,95,680.50 Total Return</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-label-sm text-outline font-tabular-data uppercase tracking-wider">Total P&amp;L</span>
+<span class="p-space-xs rounded-lg bg-tertiary-container/10 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">insights</span>
+</span>
+</div>
+<div class="mt-space-md">
+<div class="text-headline-md font-tabular-data text-tertiary">+₹1,95,680.50</div>
+<div class="text-body-sm text-tertiary font-tabular-data mt-space-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+18.63% Overall Gain</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-label-sm text-outline font-tabular-data uppercase tracking-wider">Today's P&amp;L</span>
+<span class="p-space-xs rounded-lg bg-tertiary-container/10 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+</span>
+</div>
+<div class="mt-space-md">
+<div class="text-headline-md font-tabular-data text-tertiary">+₹8,420.25</div>
+<div class="text-body-sm text-tertiary font-tabular-data mt-space-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+0.68% Today</span>
+</div>
+</div>
+</div>
+</div>
+<div class="px-space-xl grid grid-cols-1 lg:grid-cols-3 gap-space-lg mb-space-xl">
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between lg:col-span-1">
+<div>
+<div class="flex items-center justify-between mb-space-md">
+<h2 class="text-headline-sm text-on-surface">Sector Allocation</h2>
+<span class="text-label-sm text-outline font-tabular-data">4 Sectors</span>
+</div>
+<div class="space-y-space-md">
+<div>
+<div class="flex justify-between text-body-sm mb-space-xs">
+<span class="text-on-surface font-medium flex items-center gap-space-xs"><span class="w-3 h-3 rounded-full bg-primary inline-block"></span>Information Technology</span>
+<span class="font-tabular-data text-on-surface-variant">35% (₹4,35,988)</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 35%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-body-sm mb-space-xs">
+<span class="text-on-surface font-medium flex items-center gap-space-xs"><span class="w-3 h-3 rounded-full bg-tertiary inline-block"></span>Banking &amp; Finance</span>
+<span class="font-tabular-data text-on-surface-variant">28% (₹3,48,790)</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-tertiary h-full rounded-full" style="width: 28%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-body-sm mb-space-xs">
+<span class="text-on-surface font-medium flex items-center gap-space-xs"><span class="w-3 h-3 rounded-full bg-secondary inline-block"></span>Energy &amp; Utilities</span>
+<span class="font-tabular-data text-on-surface-variant">22% (₹2,74,049)</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 22%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-body-sm mb-space-xs">
+<span class="text-on-surface font-medium flex items-center gap-space-xs"><span class="w-3 h-3 rounded-full bg-outline-variant inline-block"></span>Pharmaceuticals</span>
+<span class="font-tabular-data text-on-surface-variant">15% (₹1,86,852)</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="bg-outline-variant h-full rounded-full" style="width: 15%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-space-lg pt-space-md border-t border-surface-container/50 flex items-center justify-between text-body-sm text-outline">
+<span>Diversification Score</span>
+<span class="text-tertiary font-medium flex items-center gap-1 font-tabular-data"><span class="material-symbols-outlined text-[16px]">verified</span>Optimal (8.4/10)</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm lg:col-span-2 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-md">
+<h2 class="text-headline-sm text-on-surface">Performance Overview</h2>
+<div class="flex items-center gap-space-xs bg-surface-container p-1 rounded-lg">
+<button class="px-space-sm py-1 text-label-sm bg-surface-container-lowest text-on-surface rounded shadow-sm">1M</button>
+<button class="px-space-sm py-1 text-label-sm text-outline hover:text-on-surface">6M</button>
+<button class="px-space-sm py-1 text-label-sm text-outline hover:text-on-surface">1Y</button>
+<button class="px-space-sm py-1 text-label-sm text-outline hover:text-on-surface">ALL</button>
+</div>
+</div>
+<div class="w-full h-48 flex items-end justify-between gap-2 pt-space-lg pb-space-xs px-2 bg-surface-container/30 rounded-xl relative">
+<div class="absolute inset-0 flex flex-col justify-between p-4 pointer-events-none opacity-20">
+<div class="w-full h-px bg-outline"></div>
+<div class="w-full h-px bg-outline"></div>
+<div class="w-full h-px bg-outline"></div>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group relative z-10">
+<div class="w-full bg-primary/20 group-hover:bg-primary transition-colors rounded-t" style="height: 40%;"></div>
+<span class="text-[10px] text-outline font-tabular-data">Nov 1</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group relative z-10">
+<div class="w-full bg-primary/20 group-hover:bg-primary transition-colors rounded-t" style="height: 45%;"></div>
+<span class="text-[10px] text-outline font-tabular-data">Nov 5</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group relative z-10">
+<div class="w-full bg-primary/20 group-hover:bg-primary transition-colors rounded-t" style="height: 52%;"></div>
+<span class="text-[10px] text-outline font-tabular-data">Nov 10</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group relative z-10">
+<div class="w-full bg-primary/20 group-hover:bg-primary transition-colors rounded-t" style="height: 48%;"></div>
+<span class="text-[10px] text-outline font-tabular-data">Nov 15</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group relative z-10">
+<div class="w-full bg-primary/20 group-hover:bg-primary transition-colors rounded-t" style="height: 65%;"></div>
+<span class="text-[10px] text-outline font-tabular-data">Nov 20</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group relative z-10">
+<div class="w-full bg-primary/20 group-hover:bg-primary transition-colors rounded-t" style="height: 75%;"></div>
+<span class="text-[10px] text-outline font-tabular-data">Nov 25</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group relative z-10">
+<div class="w-full bg-primary group-hover:bg-primary/90 transition-colors rounded-t" style="height: 90%;"></div>
+<span class="text-[10px] text-on-surface font-tabular-data font-semibold">Today</span>
+</div>
+</div>
+</div>
+<div class="mt-space-md flex items-center justify-between text-body-sm text-outline">
+<span>Benchmark: NIFTY 50 (+12.4%)</span>
+<span class="text-tertiary font-tabular-data font-medium">+6.23% Alpha Generated</span>
+</div>
+</div>
+</div>
+<div class="px-space-xl mb-space-md flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md flex-1">
+<div class="relative flex-1 max-w-md">
+<span class="absolute inset-y-0 left-0 flex items-center pl-space-md pointer-events-none">
+<span class="material-symbols-outlined text-outline text-[18px]">search</span>
+</span>
+<input class="w-full pl-10 pr-space-md py-2 bg-surface-container-lowest rounded-lg text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:ring-1 focus:ring-primary shadow-sm" placeholder="Search holdings by name or ticker..." type="text">
+</div>
+<div class="hidden sm:flex items-center gap-space-xs">
+<button class="px-space-md py-2 bg-surface-container-lowest text-on-surface text-label-md rounded-lg shadow-sm font-medium flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+<span>All Sectors</span>
+</button>
+<button class="px-space-md py-2 bg-surface-container-lowest text-on-surface-variant hover:text-on-surface text-label-md rounded-lg shadow-sm transition-colors">
+          IT
+        </button>
+<button class="px-space-md py-2 bg-surface-container-lowest text-on-surface-variant hover:text-on-surface text-label-md rounded-lg shadow-sm transition-colors">
+          Banking
+        </button>
+<button class="px-space-md py-2 bg-surface-container-lowest text-on-surface-variant hover:text-on-surface text-label-md rounded-lg shadow-sm transition-colors">
+          Energy
+        </button>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="text-body-sm text-outline font-tabular-data">Sort by:</span>
+<select class="bg-surface-container-lowest text-on-surface text-label-md py-2 px-space-md rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-primary">
+<option>Current Value (High to Low)</option>
+<option>P&amp;L % (High to Low)</option>
+<option>Alphabetical (A-Z)</option>
+</select>
+</div>
+</div>
+<div class="px-space-xl">
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50 text-outline text-label-sm uppercase tracking-wider font-tabular-data">
+<th class="py-space-md px-space-md font-medium">Stock / Company</th>
+<th class="py-space-md px-space-sm font-medium text-right">Quantity</th>
+<th class="py-space-md px-space-sm font-medium text-right">Avg. Price</th>
+<th class="py-space-md px-space-sm font-medium text-right">LTP</th>
+<th class="py-space-md px-space-sm font-medium text-right">Invested Value</th>
+<th class="py-space-md px-space-sm font-medium text-right">Current Value</th>
+<th class="py-space-md px-space-md font-medium text-right">P&amp;L (₹ &amp; %)</th>
+<th class="py-space-md px-space-md font-medium text-center">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container/60 text-body-md font-tabular-data">
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-9 h-9 rounded-lg bg-primary-container/20 text-primary flex items-center justify-center font-bold text-label-md">TCS</div>
+<div>
+<div class="font-semibold text-on-surface">TCS</div>
+<div class="text-body-sm text-outline font-sans">Tata Consultancy Services</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-sm text-right text-on-surface">45</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹3,420.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹3,850.50</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹1,53,900.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹1,73,272.50</td>
+<td class="py-space-md px-space-md text-right">
+<div class="text-tertiary font-semibold">+₹19,372.50</div>
+<div class="text-body-sm text-tertiary">+12.59%</div>
+</td>
+<td class="py-space-md px-space-md text-center">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="px-space-sm py-1 bg-tertiary-container/10 text-tertiary hover:bg-tertiary-container/20 rounded text-label-sm font-medium transition-colors">Buy</button>
+<button class="px-space-md py-1 bg-error-container/40 text-error hover:bg-error-container/60 rounded text-label-sm font-medium transition-colors">Sell</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-9 h-9 rounded-lg bg-tertiary-container/20 text-tertiary flex items-center justify-center font-bold text-label-md">RELI</div>
+<div>
+<div class="font-semibold text-on-surface">RELIANCE</div>
+<div class="text-body-sm text-outline font-sans">Reliance Industries Ltd</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-sm text-right text-on-surface">60</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹2,350.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹2,480.20</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹1,41,000.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹1,48,812.00</td>
+<td class="py-space-md px-space-md text-right">
+<div class="text-tertiary font-semibold">+₹7,812.00</div>
+<div class="text-body-sm text-tertiary">+5.54%</div>
+</td>
+<td class="py-space-md px-space-md text-center">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="px-space-sm py-1 bg-tertiary-container/10 text-tertiary hover:bg-tertiary-container/20 rounded text-label-sm font-medium transition-colors">Buy</button>
+<button class="px-space-md py-1 bg-error-container/40 text-error hover:bg-error-container/60 rounded text-label-sm font-medium transition-colors">Sell</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-9 h-9 rounded-lg bg-secondary-container text-secondary flex items-center justify-center font-bold text-label-md">HDFC</div>
+<div>
+<div class="font-semibold text-on-surface">HDFCBANK</div>
+<div class="text-body-sm text-outline font-sans">HDFC Bank Limited</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-sm text-right text-on-surface">120</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹1,510.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹1,690.40</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹1,81,200.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹2,02,848.00</td>
+<td class="py-space-md px-space-md text-right">
+<div class="text-tertiary font-semibold">+₹21,648.00</div>
+<div class="text-body-sm text-tertiary">+11.95%</div>
+</td>
+<td class="py-space-md px-space-md text-center">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="px-space-sm py-1 bg-tertiary-container/10 text-tertiary hover:bg-tertiary-container/20 rounded text-label-sm font-medium transition-colors">Buy</button>
+<button class="px-space-md py-1 bg-error-container/40 text-error hover:bg-error-container/60 rounded text-label-sm font-medium transition-colors">Sell</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-label-md">INFY</div>
+<div>
+<div class="font-semibold text-on-surface">INFY</div>
+<div class="text-body-sm text-outline font-sans">Infosys Limited</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-sm text-right text-on-surface">85</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹1,320.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹1,540.10</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹1,12,200.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹1,30,908.50</td>
+<td class="py-space-md px-space-md text-right">
+<div class="text-tertiary font-semibold">+₹18,708.50</div>
+<div class="text-body-sm text-tertiary">+16.67%</div>
+</td>
+<td class="py-space-md px-space-md text-center">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="px-space-sm py-1 bg-tertiary-container/10 text-tertiary hover:bg-tertiary-container/20 rounded text-label-sm font-medium transition-colors">Buy</button>
+<button class="px-space-md py-1 bg-error-container/40 text-error hover:bg-error-container/60 rounded text-label-sm font-medium transition-colors">Sell</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-9 h-9 rounded-lg bg-error-container text-error flex items-center justify-center font-bold text-label-md">ITC</div>
+<div>
+<div class="font-semibold text-on-surface">ITC</div>
+<div class="text-body-sm text-outline font-sans">ITC Limited</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-sm text-right text-on-surface">200</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹445.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹432.50</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹89,000.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹86,500.00</td>
+<td class="py-space-md px-space-md text-right">
+<div class="text-error font-semibold">-₹2,500.00</div>
+<div class="text-body-sm text-error">-2.81%</div>
+</td>
+<td class="py-space-md px-space-md text-center">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="px-space-sm py-1 bg-tertiary-container/10 text-tertiary hover:bg-tertiary-container/20 rounded text-label-sm font-medium transition-colors">Buy</button>
+<button class="px-space-md py-1 bg-error-container/40 text-error hover:bg-error-container/60 rounded text-label-sm font-medium transition-colors">Sell</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-9 h-9 rounded-lg bg-tertiary-container/20 text-tertiary flex items-center justify-center font-bold text-label-md">SUN</div>
+<div>
+<div class="font-semibold text-on-surface">SUNPHARMA</div>
+<div class="text-body-sm text-outline font-sans">Sun Pharmaceutical Ind Ltd</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-sm text-right text-on-surface">50</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹1,120.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹1,245.80</td>
+<td class="py-space-md px-space-sm text-right text-on-surface-variant">₹56,000.00</td>
+<td class="py-space-md px-space-sm text-right text-on-surface font-semibold">₹62,290.00</td>
+<td class="py-space-md px-space-md text-right">
+<div class="text-tertiary font-semibold">+₹6,290.00</div>
+<div class="text-body-sm text-tertiary">+11.23%</div>
+</td>
+<td class="py-space-md px-space-md text-center">
+<div class="flex items-center justify-center gap-space-xs">
+<button class="px-space-sm py-1 bg-tertiary-container/10 text-tertiary hover:bg-tertiary-container/20 rounded text-label-sm font-medium transition-colors">Buy</button>
+<button class="px-space-md py-1 bg-error-container/40 text-error hover:bg-error-container/60 rounded text-label-sm font-medium transition-colors">Sell</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-space-md bg-surface-container-low/30 border-t border-surface-container flex items-center justify-between text-body-sm text-outline font-tabular-data">
+<span>Showing 6 of 14 holdings</span>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-1 rounded bg-surface-container-lowest text-on-surface shadow-sm hover:bg-surface-container transition-colors">Previous</button>
+<button class="px-space-md py-1 rounded bg-primary text-on-primary shadow-sm">Next</button>
+</div>
+</div>
+</div>
+</div>
+</div></main></body></html>

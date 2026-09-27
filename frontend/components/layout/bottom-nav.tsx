@@ -10,24 +10,23 @@ export function BottomNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { name: "Home", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Markets", href: "/stocks/NIFTY%2050", icon: LineChart },
-    { name: "Watchlist", href: "/watchlist", icon: Bookmark },
-    { name: "Orders", href: "/orders", icon: Layers },
-    { name: "Portfolio", href: "/portfolio", icon: Briefcase },
+    { name: "Dashboard", href: "/dashboard", icon: "dashboard" },
+    { name: "Explore", href: "/explore", icon: "travel_explore" },
+    { name: "Holdings", href: "/holdings", icon: "account_balance_wallet" },
+    { name: "Orders", href: "/orders", icon: "receipt_long" },
+    { name: "Watchlist", href: "/watchlist", icon: "bookmark" },
+    { name: "Terminal", href: "/terminal", icon: "terminal" },
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#E5E7EB] flex items-center justify-around h-14 px-2 select-none shadow-none">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-lg border-t border-outline-variant/30 flex items-center justify-around h-14 px-2 select-none shadow-sm">
       {navItems.map((item) => {
         const isActive =
-          item.name === "Home"
+          item.href === "/dashboard"
             ? pathname === "/dashboard"
-            : item.name === "Markets"
-            ? pathname.startsWith("/stocks")
+            : item.href === "/holdings"
+            ? pathname === "/holdings" || pathname === "/portfolio"
             : pathname === item.href;
-
-        const Icon = item.icon;
 
         return (
           <Link
@@ -35,15 +34,17 @@ export function BottomNav() {
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center w-full py-1 text-[10px] font-medium transition-colors",
-              isActive ? "text-[#F97316] font-semibold" : "text-[#6B7280] hover:text-[#111827]"
+              isActive ? "text-primary font-semibold" : "text-on-surface-variant hover:text-on-surface"
             )}
           >
-            <Icon
+            <span
               className={cn(
-                "w-4 h-4 mb-0.5 transition-colors",
-                isActive ? "text-[#F97316]" : "text-[#9CA3AF]"
+                "material-symbols-outlined text-[20px] mb-0.5 transition-colors",
+                isActive ? "text-primary" : "text-outline"
               )}
-            />
+            >
+              {item.icon}
+            </span>
             <span>{item.name}</span>
           </Link>
         );

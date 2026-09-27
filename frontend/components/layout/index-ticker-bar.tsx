@@ -116,46 +116,17 @@ export function IndexTickerBar() {
   const isLive = connectionState === "CONNECTED";
 
   return (
-    <div className="w-full h-9 sm:h-10 bg-white border-b border-[#E5E7EB] px-4 sm:px-6 flex items-center gap-3 sm:gap-6 text-xs overflow-x-auto select-none no-scrollbar">
+    <div className="w-full bg-surface-container-low border-b border-outline-variant/30 py-2 px-4 sm:px-6 lg:px-8 overflow-x-auto no-scrollbar flex items-center gap-6 text-body-sm whitespace-nowrap select-none">
       {/* 1. Global Market Feed Indicator Badge */}
-      <div
-        className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium shrink-0 border transition-colors ${
-          isLive
-            ? "bg-[#F0FDF4] border-[#BBF7D0] text-[#16A34A]"
-            : providerInfo.is_fallback
-            ? "bg-[#FFFBEB] border-[#FDE68A] text-[#B45309]"
-            : "bg-[#F8FAFC] border-[#E5E7EB] text-[#4B5563]"
-        }`}
-        title={
-          isLive
-            ? "Market WebSocket stream connected"
-            : providerInfo.is_fallback
-            ? "Market Data: Fallback Provider (BharatStockAPI)"
-            : "Market WebSocket feed disconnected"
-        }
-      >
-        <span
-          className={`w-1.5 h-1.5 rounded-full ${
-            isLive
-              ? "bg-[#16A34A] animate-pulse"
-              : providerInfo.is_fallback
-              ? "bg-[#D97706]"
-              : "bg-slate-400"
-          }`}
-        />
-        <span>
-          {isLive
-            ? "● LIVE FEED"
-            : providerInfo.is_fallback
-            ? "MARKET DATA: FALLBACK"
-            : "○ FEED DISCONNECTED"}
-        </span>
+      <div className="flex items-center gap-1.5 font-medium text-outline shrink-0">
+        <span className="material-symbols-outlined text-[16px] text-primary">trending_up</span>
+        <span className="text-xs uppercase tracking-wider font-semibold">INDICES</span>
       </div>
 
-      <div className="h-3.5 w-[1px] bg-[#E5E7EB] shrink-0" />
+      <div className="h-3.5 w-[1px] bg-outline-variant/40 shrink-0" />
 
       {/* 2. Horizontal Index Ribbons */}
-      <div className="flex items-center gap-4 sm:gap-6 shrink-0 font-mono text-[13px]">
+      <div className="flex items-center gap-6 shrink-0">
         {indices.map((idx) => {
           const hasValue = idx.value !== null && idx.value !== undefined && idx.status !== "UNAVAILABLE";
           const isPos = idx.is_positive;
@@ -164,41 +135,55 @@ export function IndexTickerBar() {
             <Link
               key={idx.symbol}
               href={`/stocks/${encodeURIComponent(idx.symbol)}`}
-              className="flex items-center gap-2 group hover:opacity-85 transition-opacity"
+              className="flex items-center gap-2 group hover:opacity-80 transition-opacity"
             >
-              <span className="font-sans font-medium text-[#111827] text-xs sm:text-[13px] group-hover:text-[#F97316]">
+              <span className="font-medium text-on-surface text-xs sm:text-[13px] group-hover:text-primary transition-colors">
                 {idx.name}
               </span>
 
               {hasValue ? (
                 <div className="flex items-baseline gap-1.5">
-                  <span className="font-semibold text-[#111827] text-xs sm:text-[13px] tabular-nums">
+                  <span className="font-tabular-data font-semibold text-on-surface text-xs sm:text-[13px] tabular-nums">
                     {formatStockPrice(idx.value)}
                   </span>
                   <span
-                    className={`text-[11px] sm:text-xs font-medium tabular-nums ${
-                      isPos ? "text-[#16A34A]" : "text-[#DC2626]"
+                    className={`font-tabular-data text-[11px] sm:text-xs font-medium tabular-nums flex items-center gap-0.5 ${
+                      isPos ? "text-tertiary" : "text-error"
                     }`}
                   >
-                    {isPos ? "+" : ""}
-                    {idx.change !== null ? idx.change.toFixed(2) : "0.00"}{" "}
-                    ({isPos ? "+" : ""}
-                    {idx.change_percent !== null ? idx.change_percent.toFixed(2) : "0.00"}%)
+                    <span>{isPos ? "+" : ""}{idx.change !== null ? idx.change.toFixed(2) : "0.00"}</span>
+                    <span>({isPos ? "+" : ""}{idx.change_percent !== null ? idx.change_percent.toFixed(2) : "0.00"}%)</span>
                   </span>
                 </div>
               ) : idx.status === "LOADING" ? (
                 <div className="flex items-center gap-1.5 animate-pulse">
-                  <div className="w-12 h-3.5 bg-slate-200 rounded" />
-                  <div className="w-10 h-3 bg-slate-100 rounded" />
+                  <div className="w-12 h-3.5 bg-surface-container-high rounded" />
+                  <div className="w-10 h-3 bg-surface-container rounded" />
                 </div>
               ) : (
-                <span className="text-[#6B7280] text-[11px] font-sans font-normal">
-                  Market data unavailable
+                <span className="text-outline text-[11px] font-normal">
+                  Unavailable
                 </span>
               )}
             </Link>
           );
         })}
+      </div>
+
+      {/* Provider badge at end */}
+      <div className="ml-auto hidden xl:flex items-center gap-2 shrink-0">
+        <span
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium ${
+            isLive
+              ? "bg-tertiary-container/15 text-tertiary"
+              : providerInfo.is_fallback
+              ? "bg-amber-100 text-amber-800"
+              : "bg-surface-container text-outline"
+          }`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${isLive ? "bg-tertiary animate-pulse" : "bg-outline"}`} />
+          <span>{isLive ? "LIVE FEED" : providerInfo.is_fallback ? "FALLBACK" : "OFFLINE"}</span>
+        </span>
       </div>
     </div>
   );
