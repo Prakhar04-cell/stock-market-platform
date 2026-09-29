@@ -12,6 +12,7 @@ import {
   formatStockPrice,
   formatPnL,
 } from "@/lib/formatters";
+import { MobileDashboardView, IndexItem } from "@/components/mobile";
 
 interface PortfolioSummary {
   total_invested_value: number;
@@ -87,6 +88,30 @@ export default function DashboardPage() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [orderSuccessMsg, setOrderSuccessMsg] = useState<string | null>(null);
 
+  // Mobile specific: indices & user greeting
+  const [indices, setIndices] = useState<IndexItem[]>([]);
+  const [userName, setUserName] = useState("Trader");
+
+  useEffect(() => {
+    async function fetchIndicesAndUser() {
+      try {
+        const [tickerRes, userRes] = await Promise.allSettled([
+          apiRequest<{ indices: IndexItem[] }>("/api/v1/market/ticker"),
+          apiRequest<{ full_name?: string }>("/api/v1/auth/me"),
+        ]);
+        if (tickerRes.status === "fulfilled" && tickerRes.value?.indices) {
+          setIndices(tickerRes.value.indices);
+        }
+        if (userRes.status === "fulfilled" && userRes.value?.full_name) {
+          setUserName(userRes.value.full_name);
+        }
+      } catch {
+        // Unauthenticated or offline
+      }
+    }
+    fetchIndicesAndUser();
+  }, []);
+
   // Load portfolio and market movers
   const loadDashboardData = useCallback(async () => {
     setIsPortfolioLoading(true);
@@ -101,16 +126,7 @@ export default function DashboardPage() {
       if (portData.status === "fulfilled" && portData.value) {
         setPortfolio(portData.value);
       } else {
-        setPortfolio({
-          total_invested_value: 1050000,
-          current_portfolio_value: 1245680.5,
-          total_unrealized_pnl: 195680.5,
-          realized_pnl: 18420.25,
-          total_pnl: 214100.75,
-          cash_balance: 124500,
-          available_cash: 124500,
-          holdings: [],
-        });
+        setPortfolio(null);
       }
 
       if (movData.status === "fulfilled" && movData.value) {
@@ -183,9 +199,9 @@ export default function DashboardPage() {
     setOrderModalOpen(true);
   };
 
-  const totalValue = portfolio?.current_portfolio_value ?? 1245680.5;
-  const investedVal = portfolio?.total_invested_value ?? 1050000;
-  const totalPnL = portfolio?.total_unrealized_pnl ?? 195680.5;
+  const totalValue = portfolio?.current_portfolio_value ?? 0;
+  const investedVal = portfolio?.total_invested_value ?? 0;
+  const totalPnL = portfolio?.total_unrealized_pnl ?? 0;
   const totalPnLPct = investedVal > 0 ? (totalPnL / investedVal) * 100 : 0;
   const isPos = totalPnL >= 0;
 
@@ -193,8 +209,30 @@ export default function DashboardPage() {
   const activeLtp = livePrices[inlineSymbol]?.ltp || inlinePrice;
   const marginRequired = inlineQty * activeLtp * (inlineProduct === "MIS" ? 0.2 : 1);
 
+  // Watchlist formatted with real livePrices
+  const mobileWatchlist = useMemo(() => {
+    return DEFAULT_WATCHLIST.map((item) => {
+      const live = livePrices[item.symbol];
+      return {
+        symbol: item.symbol,
+        name: item.name,
+        exchange: item.exchange,
+        ltp: live ? live.ltp : item.ltp,
+        change: live ? live.change : item.change,
+        change_percent: live ? live.change_percent : item.change_percent,
+        volume: item.volume,
+        shares: "1 share",
+        category: ["RELIANCE", "TCS", "INFY"].includes(item.symbol) ? "Tech" : "Banking",
+      };
+    });
+  }, [livePrices]);
+
   return (
-    <div className="w-full max-w-[1600px] mx-auto p-space-md sm:p-space-lg lg:p-space-xl grid grid-cols-1 xl:grid-cols-12 gap-space-lg lg:gap-space-xl">
+    <>
+      {/* ========================================================= */}
+      {/* Desktop View (Preserved 100% as is on md+) */}
+      {/* ========================================================= */}
+      <div className="hidden md:grid w-full max-w-[1600px] mx-auto p-space-md sm:p-space-lg lg:p-space-xl grid-cols-1 xl:grid-cols-12 gap-space-lg lg:gap-space-xl">
       {/* ========================================================= */}
       {/* Left Main Column (8 cols on xl) */}
       {/* ========================================================= */}
@@ -776,8 +814,33 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      </div>
 
-      {/* Modal: Real Order Pad for trading */}
+      {/* ========================================================= */}
+      {/* Mobile Stitch View (100% Stitch UI on <md) */}
+      {/* ========================================================= */}
+      <div className="block md:hidden mobile-stitch">
+        <MobileDashboardView
+          userName={userName}
+          portfolio={{
+            totalValue,
+            investedValue: investedVal,
+            availableBalance: portfolio?.available_cash ?? 0,
+            todayPnL: totalPnL,
+            todayPnLPercent: totalPnLPct,
+          }}
+          indices={indices}
+          watchlist={mobileWatchlist}
+          gainers={movers?.gainers || []}
+          losers={movers?.losers || []}
+          isLoading={isPortfolioLoading}
+          onBuy={(sym, name) => openTradeModal(sym, name || sym, "BUY")}
+          onSell={(sym, name) => openTradeModal(sym, name || sym, "SELL")}
+          onAddFunds={() => router.push("/profile")}
+        />
+      </div>
+
+      {/* Modal: Real Order Pad for trading (Shared by both views) */}
       <OrderPadModal
         isOpen={orderModalOpen}
         onClose={() => setOrderModalOpen(false)}
@@ -789,6 +852,6 @@ export default function DashboardPage() {
           loadDashboardData();
         }}
       />
-    </div>
+    </>
   );
 }

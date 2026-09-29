@@ -86,22 +86,7 @@ export default function StockDetailPage() {
         );
         setQuote(quoteData);
       } catch {
-        // Fallback default quote
-        setQuote({
-          symbol: symbol,
-          instrument_key: `NSE_EQ|${symbol}`,
-          exchange: "NSE",
-          ltp: 2980.5,
-          open: 2940.0,
-          high: 2995.0,
-          low: 2935.0,
-          previous_close: 2935.3,
-          change: 45.2,
-          change_percent: 1.54,
-          volume: 4250000,
-          year_high: 3024.0,
-          year_low: 2221.0,
-        });
+        setQuote(null);
       }
 
       // 3. Check if in user's watchlists

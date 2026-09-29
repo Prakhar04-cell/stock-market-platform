@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api-client";
+import { MobileProfileView } from "@/components/mobile";
 
 interface UserProfile {
   id: string;
@@ -21,24 +22,25 @@ export default function ProfilePage() {
   const router = useRouter();
 
   const [user, setUser] = useState<UserProfile>({
-    id: "USR-88942-X",
-    email: "aarav.sharma@bullrun.in",
-    full_name: "Aarav Sharma",
-    phone: "+91 98765 43210",
+    id: "",
+    email: "",
+    full_name: "Trader",
+    phone: "",
     role: "TRADER",
     is_verified: true,
     kyc_status: "VERIFIED",
-    pan_number: "ABCDE1234F",
-    city: "Mumbai, India",
+    pan_number: "",
+    city: "India",
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState<
     "personal" | "account" | "security" | "notifications" | "trading"
   >("personal");
 
   const [editProfileOpen, setEditProfileOpen] = useState(false);
-  const [nameInput, setNameInput] = useState(user.full_name || "");
-  const [phoneInput, setPhoneInput] = useState(user.phone || "");
+  const [nameInput, setNameInput] = useState("");
+  const [phoneInput, setPhoneInput] = useState("");
 
   // Password update form
   const [currentPassword, setCurrentPassword] = useState("");
@@ -52,22 +54,30 @@ export default function ProfilePage() {
 
   // Load user profile
   const loadProfile = useCallback(async () => {
+    setIsLoading(true);
     try {
       const data = await apiRequest<UserProfile>("/api/v1/auth/me");
       if (data) {
-        setUser((prev) => ({
-          ...prev,
-          ...data,
-          full_name: data.full_name || prev.full_name,
-          email: data.email || prev.email,
-        }));
-        setNameInput(data.full_name || user.full_name || "");
-        setPhoneInput(data.phone || user.phone || "");
+        setUser({
+          id: data.id || "USR-LIVE",
+          email: data.email || "",
+          full_name: data.full_name || "Trader",
+          phone: data.phone || "",
+          role: data.role || "TRADER",
+          is_verified: data.is_verified ?? true,
+          kyc_status: data.kyc_status || "VERIFIED",
+          pan_number: data.pan_number || "",
+          city: data.city || "India",
+        });
+        setNameInput(data.full_name || "");
+        setPhoneInput(data.phone || "");
       }
     } catch {
-      // Fallback
+      // Unauthenticated or network error
+    } finally {
+      setIsLoading(false);
     }
-  }, [user.full_name, user.phone]);
+  }, []);
 
   useEffect(() => {
     loadProfile();
@@ -110,7 +120,9 @@ export default function ProfilePage() {
     .toUpperCase();
 
   return (
-    <div className="flex flex-col w-full bg-surface pb-24">
+    <>
+      {/* Desktop View (Preserved 100% on md+) */}
+      <div className="hidden md:flex flex-col w-full bg-surface pb-24">
       <div className="flex flex-col w-full max-w-7xl mx-auto px-space-lg lg:px-space-xl py-space-xl gap-space-xl">
         {/* 1. Header / Banner */}
         <div className="relative bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-space-lg overflow-hidden border border-outline-variant/20">
@@ -526,6 +538,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      </div>
 
       {/* Edit Profile Modal */}
       {editProfileOpen && (
@@ -571,6 +584,17 @@ export default function ProfilePage() {
           </form>
         </div>
       )}
-    </div>
+
+      {/* Mobile Stitch View (<md) */}
+      <div className="block md:hidden mobile-stitch">
+        <MobileProfileView
+          user={user}
+          onLogout={handleLogout}
+          onUpdateProfile={(updated) => {
+            setUser((prev) => ({ ...prev, ...updated }));
+          }}
+        />
+      </div>
+    </>
   );
 }

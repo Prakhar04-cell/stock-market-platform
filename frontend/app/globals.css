@@ -271,3 +271,154 @@
   scrollbar-width: none;
 }
 
+/* ==================================================
+   GOOGLE STITCH MOBILE DESIGN SYSTEM
+   Exact 1:1 match to Stitch Mobile UI export
+   ================================================== */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.mobile-stitch {
+  --stitch-primary: #3525cd;
+  --stitch-primary-container: #4f46e5;
+  --stitch-on-primary-container: #dad7ff;
+  --stitch-primary-fixed: #e2dfff;
+  --stitch-on-primary-fixed: #0f0069;
+  --stitch-secondary: #006e2d;
+  --stitch-secondary-container: #7cf994;
+  --stitch-on-secondary-container: #007230;
+  --stitch-tertiary: #960014;
+  --stitch-tertiary-container: #bc1d25;
+  --stitch-on-tertiary-container: #ffd0cc;
+  --stitch-tertiary-fixed: #ffdad7;
+  --stitch-on-tertiary-fixed: #410004;
+  --stitch-error: #ba1a1a;
+  --stitch-error-container: #ffdad6;
+  --stitch-on-error-container: #93000a;
+  --stitch-surface: #fcf8ff;
+  --stitch-surface-container-lowest: #ffffff;
+  --stitch-surface-container-low: #f5f2ff;
+  --stitch-surface-container: #f0ecf9;
+  --stitch-surface-container-high: #eae6f4;
+  --stitch-surface-container-highest: #e4e1ee;
+  --stitch-on-surface: #1b1b24;
+  --stitch-on-surface-variant: #464555;
+  --stitch-outline: #777587;
+  --stitch-outline-variant: #c7c4d8;
+}
+
+/* Color bindings scoped to mobile-stitch */
+.mobile-stitch .bg-surface { background-color: #fcf8ff !important; }
+.mobile-stitch .bg-surface-container-lowest { background-color: #ffffff !important; }
+.mobile-stitch .bg-surface-container-low { background-color: #f5f2ff !important; }
+.mobile-stitch .bg-surface-container { background-color: #f0ecf9 !important; }
+.mobile-stitch .bg-surface-container-high { background-color: #eae6f4 !important; }
+.mobile-stitch .bg-surface-container-highest { background-color: #e4e1ee !important; }
+.mobile-stitch .bg-surface-variant { background-color: #e4e1ee !important; }
+
+.mobile-stitch .text-on-surface { color: #1b1b24 !important; }
+.mobile-stitch .text-on-surface-variant { color: #464555 !important; }
+.mobile-stitch .text-outline { color: #777587 !important; }
+.mobile-stitch .border-outline-variant { border-color: #c7c4d8 !important; }
+
+.mobile-stitch .bg-primary { background-color: #3525cd !important; }
+.mobile-stitch .text-primary { color: #3525cd !important; }
+.mobile-stitch .border-primary { border-color: #3525cd !important; }
+.mobile-stitch .bg-primary-container { background-color: #4f46e5 !important; }
+.mobile-stitch .text-on-primary { color: #ffffff !important; }
+.mobile-stitch .text-on-primary-container { color: #dad7ff !important; }
+.mobile-stitch .bg-primary-fixed { background-color: #e2dfff !important; }
+.mobile-stitch .text-on-primary-fixed { color: #0f0069 !important; }
+
+.mobile-stitch .bg-secondary { background-color: #006e2d !important; }
+.mobile-stitch .text-secondary { color: #006e2d !important; }
+.mobile-stitch .text-on-secondary { color: #ffffff !important; }
+.mobile-stitch .bg-secondary-container { background-color: #7cf994 !important; }
+.mobile-stitch .text-on-secondary-container { color: #007230 !important; }
+.mobile-stitch .bg-secondary-fixed-dim { background-color: #62df7d !important; }
+
+.mobile-stitch .bg-tertiary { background-color: #960014 !important; }
+.mobile-stitch .text-tertiary { color: #960014 !important; }
+.mobile-stitch .bg-tertiary-container { background-color: #bc1d25 !important; }
+.mobile-stitch .text-on-tertiary-container { color: #ffd0cc !important; }
+.mobile-stitch .bg-tertiary-fixed { background-color: #ffdad7 !important; }
+.mobile-stitch .text-on-tertiary-fixed { color: #410004 !important; }
+
+.mobile-stitch .bg-error { background-color: #ba1a1a !important; }
+.mobile-stitch .text-error { color: #ba1a1a !important; }
+.mobile-stitch .text-on-error { color: #ffffff !important; }
+.mobile-stitch .bg-error-container { background-color: #ffdad6 !important; }
+.mobile-stitch .text-on-error-container { color: #93000a !important; }
+
+/* Mobile Typography Hierarchy */
+.mobile-stitch .text-display-lg-mobile {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 36px;
+  letter-spacing: -0.02em;
+}
+.mobile-stitch .text-headline-md {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -0.01em;
+}
+.mobile-stitch .text-headline-sm {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+}
+.mobile-stitch .text-tabular-data-lg,
+.mobile-stitch .font-tabular-data-lg {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+}
+.mobile-stitch .text-tabular-data,
+.mobile-stitch .font-tabular-data {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.mobile-stitch .text-label-md,
+.mobile-stitch .font-label-md {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+}
+.mobile-stitch .text-body-lg,
+.mobile-stitch .font-body-lg {
+  font-family: 'Manrope', var(--font-inter, 'Inter', sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+.mobile-stitch .text-body-md,
+.mobile-stitch .font-body-md {
+  font-family: 'Manrope', var(--font-inter, 'Inter', sans-serif);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.mobile-stitch .text-body-sm,
+.mobile-stitch .font-body-sm {
+  font-family: 'Manrope', var(--font-inter, 'Inter', sans-serif);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+

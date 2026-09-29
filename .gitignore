@@ -47,20 +47,21 @@ wheels/
 .installed.cfg
 *.egg
 .pytest_cache/
+**/.pytest_cache/
 .coverage
 coverage/
 htmlcov/
 
 # Node / Next.js
 node_modules/
+**/node_modules/
 .next/
+**/.next/
 out/
 next-env.d.ts
 *.tsbuildinfo
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+*.log
+*.log*
 
 # Databases & Cache
 *.sqlite

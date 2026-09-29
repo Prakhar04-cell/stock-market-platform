@@ -13,6 +13,7 @@ import {
   formatIndianNumber,
   formatPercentage,
 } from "@/lib/formatters";
+import { MobileExploreView, ExploreStockItem } from "@/components/mobile";
 
 interface QuoteItem {
   symbol: string;
@@ -116,6 +117,7 @@ export default function ExplorePage() {
   const [orderModalStock, setOrderModalStock] = useState<{
     symbol: string;
     stockId: string;
+    name?: string;
     side: "BUY" | "SELL";
   } | null>(null);
 
@@ -174,25 +176,16 @@ export default function ExplorePage() {
           map[sym] = {
             symbol: sym,
             name: q.company_name || q.name || sym,
-            ltp: ltpVal > 0 ? ltpVal : 1850.5,
+            ltp: ltpVal,
             change: Number(q.change || 0),
             change_percent: Number(q.change_percent || 0),
-            volume: Number(q.volume || 1420000),
+            volume: Number(q.volume || 0),
           };
         });
         setMostTradedQuotes(map);
       }
     } catch {
-      // Fallback defaults if endpoint unreachable
-      const fallbackMap: Record<string, QuoteItem> = {
-        RELIANCE: { symbol: "RELIANCE", name: "Reliance Industries", ltp: 2980.5, change: 34.2, change_percent: 1.16, volume: 5820000 },
-        TCS: { symbol: "TCS", name: "Tata Consultancy Services", ltp: 4210.8, change: 48.6, change_percent: 1.17, volume: 2100000 },
-        INFY: { symbol: "INFY", name: "Infosys Ltd", ltp: 1620.4, change: -12.3, change_percent: -0.75, volume: 4300000 },
-        HDFCBANK: { symbol: "HDFCBANK", name: "HDFC Bank Ltd", ltp: 1684.2, change: 18.4, change_percent: 1.1, volume: 8400000 },
-        ICICIBANK: { symbol: "ICICIBANK", name: "ICICI Bank Ltd", ltp: 1140.6, change: 14.2, change_percent: 1.26, volume: 6100000 },
-        SBIN: { symbol: "SBIN", name: "State Bank of India", ltp: 812.3, change: -4.5, change_percent: -0.55, volume: 9200000 },
-      };
-      setMostTradedQuotes(fallbackMap);
+      setMostTradedQuotes({});
     } finally {
       setIsLoadingMostTraded(false);
     }
@@ -216,17 +209,8 @@ export default function ExplorePage() {
         setLosers((res.losers || []).map(mapItem));
       }
     } catch {
-      // Fallback realistic movers
-      setGainers([
-        { symbol: "TATACHEM", name: "Tata Chemicals Ltd", ltp: 1120.4, change: 84.5, change_percent: 8.16, volume: 6400000 },
-        { symbol: "ZOMATO", name: "Zomato Ltd", ltp: 245.8, change: 14.8, change_percent: 6.4, volume: 32000000 },
-        { symbol: "BEL", name: "Bharat Electronics", ltp: 312.4, change: 16.2, change_percent: 5.47, volume: 14200000 },
-      ]);
-      setLosers([
-        { symbol: "PAYTM", name: "One97 Communications", ltp: 685.2, change: -28.4, change_percent: -3.98, volume: 5100000 },
-        { symbol: "INDUSINDBK", name: "IndusInd Bank", ltp: 1390.0, change: -41.2, change_percent: -2.88, volume: 3800000 },
-        { symbol: "BPCL", name: "Bharat Petroleum", ltp: 342.1, change: -8.9, change_percent: -2.54, volume: 7200000 },
-      ]);
+      setGainers([]);
+      setLosers([]);
     } finally {
       setIsLoadingMovers(false);
     }
@@ -252,8 +236,44 @@ export default function ExplorePage() {
 
   const activeMoversList = moversTab === "GAINERS" ? gainers : losers;
 
+  // Format list for Stitch Mobile View
+  const mobileExploreStocks = useMemo(() => {
+    const list: ExploreStockItem[] = [];
+    const seen = new Set<string>();
+
+    Object.values(mostTradedQuotes).forEach((q) => {
+      if (!seen.has(q.symbol)) {
+        seen.add(q.symbol);
+        list.push({
+          symbol: q.symbol,
+          name: q.name || q.symbol,
+          price: q.ltp,
+          changePercent: q.change_percent || 0,
+          volume: q.volume ? `${(q.volume / 1000000).toFixed(1)}M` : undefined,
+        });
+      }
+    });
+
+    [...gainers, ...losers].forEach((m) => {
+      if (!seen.has(m.symbol)) {
+        seen.add(m.symbol);
+        list.push({
+          symbol: m.symbol,
+          name: m.name || m.symbol,
+          price: m.ltp,
+          changePercent: m.change_percent || 0,
+          volume: m.volume ? `${(m.volume / 1000000).toFixed(1)}M` : undefined,
+        });
+      }
+    });
+
+    return list;
+  }, [mostTradedQuotes, gainers, losers]);
+
   return (
-    <div className="flex flex-col w-full bg-surface">
+    <>
+      {/* Desktop View (Preserved 100% on md+) */}
+      <div className="hidden md:flex flex-col w-full bg-surface">
       <div className="flex flex-col xl:flex-row w-full p-space-lg lg:p-space-xl gap-space-xl">
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col gap-space-xl min-w-0">
@@ -826,17 +846,43 @@ export default function ExplorePage() {
           </div>
         </div>
       </div>
+      </div>
 
-      {/* Dynamic OrderPadModal */}
+      {/* Mobile Stitch View (<md) */}
+      <div className="block md:hidden mobile-stitch">
+        <MobileExploreView
+          stocks={mobileExploreStocks}
+          isLoading={isLoadingMostTraded || isLoadingMovers}
+          onBuy={(sym, name) =>
+            setOrderModalStock({
+              symbol: sym,
+              stockId: sym,
+              name: name || sym,
+              side: "BUY",
+            })
+          }
+          onSell={(sym, name) =>
+            setOrderModalStock({
+              symbol: sym,
+              stockId: sym,
+              name: name || sym,
+              side: "SELL",
+            })
+          }
+        />
+      </div>
+
+      {/* Dynamic OrderPadModal (Shared by both views) */}
       {orderModalStock && (
         <OrderPadModal
           isOpen={true}
           onClose={() => setOrderModalStock(null)}
           symbol={orderModalStock.symbol}
           stockId={orderModalStock.stockId}
+          companyName={orderModalStock.name}
           initialSide={orderModalStock.side}
         />
       )}
-    </div>
+    </>
   );
 }

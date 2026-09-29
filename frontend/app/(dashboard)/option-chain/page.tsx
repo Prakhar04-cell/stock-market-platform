@@ -64,6 +64,17 @@ export default function OptionChainPage() {
   // Sync spot price when asset changes
   useEffect(() => {
     setSpotPrice(UNDERLYING_CONFIGS[selectedAsset].spot);
+    async function fetchSpot() {
+      try {
+        const q = await apiRequest<{ ltp?: number }>(`/api/v1/market/quote/${selectedAsset}`);
+        if (q?.ltp) {
+          setSpotPrice(Number(q.ltp));
+        }
+      } catch {
+        // Fallback to base strike center
+      }
+    }
+    fetchSpot();
   }, [selectedAsset]);
 
   // WebSocket Live Updates

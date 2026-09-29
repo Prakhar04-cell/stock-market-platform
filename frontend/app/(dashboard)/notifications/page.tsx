@@ -25,74 +25,13 @@ export default function NotificationsPage() {
   >("all");
   const [preferencesOpen, setPreferencesOpen] = useState(false);
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: "n-1",
-      category: "price",
-      title: "Reliance Industries Target Reached",
-      symbol: "RELIANCE",
-      timeAgo: "10 mins ago",
-      description: "Price crossed above your target of ₹2,850.00. Current trading price is ₹2,856.40 (+1.45%).",
-      isRead: false,
-      linkHref: "/stocks/RELIANCE",
-      linkText: "View Chart",
-    },
-    {
-      id: "n-2",
-      category: "trade",
-      title: "Buy Order Executed Successfully",
-      symbol: "TATAMOTORS",
-      timeAgo: "45 mins ago",
-      description: "Limit order for 50 shares executed at ₹945.50. Total debit: ₹47,275.00.",
-      isRead: false,
-      linkHref: "/orders",
-      linkText: "View Order Details",
-    },
-    {
-      id: "n-3",
-      category: "order",
-      title: "Limit Order Placed",
-      symbol: "INFY",
-      timeAgo: "2 hours ago",
-      description: "Buy limit order for 100 shares of INFY at ₹1,610.00 placed and waiting for fill in market depth.",
-      isRead: true,
-      linkHref: "/orders",
-      linkText: "View Orders",
-    },
-    {
-      id: "n-4",
-      category: "portfolio",
-      title: "Daily Portfolio Milestone",
-      timeAgo: "4 hours ago",
-      description: "Your equity portfolio reached a new all-time high of ₹12,45,680.50 (+18.6% total return).",
-      isRead: false,
-      linkHref: "/holdings",
-      linkText: "View Portfolio",
-    },
-    {
-      id: "n-5",
-      category: "news",
-      title: "TCS Enterprise AI Contract",
-      symbol: "TCS",
-      timeAgo: "5 hours ago",
-      description: "TCS announces multi-year partnership with European banking consortium for sovereign AI orchestration.",
-      isRead: true,
-      linkHref: "/stocks/TCS",
-      linkText: "Read Insights",
-    },
-    {
-      id: "n-6",
-      category: "system",
-      title: "Market WebSocket Connected",
-      timeAgo: "Today, 09:15 AM",
-      description: "NSE high-frequency live price stream connected via primary broker gateway with sub-10ms latency.",
-      isRead: true,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load from backend if available
+  // Load from backend
   useEffect(() => {
     (async () => {
+      setIsLoading(true);
       try {
         const res = await apiRequest<any[]>("/api/v1/notifications");
         if (res && res.length > 0) {
@@ -108,9 +47,13 @@ export default function NotificationsPage() {
             linkText: n.link_text || "View",
           }));
           setNotifications(mapped);
+        } else {
+          setNotifications([]);
         }
       } catch {
-        // Keep fallback
+        setNotifications([]);
+      } finally {
+        setIsLoading(false);
       }
     })();
   }, []);
@@ -265,7 +208,14 @@ export default function NotificationsPage() {
 
         {/* Notification Feed View */}
         <div className="flex flex-col gap-space-md">
-          {filteredNotifications.map((n) => {
+          {filteredNotifications.length === 0 ? (
+            <div className="bg-surface-container-lowest p-space-xl rounded-xl shadow-sm text-center py-16 border border-outline-variant/20 flex flex-col items-center justify-center gap-2">
+              <span className="material-symbols-outlined text-[44px] text-outline/60">notifications_off</span>
+              <p className="font-semibold text-headline-sm text-on-surface">No notifications</p>
+              <p className="text-body-sm text-outline">You are all caught up! No notifications in this category.</p>
+            </div>
+          ) : (
+            filteredNotifications.map((n) => {
             const isUnread = !n.isRead;
             const borderCol =
               n.category === "price"
@@ -342,7 +292,7 @@ export default function NotificationsPage() {
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
       </div>
 

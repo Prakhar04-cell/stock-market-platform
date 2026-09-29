@@ -9,6 +9,7 @@ import {
   formatINR,
   formatCompactINR,
 } from "@/lib/formatters";
+import { MobileOrdersView, MobileOrderData } from "@/components/mobile";
 
 interface OrderExecution {
   id: string;
@@ -65,78 +66,10 @@ export default function OrdersPage() {
       if (data && data.length > 0) {
         setOrders(data);
       } else {
-        // Fallback realistic orders
-        const fallbackOrders: OrderItem[] = [
-          {
-            id: "ORD-98421",
-            symbol: "RELIANCE",
-            side: "BUY",
-            order_type: "LIMIT",
-            product_type: "CNC",
-            quantity: 150,
-            filled_quantity: 0,
-            price: 2450.0,
-            status: "OPEN",
-            created_at: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
-            trade_charges: 24.5,
-          },
-          {
-            id: "ORD-98420",
-            symbol: "TCS",
-            side: "SELL",
-            order_type: "MARKET",
-            product_type: "MIS",
-            quantity: 50,
-            filled_quantity: 50,
-            price: 3890.5,
-            status: "COMPLETED",
-            created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            trade_charges: 18.2,
-          },
-          {
-            id: "ORD-98419",
-            symbol: "INFY",
-            side: "BUY",
-            order_type: "LIMIT",
-            product_type: "CNC",
-            quantity: 200,
-            filled_quantity: 200,
-            price: 1420.0,
-            status: "COMPLETED",
-            created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-            trade_charges: 14.1,
-          },
-          {
-            id: "ORD-98418",
-            symbol: "SBIN",
-            side: "BUY",
-            order_type: "LIMIT",
-            product_type: "MIS",
-            quantity: 1000,
-            filled_quantity: 0,
-            price: 580.0,
-            status: "REJECTED",
-            created_at: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
-            trade_charges: 0.0,
-          },
-          {
-            id: "ORD-98417",
-            symbol: "TATAMOTORS",
-            side: "SELL",
-            order_type: "LIMIT",
-            product_type: "CNC",
-            quantity: 300,
-            filled_quantity: 0,
-            price: 950.0,
-            status: "CANCELLED",
-            created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-            trade_charges: 0.0,
-          },
-        ];
-        setOrders(fallbackOrders);
+        setOrders([]);
       }
     } catch {
-      // Fallback
+      setOrders([]);
     } finally {
       setIsLoading(false);
     }
@@ -242,8 +175,27 @@ export default function OrdersPage() {
     document.body.removeChild(link);
   };
 
+  // Format orders for Mobile Stitch View
+  const mobileOrdersData: MobileOrderData[] = useMemo(() => {
+    return orders.map((o) => ({
+      id: o.id,
+      symbol: o.symbol,
+      side: o.side,
+      order_type: o.order_type,
+      product_type: o.product_type,
+      quantity: o.quantity,
+      filled_quantity: o.filled_quantity,
+      price: o.price,
+      average_execution_price: o.average_execution_price,
+      status: o.status,
+      created_at: o.created_at,
+    }));
+  }, [orders]);
+
   return (
-    <div className="flex flex-col w-full bg-surface pb-24">
+    <>
+      {/* Desktop View (Preserved 100% on md+) */}
+      <div className="hidden md:flex flex-col w-full bg-surface pb-24">
       {/* Top Banner / Summary metrics */}
       <div className="w-full bg-surface-container-lowest px-space-lg lg:px-space-xl py-space-lg shadow-sm mb-space-lg border-b border-outline-variant/20">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md mb-space-lg">
@@ -435,7 +387,18 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-container text-tabular-data text-on-surface">
-                {filteredOrders.map((ord) => {
+                {filteredOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-12 text-center text-outline">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="material-symbols-outlined text-[36px] text-outline/60">receipt_long</span>
+                        <p className="font-semibold text-on-surface">No orders found</p>
+                        <p className="text-body-sm text-outline">You haven&apos;t placed any orders matching this filter today.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredOrders.map((ord) => {
                   const isOpen = ord.status === "OPEN" || ord.status === "PENDING";
                   const isCompleted = ord.status === "COMPLETED" || ord.status === "FILLED";
                   const isRejected = ord.status === "REJECTED";
@@ -559,7 +522,7 @@ export default function OrdersPage() {
                       </td>
                     </tr>
                   );
-                })}
+                }))}
               </tbody>
             </table>
           </div>
@@ -680,8 +643,20 @@ export default function OrdersPage() {
           </div>
         </div>
       )}
+      </div>
 
-      {/* New Order Modal */}
+      {/* Mobile Stitch View (<md) */}
+      <div className="block md:hidden mobile-stitch">
+        <MobileOrdersView
+          orders={mobileOrdersData}
+          isLoading={isLoading}
+          onNewOrder={() => setNewOrderModalOpen(true)}
+          onCancelOrder={handleCancelOrder}
+          cancellingId={cancellingId}
+        />
+      </div>
+
+      {/* New Order Modal (Shared by both views) */}
       {newOrderModalOpen && (
         <OrderPadModal
           isOpen={newOrderModalOpen}
@@ -695,6 +670,6 @@ export default function OrdersPage() {
           }}
         />
       )}
-    </div>
+    </>
   );
 }

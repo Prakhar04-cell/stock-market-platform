@@ -11,6 +11,7 @@ import {
   formatCompactINR,
   formatPercentage,
 } from "@/lib/formatters";
+import { MobileHoldingsView, MobileHoldingData } from "@/components/mobile";
 
 interface HoldingItem {
   id: string;
@@ -76,75 +77,10 @@ export default function HoldingsPage() {
         });
         setLivePrices((prev) => ({ ...prev, ...prices }));
       } else {
-        // Fallback demo holdings if empty
-        const fallbackHoldings: HoldingItem[] = [
-          {
-            id: "1",
-            symbol: "TCS",
-            name: "Tata Consultancy Services",
-            sector: "IT",
-            quantity: 45,
-            average_buy_price: 3420.0,
-            invested_value: 153900.0,
-            current_price: 3850.5,
-            current_value: 173272.5,
-            unrealized_pnl: 19372.5,
-            pnl_percent: 12.59,
-          },
-          {
-            id: "2",
-            symbol: "RELIANCE",
-            name: "Reliance Industries Ltd",
-            sector: "Energy",
-            quantity: 60,
-            average_buy_price: 2350.0,
-            invested_value: 141000.0,
-            current_price: 2480.2,
-            current_value: 148812.0,
-            unrealized_pnl: 7812.0,
-            pnl_percent: 5.54,
-          },
-          {
-            id: "3",
-            symbol: "HDFCBANK",
-            name: "HDFC Bank Limited",
-            sector: "Banking",
-            quantity: 120,
-            average_buy_price: 1510.0,
-            invested_value: 181200.0,
-            current_price: 1690.4,
-            current_value: 202848.0,
-            unrealized_pnl: 21648.0,
-            pnl_percent: 11.95,
-          },
-          {
-            id: "4",
-            symbol: "INFY",
-            name: "Infosys Ltd",
-            sector: "IT",
-            quantity: 80,
-            average_buy_price: 1450.0,
-            invested_value: 116000.0,
-            current_price: 1620.4,
-            current_value: 129632.0,
-            unrealized_pnl: 13632.0,
-            pnl_percent: 11.75,
-          },
-        ];
-        setHoldings(fallbackHoldings);
-        setPortfolio({
-          total_invested_value: 592100.0,
-          current_portfolio_value: 654564.5,
-          total_unrealized_pnl: 62464.5,
-          realized_pnl: 12400.0,
-          total_pnl: 74864.5,
-          cash_balance: 145000.0,
-          available_cash: 145000.0,
-          holdings: fallbackHoldings,
-        });
+        setHoldings([]);
       }
     } catch {
-      // Fallback
+      setHoldings([]);
     } finally {
       setIsLoading(false);
     }
@@ -245,11 +181,36 @@ export default function HoldingsPage() {
     link.setAttribute("download", `BullRun_Holdings_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
   };
 
+  // Format holdings for Mobile Stitch View
+  const mobileHoldingsData: MobileHoldingData[] = useMemo(() => {
+    return holdings.map((h) => {
+      const ltp = livePrices[h.symbol.toUpperCase()] ?? h.current_price ?? h.average_buy_price;
+      const curVal = h.quantity * ltp;
+      const invVal = h.invested_value || h.quantity * h.average_buy_price;
+      const pnl = curVal - invVal;
+      const pnlPct = invVal > 0 ? (pnl / invVal) * 100 : 0;
+      return {
+        id: h.id || h.symbol,
+        symbol: h.symbol,
+        name: h.name,
+        quantity: h.quantity,
+        average_buy_price: h.average_buy_price,
+        invested_value: invVal,
+        current_price: ltp,
+        current_value: curVal,
+        unrealized_pnl: pnl,
+        pnl_percent: pnlPct,
+        sector: h.sector,
+      };
+    });
+  }, [holdings, livePrices]);
+
   return (
-    <div className="flex flex-col w-full bg-surface pb-24">
+    <>
+      {/* Desktop View (Preserved 100% on md+) */}
+      <div className="hidden md:flex flex-col w-full bg-surface pb-24">
       {/* Page Title & Action Bar */}
       <div className="px-space-lg lg:px-space-xl pt-space-xl pb-space-md flex flex-col md:flex-row md:items-center md:justify-between gap-space-md">
         <div>
@@ -375,7 +336,7 @@ export default function HoldingsPage() {
         <div className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm border border-outline-variant/20 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-label-sm text-outline font-tabular-data uppercase tracking-wider">
-              Today's P&amp;L
+              Today&apos;s P&amp;L
             </span>
             <span className="p-space-xs rounded-lg bg-tertiary-container/10 text-tertiary flex items-center justify-center">
               <span className="material-symbols-outlined text-[18px]">schedule</span>
@@ -588,8 +549,20 @@ export default function HoldingsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-container/60 text-body-md font-tabular-data">
-                {filteredHoldings.map((h) => {
-                  const ltp = livePrices[h.symbol.toUpperCase()] ?? h.current_price ?? h.average_buy_price;
+                {filteredHoldings.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-12 text-center text-outline">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="material-symbols-outlined text-[36px] text-outline/60">account_balance_wallet</span>
+                        <p className="font-semibold text-on-surface">No active equity holdings</p>
+                        <p className="text-body-sm text-outline">You have not taken any delivery positions yet.</p>
+                        <Link href="/explore" className="mt-2 px-4 py-1.5 bg-primary text-on-primary rounded-lg text-label-md font-medium">Explore Markets</Link>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredHoldings.map((h) => {
+                    const ltp = livePrices[h.symbol.toUpperCase()] ?? h.current_price ?? h.average_buy_price;
                   const curVal = h.quantity * ltp;
                   const pnl = curVal - h.invested_value;
                   const pnlPct = h.invested_value > 0 ? (pnl / h.invested_value) * 100 : 0;
@@ -669,14 +642,47 @@ export default function HoldingsPage() {
                       </td>
                     </tr>
                   );
-                })}
+                }))}
               </tbody>
             </table>
           </div>
         </div>
       </div>
+      </div>
 
-      {/* Dynamic OrderPadModal */}
+      {/* Mobile Stitch View (<md) */}
+      <div className="block md:hidden mobile-stitch">
+        <MobileHoldingsView
+          portfolio={{
+            totalInvested,
+            currentValue,
+            todayPnL,
+            todayPnLPercent: (todayPnL / (totalInvested || 1)) * 100,
+            overallReturns: totalPnL,
+            overallReturnsPercent: totalPnLPercent,
+          }}
+          holdings={mobileHoldingsData}
+          isLoading={isLoading}
+          onBuy={(sym, name) =>
+            setOrderModalStock({
+              symbol: sym,
+              stockId: sym,
+              name: name || sym,
+              side: "BUY",
+            })
+          }
+          onSell={(sym, name) =>
+            setOrderModalStock({
+              symbol: sym,
+              stockId: sym,
+              name: name || sym,
+              side: "SELL",
+            })
+          }
+        />
+      </div>
+
+      {/* Dynamic OrderPadModal (Shared by both views) */}
       {orderModalStock && (
         <OrderPadModal
           isOpen={true}
@@ -688,6 +694,6 @@ export default function HoldingsPage() {
           onOrderPlaced={loadData}
         />
       )}
-    </div>
+    </>
   );
 }
