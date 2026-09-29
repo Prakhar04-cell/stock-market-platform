@@ -336,7 +336,7 @@ export default function HoldingsPage() {
         <div className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm border border-outline-variant/20 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-label-sm text-outline font-tabular-data uppercase tracking-wider">
-              Today's P&amp;L
+              Today&apos;s P&amp;L
             </span>
             <span className="p-space-xs rounded-lg bg-tertiary-container/10 text-tertiary flex items-center justify-center">
               <span className="material-symbols-outlined text-[18px]">schedule</span>

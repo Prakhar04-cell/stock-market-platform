@@ -99,13 +99,13 @@ export function MobileHoldingsView({
 
         {/* 2. Main Bento Hero Card */}
         <MobilePortfolioCard
-          totalValue={portfolio?.currentValue ?? 1245680.5}
-          investedValue={portfolio?.totalInvested ?? 1050000.0}
-          availableBalance={195680.5}
-          todayPnL={portfolio?.todayPnL ?? 8420.25}
-          todayPnLPercent={portfolio?.todayPnLPercent ?? 0.68}
-          overallReturns={portfolio?.overallReturns ?? 195680.5}
-          overallReturnsPercent={portfolio?.overallReturnsPercent ?? 18.63}
+          totalValue={portfolio?.currentValue ?? 0}
+          investedValue={portfolio?.totalInvested ?? 0}
+          availableBalance={0}
+          todayPnL={portfolio?.todayPnL ?? 0}
+          todayPnLPercent={portfolio?.todayPnLPercent ?? 0}
+          overallReturns={portfolio?.overallReturns ?? 0}
+          overallReturnsPercent={portfolio?.overallReturnsPercent ?? 0}
           variant="holdings"
         />
 

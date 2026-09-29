@@ -183,11 +183,11 @@ export function MobileDashboardView({
 
       {/* 3. Portfolio Summary Card */}
       <MobilePortfolioCard
-        totalValue={portfolio?.totalValue ?? 1245680.5}
-        investedValue={portfolio?.investedValue ?? 1050000.0}
-        availableBalance={portfolio?.availableBalance ?? 195680.5}
-        todayPnL={portfolio?.todayPnL ?? 8420.25}
-        todayPnLPercent={portfolio?.todayPnLPercent ?? 0.68}
+        totalValue={portfolio?.totalValue ?? 0}
+        investedValue={portfolio?.investedValue ?? 0}
+        availableBalance={portfolio?.availableBalance ?? 0}
+        todayPnL={portfolio?.todayPnL ?? 0}
+        todayPnLPercent={portfolio?.todayPnLPercent ?? 0}
         timeframe={timeframe}
         onTimeframeChange={setTimeframe}
         variant="dashboard"
