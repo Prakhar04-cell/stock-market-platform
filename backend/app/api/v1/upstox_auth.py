@@ -25,7 +25,7 @@ router = APIRouter(prefix="/upstox/auth", tags=["Upstox OAuth 2.0 Integration"])
 
 @router.get("/login", summary="Initiate Upstox OAuth 2.0 connection")
 async def upstox_login(
-    redirect: bool = False,
+    redirect: bool = True,
 ):
     """
     Generates official Upstox OAuth 2.0 authorization dialog URL with CSRF state protection.

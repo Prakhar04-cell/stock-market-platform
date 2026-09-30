@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, API_BASE_URL } from "@/lib/api-client";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -274,7 +274,7 @@ export default function AdminMonitoringPage() {
         <div className="flex items-center gap-2">
           {!isUpstoxAuth ? (
             <a
-              href="/api/v1/upstox/auth/login"
+              href={`${API_BASE_URL}/api/v1/upstox/auth/login?redirect=true`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-medium shadow-xs transition-colors"

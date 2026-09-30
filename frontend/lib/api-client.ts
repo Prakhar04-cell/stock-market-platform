@@ -3,7 +3,11 @@
 
 const rawBaseUrl =
   process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
+  (process.env.NODE_ENV === "production"
+    ? "https://tradex-backend-k2tw.onrender.com"
+    : typeof window !== "undefined"
+      ? window.location.origin
+      : "http://localhost:8000");
 
 export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, "");
 
