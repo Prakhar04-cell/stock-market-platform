@@ -168,6 +168,9 @@ class UpstoxUpstreamFeed:
         self._error_count: int = 0
         self._last_error: Optional[str] = None
         self._last_disconnect_reason: Optional[str] = None
+        self._max_eval_tasks: int = 5
+        self._eval_semaphore: asyncio.Semaphore = asyncio.Semaphore(5)
+        self._background_tasks: Set[asyncio.Task] = set()
         self._task: Optional[asyncio.Task] = None
         self._ws = None
 
@@ -243,7 +246,39 @@ class UpstoxUpstreamFeed:
             except asyncio.CancelledError:
                 pass
             self._task = None
+
+        # Cancel and cleanup all outstanding background order evaluation tasks
+        for task in list(self._background_tasks):
+            task.cancel()
+        if self._background_tasks:
+            await asyncio.gather(*list(self._background_tasks), return_exceptions=True)
+        self._background_tasks.clear()
+
         logger.info("Upstox Upstream WebSocket Feed manager stopped.")
+
+    def _dispatch_order_evaluation(self, quote: MarketQuote) -> None:
+        """
+        Dispatches non-blocking limit order evaluation with bounded concurrency
+        and task tracking to prevent event-loop blocking and task accumulation.
+        """
+        if len(self._background_tasks) >= self._max_eval_tasks or self._eval_semaphore.locked():
+            # Bounded backpressure: skip evaluation for this tick to protect memory and event loop
+            return
+
+        task = asyncio.create_task(self._safe_evaluate_order(quote))
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
+
+    async def _safe_evaluate_order(self, quote: MarketQuote) -> None:
+        """Executes limit order evaluation under semaphore concurrency control and logs unexpected errors."""
+        try:
+            async with self._eval_semaphore:
+                from app.services.paper_trading.execution_service import paper_execution_service
+                await paper_execution_service.evaluate_open_limit_orders(quote)
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            logger.warning(f"Error in background limit-order evaluation for {quote.symbol}: {e}", exc_info=True)
 
     async def _run_loop(self):
         """Continuous background reconnect loop with exponential backoff."""
@@ -434,12 +469,8 @@ class UpstoxUpstreamFeed:
                         await quote_service.cache_quote(norm_quote)
                         await market_ws_manager.broadcast_quote(norm_quote)
 
-                        # Trigger limit order engine evaluation asynchronously in background without blocking receive loop
-                        try:
-                            from app.services.paper_trading.execution_service import paper_execution_service
-                            asyncio.create_task(paper_execution_service.evaluate_open_limit_orders(norm_quote))
-                        except Exception:
-                            pass
+                        # Trigger limit order engine evaluation with bounded background task tracking
+                        self._dispatch_order_evaluation(norm_quote)
 
             elif isinstance(raw_message, str):
                 data = json.loads(raw_message)
@@ -455,11 +486,7 @@ class UpstoxUpstreamFeed:
                         )
                     await quote_service.cache_quote(norm_quote)
                     await market_ws_manager.broadcast_quote(norm_quote)
-                    try:
-                        from app.services.paper_trading.execution_service import paper_execution_service
-                        asyncio.create_task(paper_execution_service.evaluate_open_limit_orders(norm_quote))
-                    except Exception:
-                        pass
+                    self._dispatch_order_evaluation(norm_quote)
         except Exception as e:
             logger.debug(f"Error handling Upstox WS message: {e}")
 
@@ -505,6 +532,7 @@ class UpstoxUpstreamFeed:
             "quote_update_rate": self.get_quote_rate(),
             "feed_latency_ms": self._last_feed_latency_ms,
             "ws_latency_seconds": round(self._ws.latency, 3) if self._ws and hasattr(self._ws, "latency") and self._ws.latency is not None else None,
+            "active_background_tasks": len(self._background_tasks),
         }
 
 

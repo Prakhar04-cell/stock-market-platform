@@ -469,6 +469,154 @@ async def test_no_duplicate_connection_tasks():
         assert first_task.cancelled() or first_task.done()
 
 
+@pytest.mark.asyncio
+async def test_background_order_evaluation_task_tracking_and_cleanup():
+    """Verifies that dispatched order-evaluation tasks are tracked and automatically cleaned up on completion."""
+    test_feed = UpstoxUpstreamFeed()
+    assert len(test_feed._background_tasks) == 0
+
+    quote = MarketQuote(
+        symbol="RELIANCE",
+        instrument_key="NSE_EQ|INE002A01018",
+        exchange="NSE",
+        timestamp=datetime.now(timezone.utc),
+        ltp=Decimal("1250.00"),
+        open=Decimal("1230.00"),
+        high=Decimal("1255.00"),
+        low=Decimal("1225.00"),
+        previous_close=Decimal("1220.00"),
+        change=Decimal("30.00"),
+        change_percent=Decimal("2.46"),
+        volume=100000,
+    )
+
+    with patch("app.services.paper_trading.execution_service.paper_execution_service.evaluate_open_limit_orders", AsyncMock()):
+        test_feed._dispatch_order_evaluation(quote)
+        assert len(test_feed._background_tasks) == 1
+
+        # Yield execution to allow background task to complete and invoke done callback
+        await asyncio.sleep(0.05)
+        assert len(test_feed._background_tasks) == 0
+
+
+@pytest.mark.asyncio
+async def test_background_order_evaluation_bounded_concurrency_and_backpressure():
+    """Verifies that background order evaluation enforces bounded concurrency and skips excess tasks without blocking."""
+    test_feed = UpstoxUpstreamFeed()
+    assert test_feed._max_eval_tasks == 5
+
+    quote = MarketQuote(
+        symbol="TCS",
+        instrument_key="NSE_EQ|INE467B01029",
+        exchange="NSE",
+        timestamp=datetime.now(timezone.utc),
+        ltp=Decimal("3500.00"),
+        open=Decimal("3480.00"),
+        high=Decimal("3520.00"),
+        low=Decimal("3470.00"),
+        previous_close=Decimal("3450.00"),
+        change=Decimal("50.00"),
+        change_percent=Decimal("1.45"),
+        volume=50000,
+    )
+
+    release_event = asyncio.Event()
+
+    async def slow_order_evaluation(_):
+        await release_event.wait()
+
+    with patch("app.services.paper_trading.execution_service.paper_execution_service.evaluate_open_limit_orders", side_effect=slow_order_evaluation):
+        # Dispatch up to maximum capacity (5 tasks)
+        for _ in range(5):
+            test_feed._dispatch_order_evaluation(quote)
+        assert len(test_feed._background_tasks) == 5
+
+        # Attempt to dispatch additional tasks beyond concurrency limit
+        for _ in range(5):
+            test_feed._dispatch_order_evaluation(quote)
+
+        # Concurrency must be strictly bounded at 5 — backpressure drops excess
+        assert len(test_feed._background_tasks) == 5
+
+        # Release the event to let tasks finish
+        release_event.set()
+        await asyncio.sleep(0.05)
+        assert len(test_feed._background_tasks) == 0
+
+
+@pytest.mark.asyncio
+async def test_background_order_evaluation_cancellation_during_stop():
+    """Verifies that calling stop() cleanly cancels and drains all active background evaluation tasks."""
+    test_feed = UpstoxUpstreamFeed()
+
+    quote = MarketQuote(
+        symbol="INFY",
+        instrument_key="NSE_EQ|INE009A01021",
+        exchange="NSE",
+        timestamp=datetime.now(timezone.utc),
+        ltp=Decimal("1600.00"),
+        open=Decimal("1590.00"),
+        high=Decimal("1610.00"),
+        low=Decimal("1585.00"),
+        previous_close=Decimal("1580.00"),
+        change=Decimal("20.00"),
+        change_percent=Decimal("1.27"),
+        volume=75000,
+    )
+
+    async def hanging_evaluation(_):
+        try:
+            await asyncio.sleep(10)
+        except asyncio.CancelledError:
+            raise
+
+    with patch("app.services.paper_trading.execution_service.paper_execution_service.evaluate_open_limit_orders", side_effect=hanging_evaluation):
+        for _ in range(3):
+            test_feed._dispatch_order_evaluation(quote)
+        assert len(test_feed._background_tasks) == 3
+
+        # Call stop() which must cancel and drain the tasks
+        await test_feed.stop()
+        assert len(test_feed._background_tasks) == 0
+
+
+@pytest.mark.asyncio
+async def test_websocket_receive_loop_remains_non_blocking_with_slow_database():
+    """Verifies that slow database operations in limit order evaluation never block the feed handle_message loop."""
+    import time
+    test_feed = UpstoxUpstreamFeed()
+
+    fr = FeedResponse()
+    fr.type = 1
+    fr.currentTs = int(datetime.now(timezone.utc).timestamp() * 1000)
+    feed = fr.feeds["NSE_INDEX|Nifty 50"]
+    feed.fullFeed.indexFF.ltpc.ltp = 24500.50
+    feed.fullFeed.indexFF.ltpc.cp = 24400.00
+    ohlc = feed.fullFeed.indexFF.marketOHLC.ohlc.add()
+    ohlc.interval = "1d"
+    ohlc.open = 24450.00
+    ohlc.high = 24600.00
+    ohlc.low = 24400.00
+    ohlc.close = 24500.50
+    raw_bytes = fr.SerializeToString()
+
+    async def slow_db_eval(_):
+        await asyncio.sleep(0.5)
+
+    with patch("app.services.market_data.quote_service.quote_service.cache_quote", AsyncMock()), \
+         patch("app.services.paper_trading.execution_service.paper_execution_service.evaluate_open_limit_orders", side_effect=slow_db_eval):
+        t0 = time.perf_counter()
+        await test_feed._handle_message(raw_bytes)
+        elapsed = time.perf_counter() - t0
+
+        # _handle_message must return immediately (< 0.2s) despite 0.5s DB work in background
+        assert elapsed < 0.2
+        assert len(test_feed._background_tasks) == 1
+
+        await test_feed.stop()
+        assert len(test_feed._background_tasks) == 0
+
+
 # ==============================================================================
 # 10. MARKET DATA HEALTH ENDPOINT
 # ==============================================================================
