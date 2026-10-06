@@ -3,8 +3,8 @@ import asyncio
 import json
 import sys
 import uuid
-import websockets
-import httpx
+import websockets  # type: ignore
+import httpx  # type: ignore
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--url", default="http://localhost:8000", help="Base URL of TradeX backend")

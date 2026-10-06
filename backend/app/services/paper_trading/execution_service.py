@@ -257,6 +257,12 @@ class PaperExecutionService:
                             notification_type="INFO",
                         )
                     )
+            else:
+                raise TradeXException(
+                    code="INVALID_ORDER_TYPE",
+                    message=f"Unsupported order type: {order_type}. Supported types are MARKET and LIMIT.",
+                    status_code=400,
+                )
 
             await db.commit()
             await db.refresh(order)
@@ -426,6 +432,9 @@ class PaperExecutionService:
                         can_fill = True
 
                     if can_fill:
+                        if order.price is None:
+                            continue
+
                         # Fetch user wallet
                         w_stmt = select(Wallet).where(Wallet.id == order.wallet_id)
                         wallet = (await db.execute(w_stmt)).scalar_one_or_none()

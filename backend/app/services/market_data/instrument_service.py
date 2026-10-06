@@ -113,7 +113,7 @@ class InstrumentService:
             if redis:
                 cached = await redis.get(redis_key)
                 if cached:
-                    return cached.decode("utf-8") if isinstance(cached, bytes) else str(cached)
+                    return cached.decode("utf-8") if isinstance(cached, bytes) else cached
         except Exception as e:
             logger.debug(f"Redis get failed for {redis_key}: {e}")
 

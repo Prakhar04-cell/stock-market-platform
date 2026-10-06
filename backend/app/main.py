@@ -241,7 +241,7 @@ app.add_middleware(
 # Optional Sentry initialization with strict sensitive data sanitization
 if settings.SENTRY_DSN:
     try:
-        import sentry_sdk
+        import sentry_sdk  # type: ignore
 
         def _sentry_before_send(event, hint):
             req = event.get("request", {})
