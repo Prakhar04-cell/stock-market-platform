@@ -59,7 +59,7 @@ async def test_missing_token_handling():
         with pytest.raises(UpstoxAuthRequiredError) as exc_info:
             await client.get("/market-quote/quotes")
         assert exc_info.value.status_code == 401
-        assert "Bearer" not in str(exc_info.value.message)
+        assert "Bearer" not in exc_info.value.message
 
 
 # ==============================================================================
@@ -139,6 +139,7 @@ def test_quote_normalization_complete():
     assert norm.low == Decimal("1225.00")
     assert norm.previous_close == Decimal("1220.00")
     assert norm.change == Decimal("25.5000")
+    assert norm.change_percent is not None
     assert round(float(norm.change_percent), 2) == 2.09
     assert norm.volume == 8500000
 
@@ -268,7 +269,7 @@ async def test_websocket_broadcast_and_protobuf_decode():
 @pytest.mark.asyncio
 async def test_websocket_reconnect_metrics():
     test_feed = UpstoxUpstreamFeed()
-    assert test_feed.is_connected is False
+    assert not test_feed.is_connected
     assert test_feed._reconnect_count == 0
 
     # Simulate an error causing reconnection attempt
@@ -302,7 +303,7 @@ async def test_websocket_keepalive_timeout_reconnect_handling():
     test_feed._last_disconnect_reason = keepalive_err
     test_feed._set_state("RECONNECTING")
 
-    assert test_feed.is_connected is False
+    assert not test_feed.is_connected
     assert test_feed.state == "RECONNECTING"
     metrics = test_feed.get_monitoring_metrics()
     assert metrics["reconnect_count"] == 1
@@ -464,7 +465,7 @@ async def test_no_duplicate_connection_tasks():
         # Clean shutdown
         await test_feed.stop()
         assert test_feed._task is None
-        assert test_feed._is_running is False
+        assert not test_feed._is_running
         assert first_task.cancelled() or first_task.done()
 
 
