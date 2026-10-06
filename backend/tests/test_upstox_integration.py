@@ -712,3 +712,141 @@ async def test_missing_analytics_token_error():
         assert "UPSTOX_ANALYTICS_TOKEN" in str(exc_info.value)
         assert "stale_oauth_token" not in str(exc_info.value)
 
+
+# ==============================================================================
+# 13. WEBSOCKET RTT & MARKET DATA LATENCY METRIC SEPARATION TESTS
+# ==============================================================================
+@pytest.mark.asyncio
+async def test_ws_latency_reported_as_websocket_rtt():
+    """Verifies that websockets ws.latency (in seconds) is accurately converted and reported as websocket_rtt_ms."""
+    feed = UpstoxUpstreamFeed()
+    assert feed.websocket_rtt_ms is None
+
+    # Mock ws with 25.4ms latency (0.0254 seconds)
+    mock_ws = MagicMock()
+    mock_ws.latency = 0.0254
+    feed._ws = mock_ws
+    assert feed.websocket_rtt_ms == 25.4
+
+    # Check in get_monitoring_metrics()
+    metrics = feed.get_monitoring_metrics()
+    assert metrics["websocket_rtt_ms"] == 25.4
+    # ws.latency must NOT be used for market_data_latency_ms
+    assert metrics["market_data_latency_ms"] is None
+
+
+@pytest.mark.asyncio
+async def test_market_data_latency_calculated_only_from_reliable_tick_timestamp():
+    """
+    Verifies that market-data latency is calculated strictly as
+    (backend_receive_time - reliable_tick/exchange_timestamp) from trustworthy decoded ticks.
+    """
+    import time
+    feed = UpstoxUpstreamFeed()
+
+    # Create protobuf with fresh tick timestamp (e.g. 120 ms ago)
+    now_ms = int(time.time() * 1000)
+    tick_ts = now_ms - 120
+
+    fr = FeedResponse()
+    fr.type = 1
+    fr.currentTs = tick_ts
+    f = fr.feeds["NSE_INDEX|Nifty 50"]
+    f.fullFeed.indexFF.ltpc.ltp = 24500.00
+    f.fullFeed.indexFF.ltpc.cp = 24400.00
+    f.fullFeed.indexFF.ltpc.ltt = tick_ts
+    raw_bytes = fr.SerializeToString()
+
+    with patch("app.services.market_data.quote_service.quote_service.cache_quote", AsyncMock()), \
+         patch("app.services.market_data.websocket_service.market_ws_manager.broadcast_quote", AsyncMock()):
+        await feed._handle_message(raw_bytes)
+
+    assert feed.market_data_latency_ms is not None
+    # Transit latency should be roughly around 120ms (with execution jitter, between 100ms and 400ms)
+    assert 100.0 <= feed.market_data_latency_ms <= 400.0
+
+    metrics = feed.get_monitoring_metrics()
+    assert metrics["market_data_latency_ms"] == feed.market_data_latency_ms
+
+
+@pytest.mark.asyncio
+async def test_missing_or_stale_timestamp_produces_none_na():
+    """
+    Verifies that missing timestamps or untrustworthy timestamps (such as the 59988ms keepalive ping timeout)
+    produce None (displayed as N/A in UI) and are never reported as market-data latency.
+    """
+    import time
+    feed = UpstoxUpstreamFeed()
+
+    # Case A: Missing timestamps entirely (currentTs = 0, ltt = 0)
+    fr_empty = FeedResponse()
+    fr_empty.type = 1
+    fr_empty.currentTs = 0
+    f = fr_empty.feeds["NSE_INDEX|Nifty 50"]
+    f.fullFeed.indexFF.ltpc.ltp = 24500.00
+    f.fullFeed.indexFF.ltpc.cp = 24400.00
+    f.fullFeed.indexFF.ltpc.ltt = 0
+    raw_empty = fr_empty.SerializeToString()
+
+    with patch("app.services.market_data.quote_service.quote_service.cache_quote", AsyncMock()), \
+         patch("app.services.market_data.websocket_service.market_ws_manager.broadcast_quote", AsyncMock()):
+        await feed._handle_message(raw_empty)
+
+    assert feed.market_data_latency_ms is None
+    assert feed.get_monitoring_metrics()["market_data_latency_ms"] is None
+
+    # Case B: Stale timestamp (e.g. 59988 ms ago - the keepalive ping timeout artifact)
+    now_ms = int(time.time() * 1000)
+    stale_ts = now_ms - 59988
+
+    fr_stale = FeedResponse()
+    fr_stale.type = 1
+    fr_stale.currentTs = stale_ts
+    f2 = fr_stale.feeds["NSE_INDEX|Nifty 50"]
+    f2.fullFeed.indexFF.ltpc.ltp = 24500.00
+    f2.fullFeed.indexFF.ltpc.cp = 24400.00
+    f2.fullFeed.indexFF.ltpc.ltt = stale_ts
+    raw_stale = fr_stale.SerializeToString()
+
+    with patch("app.services.market_data.quote_service.quote_service.cache_quote", AsyncMock()), \
+         patch("app.services.market_data.websocket_service.market_ws_manager.broadcast_quote", AsyncMock()):
+        await feed._handle_message(raw_stale)
+
+    # Must REJECT the 59988ms stale timestamp as untrustworthy and remain None (N/A)
+    assert feed.market_data_latency_ms is None
+    assert feed.get_monitoring_metrics()["market_data_latency_ms"] is None
+
+
+@pytest.mark.asyncio
+async def test_no_fake_or_hardcoded_latency_values():
+    """Verifies that no fake or hardcoded latency values exist in feed metrics."""
+    feed = UpstoxUpstreamFeed()
+    metrics = feed.get_monitoring_metrics()
+    assert metrics["websocket_rtt_ms"] is None
+    assert metrics["market_data_latency_ms"] is None
+
+    # Even when ws has latency, market_data_latency remains None unless ticks are decoded
+    mock_ws = MagicMock()
+    mock_ws.latency = 0.05
+    feed._ws = mock_ws
+    metrics2 = feed.get_monitoring_metrics()
+    assert metrics2["websocket_rtt_ms"] == 50.0
+    assert metrics2["market_data_latency_ms"] is None
+
+
+@pytest.mark.asyncio
+async def test_quote_update_rate_remains_correct_with_metric_separation():
+    """Verifies that quote update rate calculation is preserved and unaffected by latency metric separation."""
+    import time
+    feed = UpstoxUpstreamFeed()
+    feed._set_state("CONNECTED")
+
+    now = time.time()
+    # Simulate 5 ticks spaced across 1 second
+    for i in range(5):
+        feed.record_tick(now - 1.0 + (i * 0.2))
+
+    rate = feed.get_quote_rate()
+    assert "updates/sec" in rate
+    assert float(rate.split()[0]) > 0.0
+

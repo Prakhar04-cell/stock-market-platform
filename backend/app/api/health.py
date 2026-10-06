@@ -137,7 +137,8 @@ async def get_market_data_health(db: AsyncSession = Depends(get_db)):
         else None
     )
 
-    latency = metrics.get("feed_latency_ms") or upstox_client.get_latency_ms()
+    ws_rtt_ms = metrics.get("websocket_rtt_ms")
+    market_latency_ms = metrics.get("market_data_latency_ms")
 
     return {
         "provider": "upstox",
@@ -147,7 +148,9 @@ async def get_market_data_health(db: AsyncSession = Depends(get_db)):
         "websocket_state": ws_state,
         "quote_update_rate": metrics.get("quote_update_rate", "N/A"),
         "last_update": last_update,
-        "latency_ms": latency,
+        "websocket_rtt_ms": ws_rtt_ms,
+        "market_data_latency_ms": market_latency_ms,
+        "latency_ms": market_latency_ms,
         "redis": redis_status,
         "instruments": metrics.get("subscribed_instruments_count", 0),
         "status": "healthy" if (configured and authenticated and ws_state == "CONNECTED") else (
@@ -199,7 +202,8 @@ async def get_infrastructure_health(db: AsyncSession = Depends(get_db)):
         else "Host Docker runtime is managed by Render and is not directly exposed to the application."
     )
 
-    latency_ms = ws_metrics.get("feed_latency_ms") or upstox_client.get_latency_ms()
+    ws_rtt_ms = ws_metrics.get("websocket_rtt_ms")
+    market_latency_ms = ws_metrics.get("market_data_latency_ms")
 
     return {
         "environment": settings.ENVIRONMENT,
@@ -243,7 +247,9 @@ async def get_infrastructure_health(db: AsyncSession = Depends(get_db)):
             "connected": upstream_feed.is_connected,
             "quote_update_rate": ws_metrics.get("quote_update_rate", "N/A"),
             "subscribed_instruments_count": ws_metrics.get("subscribed_instruments_count", 0),
-            "latency_ms": latency_ms,
+            "websocket_rtt_ms": ws_rtt_ms,
+            "market_data_latency_ms": market_latency_ms,
+            "latency_ms": market_latency_ms,
         },
         "sentry": {
             "status": sentry_status,

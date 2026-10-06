@@ -165,13 +165,23 @@ export default function AdminMonitoringPage() {
     marketDataHealth?.quote_update_rate ??
     (isWsConnected ? "Live Feed" : "N/A");
 
-  // Market Latency
+  // WebSocket RTT
+  const rawWsRtt =
+    monitoringData?.metrics?.websocket_rtt_ms ??
+    infraData?.websocket?.websocket_rtt_ms ??
+    marketDataHealth?.websocket_rtt_ms;
+  const wsRttDisplay =
+    rawWsRtt !== undefined && rawWsRtt !== null && rawWsRtt >= 0
+      ? `${rawWsRtt} ms`
+      : "N/A";
+
+  // Market Data Latency
   const rawMarketLatency =
     monitoringData?.metrics?.market_data_latency_ms ??
-    infraData?.websocket?.latency_ms ??
-    marketDataHealth?.latency_ms;
+    infraData?.websocket?.market_data_latency_ms ??
+    marketDataHealth?.market_data_latency_ms;
   const marketLatencyDisplay =
-    rawMarketLatency !== undefined && rawMarketLatency !== null && rawMarketLatency > 0
+    rawMarketLatency !== undefined && rawMarketLatency !== null && rawMarketLatency >= 0
       ? `${rawMarketLatency} ms`
       : "N/A";
 
@@ -492,6 +502,13 @@ export default function AdminMonitoringPage() {
             <span className="text-[11px] text-[#6B7280] font-normal block">Quote Update Rate</span>
             <span className="font-semibold text-[#111827]">
               {quoteUpdateRate}
+            </span>
+          </div>
+
+          <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
+            <span className="text-[11px] text-[#6B7280] font-normal block">WebSocket RTT</span>
+            <span className="font-semibold text-[#111827] tabular-nums">
+              {wsRttDisplay}
             </span>
           </div>
 

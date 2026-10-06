@@ -162,6 +162,7 @@ class UpstoxUpstreamFeed:
         self._last_tick_at: Optional[datetime] = None
         self._tick_history: collections.deque = collections.deque(maxlen=120)
         self._last_feed_latency_ms: Optional[float] = None
+        self._last_market_data_latency_ms: Optional[float] = None
         self._messages_received: int = 0
         self._total_ticks_decoded: int = 0
         self._reconnect_count: int = 0
@@ -173,6 +174,30 @@ class UpstoxUpstreamFeed:
         self._background_tasks: Set[asyncio.Task] = set()
         self._task: Optional[asyncio.Task] = None
         self._ws = None
+
+    @property
+    def websocket_rtt_ms(self) -> Optional[float]:
+        """
+        WebSocket Ping/Pong round-trip time (RTT) in milliseconds.
+        Derived directly from websockets ws.latency (which is in seconds).
+        """
+        if self._ws and hasattr(self._ws, "latency") and self._ws.latency is not None:
+            try:
+                rtt_ms = float(self._ws.latency) * 1000.0
+                if rtt_ms >= 0.0:
+                    return round(rtt_ms, 1)
+            except Exception:
+                pass
+        return None
+
+    @property
+    def market_data_latency_ms(self) -> Optional[float]:
+        """
+        Market data transit latency in milliseconds, calculated strictly
+        from trustworthy decoded market tick timing (backend_receive_time - reliable_tick/exchange_timestamp).
+        Returns None (N/A) if no reliable/trustworthy tick timestamp is available.
+        """
+        return self._last_market_data_latency_ms
 
     @property
     def is_connected(self) -> bool:
@@ -373,6 +398,7 @@ class UpstoxUpstreamFeed:
     async def _handle_message(self, raw_message: Any):
         """Decodes JSON or binary Protobuf feed payload."""
         now_ts = time.time()
+        backend_receive_ms = now_ts * 1000.0
         self._last_message_at = datetime.now(timezone.utc)
         self._messages_received += 1
         self._tick_history.append(now_ts)
@@ -385,14 +411,23 @@ class UpstoxUpstreamFeed:
                 feed_resp = FeedResponse()
                 feed_resp.ParseFromString(raw_message)
 
-                if feed_resp.currentTs:
-                    diff_ms = (now_ts * 1000) - feed_resp.currentTs
-                    if 0 <= diff_ms < 60000:
-                        self._last_feed_latency_ms = round(diff_ms, 1)
-
                 # Feed type 2 is market_info status message
                 if not feed_resp.feeds:
                     return
+
+                # Calculate Market Data Latency strictly from trustworthy decoded market tick timing
+                # (backend_receive_time - reliable_tick/exchange_timestamp).
+                # Only update if the tick/feed timestamp is actually present and trustworthy (-500ms to 10000ms).
+                # websockets ws.latency is NEVER used for market data latency.
+                if feed_resp.currentTs and feed_resp.currentTs > 0:
+                    feed_curr_ts_ms = (
+                        float(feed_resp.currentTs)
+                        if feed_resp.currentTs > 1e11
+                        else float(feed_resp.currentTs) * 1000.0
+                    )
+                    diff_feed = backend_receive_ms - feed_curr_ts_ms
+                    if -500.0 <= diff_feed <= 10000.0:
+                        self._last_market_data_latency_ms = round(max(0.0, diff_feed), 1)
 
                 ts_ms = feed_resp.currentTs or int(now_ts * 1000)
                 quote_time = datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc)
@@ -404,10 +439,12 @@ class UpstoxUpstreamFeed:
                     high_p = 0.0
                     low_p = 0.0
                     vol = 0
+                    ltt = 0
 
                     if f.HasField("ltpc"):
                         ltp = f.ltpc.ltp
                         cp = f.ltpc.cp
+                        ltt = f.ltpc.ltt
                     elif f.HasField("fullFeed"):
                         ff = f.fullFeed
                         if ff.HasField("marketFF"):
@@ -415,6 +452,7 @@ class UpstoxUpstreamFeed:
                             ltp = m.ltpc.ltp
                             cp = m.ltpc.cp
                             vol = m.vtt
+                            ltt = m.ltpc.ltt if m.HasField("ltpc") else 0
                             for ohlc in m.marketOHLC.ohlc:
                                 if ohlc.interval == "1d":
                                     open_p = ohlc.open
@@ -429,6 +467,7 @@ class UpstoxUpstreamFeed:
                             idx = ff.indexFF
                             ltp = idx.ltpc.ltp
                             cp = idx.ltpc.cp
+                            ltt = idx.ltpc.ltt if idx.HasField("ltpc") else 0
                             for ohlc in idx.marketOHLC.ohlc:
                                 if ohlc.interval == "1d":
                                     open_p = ohlc.open
@@ -439,6 +478,13 @@ class UpstoxUpstreamFeed:
                                     open_p = ohlc.open
                                     high_p = ohlc.high
                                     low_p = ohlc.low
+
+                    # If this tick has an exchange trade timestamp (ltt) that is fresh and trustworthy:
+                    if ltt and ltt > 0:
+                        ltt_ms = float(ltt) if ltt > 1e11 else float(ltt) * 1000.0
+                        diff_ltt = backend_receive_ms - ltt_ms
+                        if -500.0 <= diff_ltt <= 10000.0:
+                            self._last_market_data_latency_ms = round(max(0.0, diff_ltt), 1)
 
                     if ltp > 0:
                         symbol = await instrument_service.get_symbol_for_key(ikey)
@@ -477,6 +523,22 @@ class UpstoxUpstreamFeed:
                 feeds = data.get("feeds", {})
                 for ikey, quote_dict in feeds.items():
                     norm_quote = normalize_upstox_quote(instrument_key=ikey, raw_quote=quote_dict)
+                    raw_ts = quote_dict.get("timestamp") or quote_dict.get("ltt") or data.get("currentTs")
+                    if raw_ts:
+                        try:
+                            if isinstance(raw_ts, (int, float)):
+                                tick_ms = float(raw_ts) if raw_ts > 1e11 else float(raw_ts) * 1000.0
+                            elif isinstance(raw_ts, str):
+                                dt = datetime.fromisoformat(raw_ts.replace("Z", "+00:00"))
+                                tick_ms = dt.timestamp() * 1000.0
+                            else:
+                                tick_ms = None
+                            if tick_ms is not None:
+                                diff_ms = backend_receive_ms - tick_ms
+                                if -500.0 <= diff_ms <= 10000.0:
+                                    self._last_market_data_latency_ms = round(max(0.0, diff_ms), 1)
+                        except Exception:
+                            pass
                     self._total_ticks_decoded += 1
                     if self._first_tick_at is None:
                         self._first_tick_at = datetime.now(timezone.utc)
@@ -530,7 +592,9 @@ class UpstoxUpstreamFeed:
             "first_binary_message_at": self._first_binary_message_at.isoformat() if self._first_binary_message_at else None,
             "first_tick_at": self._first_tick_at.isoformat() if self._first_tick_at else None,
             "quote_update_rate": self.get_quote_rate(),
-            "feed_latency_ms": self._last_feed_latency_ms,
+            "websocket_rtt_ms": self.websocket_rtt_ms,
+            "market_data_latency_ms": self.market_data_latency_ms,
+            "feed_latency_ms": self.market_data_latency_ms,
             "ws_latency_seconds": round(self._ws.latency, 3) if self._ws and hasattr(self._ws, "latency") and self._ws.latency is not None else None,
             "active_background_tasks": len(self._background_tasks),
         }

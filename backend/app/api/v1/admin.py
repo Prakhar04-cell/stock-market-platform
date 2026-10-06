@@ -255,7 +255,8 @@ async def get_monitoring_overview(db: AsyncSession = Depends(get_db)):
 
     inst_count = (await db.execute(select(func.count(Instrument.id)))).scalar() or 0
     now = datetime.now(timezone.utc)
-    latency_ms = ws_metrics.get("feed_latency_ms") or upstox_client.get_latency_ms()
+    ws_rtt_ms = ws_metrics.get("websocket_rtt_ms")
+    market_data_latency_ms = ws_metrics.get("market_data_latency_ms")
 
     return {
         "environment": settings.ENVIRONMENT,
@@ -266,7 +267,7 @@ async def get_monitoring_overview(db: AsyncSession = Depends(get_db)):
             {"service_name": "PostgreSQL Database", "status": db_status, "details": f"{db_provider} ({db_latency} ms)"},
             {"service_name": "Redis Cache & Rate Limiter", "status": redis_status, "details": f"{redis_provider} ({redis_latency} ms)" if redis_ok else redis_provider},
             {"service_name": "Upstox Connection", "status": mkt_status, "details": f"Upstox V3 API ({'Analytics Token ACTIVE' if verification.get('authenticated') else 'NOT CONFIGURED'})"},
-            {"service_name": "Market WebSocket", "status": ws_status, "details": f"Upstream: {ws_state}, Clients: {client_stats['connected_clients']}"},
+            {"service_name": "Market WebSocket", "status": ws_status, "details": f"Upstream: {ws_state}, Clients: {client_stats['connected_clients']}, RTT: {ws_rtt_ms if ws_rtt_ms is not None else 'N/A'} ms"},
             {"service_name": "Sentry Monitoring", "status": sentry_status, "details": sentry_desc},
             {"service_name": "Trading Engine", "status": "HEALTHY", "details": "Virtual Paper Trading Engine (No Real Money)"},
         ],
@@ -296,7 +297,8 @@ async def get_monitoring_overview(db: AsyncSession = Depends(get_db)):
             "postgresql_latency_ms": db_latency,
             "postgresql_provider": db_provider,
             "subscribed_instruments_count": ws_metrics.get("subscribed_instruments_count", 0),
-            "market_data_latency_ms": latency_ms,
+            "websocket_rtt_ms": ws_rtt_ms,
+            "market_data_latency_ms": market_data_latency_ms,
             "quote_update_rate": ws_metrics.get("quote_update_rate", "Standby"),
             "paper_trading_engine_status": "ACTIVE (PAPER EXECUTION ONLY)",
             "sentry_status": sentry_status,
@@ -321,6 +323,8 @@ async def get_monitoring_overview(db: AsyncSession = Depends(get_db)):
                 "quote_update_rate": ws_metrics.get("quote_update_rate", "Standby"),
                 "subscribed_instruments": ws_metrics.get("subscribed_instruments_count", 0),
                 "active_client_connections": client_stats["connected_clients"],
+                "websocket_rtt_ms": ws_rtt_ms,
+                "market_data_latency_ms": market_data_latency_ms,
             },
             "instruments_master_count": inst_count,
             "database_status": db_status,
