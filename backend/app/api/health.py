@@ -1,3 +1,4 @@
+import logging
 import time
 import os
 import sys
@@ -11,6 +12,8 @@ from app.core.config import settings
 from app.core.database import check_db_health, get_db
 from app.core.redis import check_redis_health, check_redis_ping
 from app.core.sentry import get_sentry_status
+
+logger = logging.getLogger("tradex.health")
 
 router = APIRouter(prefix="/health", tags=["Health & Monitoring"])
 
@@ -139,6 +142,13 @@ async def get_market_data_health(db: AsyncSession = Depends(get_db)):
 
     ws_rtt_ms = metrics.get("websocket_rtt_ms")
     market_latency_ms = metrics.get("market_data_latency_ms")
+    diag_state = metrics.get("diagnostic_state", "DISCONNECTED")
+
+    logger.info(
+        f"[DIAGNOSTIC PROBE] /health/market-data: ws={ws_state}, diag_state={diag_state}, "
+        f"rtt_ms={ws_rtt_ms}, binary_msgs={metrics.get('total_binary_messages', 0)}, "
+        f"ticks={metrics.get('total_ticks_decoded', 0)}, reconnects={metrics.get('reconnect_count', 0)}"
+    )
 
     return {
         "provider": "upstox",
@@ -238,13 +248,13 @@ async def get_infrastructure_health(db: AsyncSession = Depends(get_db)):
             "status": "HEALTHY" if db_ok else "FAILED",
             "provider": db_provider,
             "latency_ms": db_latency,
-            "details": None if db_ok else str(db_provider),
+            "details": None if db_ok else db_provider,
         },
         "redis": {
             "status": "HEALTHY" if redis_ok else ("NOT_CONFIGURED" if redis_provider == "NOT_CONFIGURED" else "FAILED"),
             "provider": redis_provider,
             "latency_ms": redis_latency,
-            "details": None if redis_ok else str(redis_provider),
+            "details": None if redis_ok else redis_provider,
         },
         "upstox": {
             "configured": verification["configured"],

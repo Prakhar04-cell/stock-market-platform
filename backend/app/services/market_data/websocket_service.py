@@ -180,6 +180,7 @@ class UpstoxUpstreamFeed:
         self._background_tasks: Set[asyncio.Task] = set()
         self._task: Optional[asyncio.Task] = None
         self._ws = None
+        self._last_logged_diagnostic_state: Optional[str] = None
 
     @property
     def diagnostic_state(self) -> str:
@@ -402,7 +403,32 @@ class UpstoxUpstreamFeed:
                         )
 
                     while self._is_running:
-                        msg = await ws.recv()
+                        current_diag = self.diagnostic_state
+                        if current_diag != self._last_logged_diagnostic_state:
+                            self._last_logged_diagnostic_state = current_diag
+                            logger.info(
+                                f"[DIAGNOSTIC STATE TRANSITION] Diagnostic state changed to: {current_diag} "
+                                f"(RTT={self.websocket_rtt_ms}ms, binary_msgs={self._total_binary_messages}, ticks={self._total_ticks_decoded})"
+                            )
+
+                        try:
+                            msg = await asyncio.wait_for(ws.recv(), timeout=30.0)
+                        except asyncio.TimeoutError:
+                            # Periodic diagnostic log during idle waiting periods (e.g. State A / State B)
+                            current_diag = self.diagnostic_state
+                            if current_diag != self._last_logged_diagnostic_state:
+                                self._last_logged_diagnostic_state = current_diag
+                                logger.info(
+                                    f"[DIAGNOSTIC STATE TRANSITION] Diagnostic state changed to: {current_diag} "
+                                    f"(RTT={self.websocket_rtt_ms}ms, binary_msgs={self._total_binary_messages}, ticks={self._total_ticks_decoded})"
+                                )
+                            logger.info(
+                                f"[DIAGNOSTIC HEARTBEAT] WebSocket connected. Diagnostic state: {current_diag} "
+                                f"(RTT={self.websocket_rtt_ms}ms, binary_msgs={self._total_binary_messages}, "
+                                f"ticks={self._total_ticks_decoded}, reconnects={self._reconnect_count})"
+                            )
+                            continue
+
                         now_utc = datetime.now(timezone.utc)
                         self._last_websocket_frame_at = now_utc
                         self._last_message_at = now_utc
@@ -428,6 +454,7 @@ class UpstoxUpstreamFeed:
             except Exception as e:
                 self._connected = False
                 self._ws = None
+                self._last_logged_diagnostic_state = "DISCONNECTED"
                 self._error_count += 1
                 self._reconnect_count += 1
                 self._last_error = str(e)
