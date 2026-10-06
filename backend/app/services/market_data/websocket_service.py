@@ -155,14 +155,19 @@ class UpstoxUpstreamFeed:
         self._connected = False
         self._state = "DISCONNECTED"
         self._subscribed_keys: Set[str] = set(DEFAULT_SUBSCRIBED_KEYS)
+        self._last_subscription_sent_at: Optional[datetime] = None
+        self._first_binary_message_at: Optional[datetime] = None
+        self._first_tick_at: Optional[datetime] = None
         self._last_message_at: Optional[datetime] = None
         self._last_tick_at: Optional[datetime] = None
         self._tick_history: collections.deque = collections.deque(maxlen=120)
         self._last_feed_latency_ms: Optional[float] = None
         self._messages_received: int = 0
+        self._total_ticks_decoded: int = 0
         self._reconnect_count: int = 0
         self._error_count: int = 0
         self._last_error: Optional[str] = None
+        self._last_disconnect_reason: Optional[str] = None
         self._task: Optional[asyncio.Task] = None
         self._ws = None
 
@@ -206,12 +211,14 @@ class UpstoxUpstreamFeed:
                     },
                 }
                 await self._ws.send(json.dumps(sub_msg).encode("utf-8"))
+                self._last_subscription_sent_at = datetime.now(timezone.utc)
+                logger.info(f"Dynamic Upstox V3 subscription sent for {len(new_keys)} keys: {new_keys}")
             except Exception as e:
                 logger.debug(f"Dynamic subscription send failed: {e}")
 
     async def start(self):
-        """Starts the upstream listener task if configured."""
-        if self._is_running:
+        """Starts the upstream listener task if configured, guaranteeing a single active task."""
+        if self._is_running and self._task and not self._task.done():
             return
         self._is_running = True
         self._state = "CONNECTING"
@@ -235,6 +242,7 @@ class UpstoxUpstreamFeed:
                 await self._task
             except asyncio.CancelledError:
                 pass
+            self._task = None
         logger.info("Upstox Upstream WebSocket Feed manager stopped.")
 
     async def _run_loop(self):
@@ -260,10 +268,16 @@ class UpstoxUpstreamFeed:
                     await asyncio.sleep(15)
                     continue
 
+                logger.info("Upstox V3 Market Data Feed authorization successful.")
                 import websockets
 
                 logger.info("Connecting to Upstox Market Data Feed V3...")
-                async with websockets.connect(auth_url, ping_interval=30, ping_timeout=10) as ws:
+                async with websockets.connect(
+                    auth_url,
+                    ping_interval=30,
+                    ping_timeout=30,
+                    close_timeout=10,
+                ) as ws:
                     self._ws = ws
                     self._connected = True
                     self._state = "CONNECTED"
@@ -281,11 +295,22 @@ class UpstoxUpstreamFeed:
                             },
                         }
                         await ws.send(json.dumps(sub_msg).encode("utf-8"))
+                        self._last_subscription_sent_at = datetime.now(timezone.utc)
+                        logger.info(
+                            f"Upstox V3 subscription sent for {len(self._subscribed_keys)} instruments: "
+                            f"{sorted(list(self._subscribed_keys))}"
+                        )
 
                     while self._is_running:
                         msg = await ws.recv()
                         self._last_message_at = datetime.now(timezone.utc)
                         self._messages_received += 1
+                        if isinstance(msg, bytes):
+                            if self._first_binary_message_at is None:
+                                self._first_binary_message_at = self._last_message_at
+                                logger.info(f"First Upstox V3 binary message received (size: {len(msg)} bytes)")
+                        elif isinstance(msg, str):
+                            logger.info(f"Upstox V3 text frame received: {msg[:200]}")
                         await self._handle_message(msg)
 
             except asyncio.CancelledError:
@@ -296,14 +321,19 @@ class UpstoxUpstreamFeed:
                 self._error_count += 1
                 self._reconnect_count += 1
                 self._last_error = str(e)
+                self._last_disconnect_reason = str(e)
                 self._state = "RECONNECTING" if self._is_running else "ERROR"
-                logger.warning(f"Upstox WebSocket error: {e}. Reconnecting in {backoff:.1f}s...")
+                logger.warning(
+                    f"Upstox WebSocket error: {e}. Reconnecting in {backoff:.1f}s (reconnect attempt #{self._reconnect_count})..."
+                )
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 1.5, max_backoff)
 
         self._connected = False
         self._state = "DISCONNECTED"
         self._ws = None
+        self._is_running = False
+        self._task = None
 
     async def _handle_message(self, raw_message: Any):
         """Decodes JSON or binary Protobuf feed payload."""
@@ -394,13 +424,20 @@ class UpstoxUpstreamFeed:
                             change_percent=Decimal(str(round(change_pct, 4))),
                             volume=int(vol),
                         )
+                        self._total_ticks_decoded += 1
+                        if self._first_tick_at is None:
+                            self._first_tick_at = datetime.now(timezone.utc)
+                            logger.info(
+                                f"First decoded market tick received: {norm_quote.symbol} "
+                                f"({norm_quote.instrument_key}) LTP={norm_quote.ltp}"
+                            )
                         await quote_service.cache_quote(norm_quote)
                         await market_ws_manager.broadcast_quote(norm_quote)
 
-                        # Trigger limit order engine evaluation
+                        # Trigger limit order engine evaluation asynchronously in background without blocking receive loop
                         try:
                             from app.services.paper_trading.execution_service import paper_execution_service
-                            await paper_execution_service.evaluate_open_limit_orders(norm_quote)
+                            asyncio.create_task(paper_execution_service.evaluate_open_limit_orders(norm_quote))
                         except Exception:
                             pass
 
@@ -409,11 +446,18 @@ class UpstoxUpstreamFeed:
                 feeds = data.get("feeds", {})
                 for ikey, quote_dict in feeds.items():
                     norm_quote = normalize_upstox_quote(instrument_key=ikey, raw_quote=quote_dict)
+                    self._total_ticks_decoded += 1
+                    if self._first_tick_at is None:
+                        self._first_tick_at = datetime.now(timezone.utc)
+                        logger.info(
+                            f"First decoded market tick received (fallback): {norm_quote.symbol} "
+                            f"({norm_quote.instrument_key}) LTP={norm_quote.ltp}"
+                        )
                     await quote_service.cache_quote(norm_quote)
                     await market_ws_manager.broadcast_quote(norm_quote)
                     try:
                         from app.services.paper_trading.execution_service import paper_execution_service
-                        await paper_execution_service.evaluate_open_limit_orders(norm_quote)
+                        asyncio.create_task(paper_execution_service.evaluate_open_limit_orders(norm_quote))
                     except Exception:
                         pass
         except Exception as e:
@@ -448,13 +492,19 @@ class UpstoxUpstreamFeed:
             "last_message": self._last_message_at.isoformat() if self._last_message_at else None,
             "last_tick_at": self._last_tick_at.isoformat() if self._last_tick_at else None,
             "messages_received": self._messages_received,
+            "total_ticks_decoded": self._total_ticks_decoded,
             "reconnect_count": self._reconnect_count,
             "error_count": self._error_count,
             "last_error": self._last_error,
+            "last_disconnect_reason": self._last_disconnect_reason,
             "subscribed_instruments_count": len(self._subscribed_keys),
-            "subscribed_instruments": list(self._subscribed_keys),
+            "subscribed_instruments": sorted(list(self._subscribed_keys)),
+            "last_subscription_sent_at": self._last_subscription_sent_at.isoformat() if self._last_subscription_sent_at else None,
+            "first_binary_message_at": self._first_binary_message_at.isoformat() if self._first_binary_message_at else None,
+            "first_tick_at": self._first_tick_at.isoformat() if self._first_tick_at else None,
             "quote_update_rate": self.get_quote_rate(),
             "feed_latency_ms": self._last_feed_latency_ms,
+            "ws_latency_seconds": round(self._ws.latency, 3) if self._ws and hasattr(self._ws, "latency") and self._ws.latency is not None else None,
         }
 
 

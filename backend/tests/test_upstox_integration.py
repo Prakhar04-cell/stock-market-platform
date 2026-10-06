@@ -263,7 +263,7 @@ async def test_websocket_broadcast_and_protobuf_decode():
 
 
 # ==============================================================================
-# 9. WEBSOCKET RECONNECT HANDLING
+# 9. WEBSOCKET RECONNECT & LIFECYCLE TESTS
 # ==============================================================================
 @pytest.mark.asyncio
 async def test_websocket_reconnect_metrics():
@@ -275,12 +275,197 @@ async def test_websocket_reconnect_metrics():
     test_feed._reconnect_count += 1
     test_feed._error_count += 1
     test_feed._last_error = "Connection closed with error"
+    test_feed._last_disconnect_reason = "Connection closed with error"
 
     metrics = test_feed.get_monitoring_metrics()
     assert metrics["connected"] is False
     assert metrics["reconnect_count"] == 1
     assert metrics["error_count"] == 1
     assert "error" in metrics["last_error"].lower()
+    assert metrics["last_disconnect_reason"] == "Connection closed with error"
+
+
+@pytest.mark.asyncio
+async def test_websocket_keepalive_timeout_reconnect_handling():
+    """Tests that a 1011 keepalive ping timeout properly sets disconnect reason, error count, and reconnect count."""
+    test_feed = UpstoxUpstreamFeed()
+    test_feed._set_state("CONNECTED")
+    assert test_feed.is_connected is True
+    assert test_feed.state == "CONNECTED"
+
+    # Simulate keepalive ping timeout error as observed in production
+    keepalive_err = "sent 1011 (internal error) keepalive ping timeout; no close frame received."
+    test_feed._connected = False
+    test_feed._error_count += 1
+    test_feed._reconnect_count += 1
+    test_feed._last_error = keepalive_err
+    test_feed._last_disconnect_reason = keepalive_err
+    test_feed._set_state("RECONNECTING")
+
+    assert test_feed.is_connected is False
+    assert test_feed.state == "RECONNECTING"
+    metrics = test_feed.get_monitoring_metrics()
+    assert metrics["reconnect_count"] == 1
+    assert metrics["error_count"] == 1
+    assert "keepalive ping timeout" in metrics["last_error"]
+    assert "keepalive ping timeout" in metrics["last_disconnect_reason"]
+
+
+@pytest.mark.asyncio
+async def test_websocket_connection_state_transitions():
+    """Tests full state transitions of UpstoxUpstreamFeed."""
+    test_feed = UpstoxUpstreamFeed()
+    assert test_feed.state == "DISCONNECTED"
+    assert not test_feed.is_connected
+
+    test_feed._set_state("CONNECTING")
+    assert test_feed.state == "CONNECTING"
+    assert not test_feed.is_connected
+
+    test_feed._set_state("CONNECTED")
+    assert test_feed.state == "CONNECTED"
+    assert test_feed.is_connected
+
+    test_feed._set_state("RECONNECTING")
+    assert test_feed.state == "RECONNECTING"
+    assert not test_feed.is_connected
+
+    test_feed._set_state("ERROR")
+    assert test_feed.state == "ERROR"
+    assert not test_feed.is_connected
+
+
+@pytest.mark.asyncio
+async def test_websocket_subscription_state_and_payload():
+    """Tests subscription tracking, payload format, and metrics."""
+    test_feed = UpstoxUpstreamFeed()
+    metrics = test_feed.get_monitoring_metrics()
+    assert metrics["subscribed_instruments_count"] >= 8
+    assert "NSE_INDEX|Nifty 50" in metrics["subscribed_instruments"]
+    assert metrics["last_subscription_sent_at"] is None
+
+    # Mock WebSocket to verify subscription packet format
+    mock_ws = AsyncMock()
+    mock_ws.send = AsyncMock()
+    test_feed._ws = mock_ws
+    test_feed._set_state("CONNECTED")
+
+    # Use symbols not in DEFAULT_SUBSCRIBED_KEYS (e.g., TATAMOTORS, SBIN)
+    await test_feed.add_subscriptions(["TATAMOTORS", "SBIN"])
+    assert test_feed._last_subscription_sent_at is not None
+    mock_ws.send.assert_called_once()
+    sent_payload = json.loads(mock_ws.send.call_args[0][0].decode("utf-8"))
+    assert sent_payload["method"] == "sub"
+    assert sent_payload["data"]["mode"] == "full"
+    assert len(sent_payload["data"]["instrumentKeys"]) >= 1
+
+    updated_metrics = test_feed.get_monitoring_metrics()
+    assert updated_metrics["last_subscription_sent_at"] is not None
+    assert updated_metrics["subscribed_instruments_count"] >= 10
+
+
+@pytest.mark.asyncio
+async def test_websocket_first_tick_and_metrics_state():
+    """Tests first message, first tick, and decoded tick telemetry."""
+    test_feed = UpstoxUpstreamFeed()
+    assert test_feed._first_binary_message_at is None
+    assert test_feed._first_tick_at is None
+    assert test_feed._total_ticks_decoded == 0
+
+    # Simulate receiving a Protobuf feed frame with LTP > 0
+    fr = FeedResponse()
+    fr.type = 1
+    fr.currentTs = int(datetime.now(timezone.utc).timestamp() * 1000)
+    feed = fr.feeds["NSE_INDEX|Nifty 50"]
+    feed.fullFeed.indexFF.ltpc.ltp = 24500.50
+    feed.fullFeed.indexFF.ltpc.cp = 24400.00
+    ohlc = feed.fullFeed.indexFF.marketOHLC.ohlc.add()
+    ohlc.interval = "1d"
+    ohlc.open = 24450.00
+    ohlc.high = 24600.00
+    ohlc.low = 24400.00
+    ohlc.close = 24500.50
+
+    raw_bytes = fr.SerializeToString()
+    # Mark first binary message
+    test_feed._first_binary_message_at = datetime.now(timezone.utc)
+    await test_feed._handle_message(raw_bytes)
+
+    assert test_feed._first_binary_message_at is not None
+    assert test_feed._first_tick_at is not None
+    assert test_feed._last_tick_at is not None
+    assert test_feed._total_ticks_decoded == 1
+
+    metrics = test_feed.get_monitoring_metrics()
+    assert metrics["total_ticks_decoded"] == 1
+    assert metrics["first_tick_at"] is not None
+    assert metrics["first_binary_message_at"] is not None
+    assert metrics["last_tick_at"] is not None
+
+
+@pytest.mark.asyncio
+async def test_websocket_quote_rate_calculation():
+    """Tests rolling quote update rate across various intervals."""
+    test_feed = UpstoxUpstreamFeed()
+    # Unconnected & no ticks
+    assert test_feed.get_quote_rate() == "N/A"
+
+    # Connected but waiting for ticks
+    test_feed._set_state("CONNECTED")
+    assert test_feed.get_quote_rate() == "Waiting for first tick"
+
+    # Live ticks burst
+    import time
+    now = time.time()
+    for i in range(10):
+        test_feed.record_tick(now - (9 - i) * 0.1)
+
+    rate = test_feed.get_quote_rate()
+    assert "updates/sec" in rate
+
+    # Idle feed (tick 30s ago)
+    test_feed._tick_history.clear()
+    test_feed.record_tick(now - 30.0)
+    assert test_feed.get_quote_rate() == "Idle (<1/sec)"
+
+    # Stale feed (tick 90s ago)
+    test_feed._tick_history.clear()
+    test_feed.record_tick(now - 90.0)
+    assert test_feed.get_quote_rate() == "Stale (>60s)"
+
+
+@pytest.mark.asyncio
+async def test_no_duplicate_connection_tasks():
+    """Verifies that calling start() multiple times never creates duplicate tasks."""
+    test_feed = UpstoxUpstreamFeed()
+    assert test_feed._task is None
+    assert test_feed._is_running is False
+
+    # Mock _run_loop to hang until cancelled
+    async def dummy_run_loop():
+        try:
+            while True:
+                await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            pass
+
+    with patch.object(test_feed, "_run_loop", side_effect=dummy_run_loop):
+        await test_feed.start()
+        first_task = test_feed._task
+        assert first_task is not None
+        assert not first_task.done()
+
+        # Call start() again while already running
+        await test_feed.start()
+        second_task = test_feed._task
+        # Must be the exact same task instance — no duplicates created!
+        assert first_task is second_task
+
+        # Clean shutdown
+        await test_feed.stop()
+        assert test_feed._task is None
+        assert test_feed._is_running is False
+        assert first_task.cancelled() or first_task.done()
 
 
 # ==============================================================================
