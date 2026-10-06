@@ -355,7 +355,10 @@ async def test_websocket_subscription_state_and_payload():
     await test_feed.add_subscriptions(["TATAMOTORS", "SBIN"])
     assert test_feed._last_subscription_sent_at is not None
     mock_ws.send.assert_called_once()
-    sent_payload = json.loads(mock_ws.send.call_args[0][0].decode("utf-8"))
+    raw_sub = mock_ws.send.call_args[0][0]
+    # Verify that the subscription is sent as binary bytes per Upstox V3 specification
+    assert isinstance(raw_sub, bytes), "Subscription message MUST be binary bytes"
+    sent_payload = json.loads(raw_sub.decode("utf-8"))
     assert sent_payload["method"] == "sub"
     assert sent_payload["data"]["mode"] == "full"
     assert len(sent_payload["data"]["instrumentKeys"]) >= 1
@@ -849,4 +852,136 @@ async def test_quote_update_rate_remains_correct_with_metric_separation():
     rate = feed.get_quote_rate()
     assert "updates/sec" in rate
     assert float(rate.split()[0]) > 0.0
+
+
+# ==============================================================================
+# 20. STRUCTURED DIAGNOSTICS & TELEMETRY METRICS TESTS
+# ==============================================================================
+@pytest.mark.asyncio
+async def test_diagnostic_states_transitions_A_through_E():
+    """
+    Verifies that the structured diagnostics correctly differentiate:
+    - State A: no frames received at all
+    - State B: ping/pong activity active but no market-data frames
+    - State C: binary frames received but protobuf decode fails
+    - State D: decoded frames received but normalization fails
+    - State E: valid ticks received and streaming
+    """
+    feed = UpstoxUpstreamFeed()
+    assert feed.diagnostic_state == "DISCONNECTED"
+
+    # State A: Connected, but zero frames of any type received
+    feed._set_state("CONNECTED")
+    assert feed.diagnostic_state == "STATE_A_NO_FRAMES_RECEIVED"
+
+    # State B: Ping/Pong RTT is measured, but still zero market data binary frames
+    mock_ws = MagicMock()
+    mock_ws.latency = 0.024
+    feed._ws = mock_ws
+    assert feed.diagnostic_state == "STATE_B_PING_PONG_ACTIVE_NO_MARKET_DATA"
+
+    # State C: Binary frames received, but Protobuf decode fails
+    feed._total_binary_messages = 1
+    feed._last_binary_message_at = datetime.now(timezone.utc)
+    feed._decode_errors = 1
+    assert feed.diagnostic_state == "STATE_C_PROTOBUF_DECODE_FAILED"
+
+    # State D: Binary decode succeeds, but quote normalization fails
+    feed._decode_errors = 0
+    feed._normalization_errors = 1
+    assert feed.diagnostic_state == "STATE_D_NORMALIZATION_FAILED"
+
+    # State E: Valid ticks received and decoded
+    feed._normalization_errors = 0
+    feed._total_ticks_decoded = 5
+    feed._last_tick_at = datetime.now(timezone.utc)
+    feed._first_tick_at = datetime.now(timezone.utc)
+    assert feed.diagnostic_state == "STATE_E_TICKS_STREAMING"
+
+
+@pytest.mark.asyncio
+async def test_all_11_required_monitoring_metrics_tracked_separately():
+    """
+    Verifies that all 11 explicit monitoring metrics required by the diagnostic specification
+    are tracked and exposed as separate fields in get_monitoring_metrics().
+    """
+    feed = UpstoxUpstreamFeed()
+    feed._set_state("CONNECTED")
+
+    mock_ws = MagicMock()
+    mock_ws.latency = 0.018  # 18.0 ms
+    feed._ws = mock_ws
+
+    now = datetime.now(timezone.utc)
+    feed._last_websocket_frame_at = now
+    feed._last_binary_message_at = now
+    feed._first_tick_at = now
+    feed._last_tick_at = now
+    feed._total_binary_messages = 42
+    feed._total_ticks_decoded = 35
+    feed._reconnect_count = 3
+    feed._last_disconnect_reason = "sent 1011 keepalive ping timeout"
+
+    metrics = feed.get_monitoring_metrics()
+
+    # Verify all 11 metrics are present and have expected values
+    assert metrics["websocket_connected"] is True
+    assert metrics["websocket_rtt_ms"] == 18.0
+    assert metrics["last_websocket_frame_at"] == now.isoformat()
+    assert metrics["last_binary_message_at"] == now.isoformat()
+    assert metrics["first_tick_at"] == now.isoformat()
+    assert metrics["total_binary_messages"] == 42
+    assert metrics["total_ticks_decoded"] == 35
+    assert metrics["last_tick_at"] == now.isoformat()
+    assert metrics["reconnect_count"] == 3
+    assert metrics["last_disconnect_reason"] == "sent 1011 keepalive ping timeout"
+    assert metrics["active_background_tasks"] == 0
+
+    # Verify diagnostic_state is present
+    assert metrics["diagnostic_state"] == "STATE_E_TICKS_STREAMING"
+
+
+@pytest.mark.asyncio
+async def test_corrupted_binary_frame_increments_decode_errors_state_c():
+    """Verifies that an invalid binary frame triggers State C without crashing the receive loop."""
+    feed = UpstoxUpstreamFeed()
+    feed._set_state("CONNECTED")
+
+    corrupted_bytes = b"NOT_A_VALID_PROTOBUF_FRAME_123456"
+    await feed._handle_message(corrupted_bytes)
+
+    assert feed._decode_errors == 1
+    assert feed._total_ticks_decoded == 0
+    assert feed.diagnostic_state == "STATE_C_PROTOBUF_DECODE_FAILED"
+
+
+@pytest.mark.asyncio
+async def test_binary_frame_subscription_payload_structure():
+    """
+    Verifies that Upstox subscriptions are transmitted as binary frames (UTF-8 bytes)
+    per official Upstox V3 specification, containing valid instrumentKeys, mode='full', and guid.
+    """
+    feed = UpstoxUpstreamFeed()
+    mock_ws = AsyncMock()
+    mock_ws.send = AsyncMock()
+    feed._ws = mock_ws
+    feed._set_state("CONNECTED")
+
+    # Clear pre-existing default keys to test fresh dynamic subscription dispatch
+    feed._subscribed_keys.clear()
+    await feed.add_subscriptions(["TATAMOTORS", "SBIN"])
+
+    # Check mock_ws.send was called with bytes
+    assert mock_ws.send.called
+    sent_arg = mock_ws.send.call_args[0][0]
+    assert isinstance(sent_arg, bytes), "Subscription message MUST be a binary frame (bytes), per Upstox V3 specification"
+
+    parsed = json.loads(sent_arg.decode("utf-8"))
+    assert parsed["method"] == "sub"
+    assert parsed["data"]["mode"] == "full"
+    assert "guid" in parsed
+    assert isinstance(parsed["data"]["instrumentKeys"], list)
+    for k in parsed["data"]["instrumentKeys"]:
+        assert "|" in k, f"Instrument key {k} must have valid EXCHANGE|ID format"
+
 

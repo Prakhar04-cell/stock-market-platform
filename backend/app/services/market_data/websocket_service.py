@@ -159,7 +159,13 @@ class UpstoxUpstreamFeed:
         self._first_binary_message_at: Optional[datetime] = None
         self._first_tick_at: Optional[datetime] = None
         self._last_message_at: Optional[datetime] = None
+        self._last_websocket_frame_at: Optional[datetime] = None
+        self._last_binary_message_at: Optional[datetime] = None
         self._last_tick_at: Optional[datetime] = None
+        self._total_binary_messages: int = 0
+        self._total_text_messages: int = 0
+        self._decode_errors: int = 0
+        self._normalization_errors: int = 0
         self._tick_history: collections.deque = collections.deque(maxlen=120)
         self._last_feed_latency_ms: Optional[float] = None
         self._last_market_data_latency_ms: Optional[float] = None
@@ -174,6 +180,32 @@ class UpstoxUpstreamFeed:
         self._background_tasks: Set[asyncio.Task] = set()
         self._task: Optional[asyncio.Task] = None
         self._ws = None
+
+    @property
+    def diagnostic_state(self) -> str:
+        """
+        Calculates structured diagnostic state distinguishing:
+        State A: no frames received at all
+        State B: ping/pong activity active but no market-data frames received
+        State C: binary frames received but protobuf decode fails
+        State D: decoded frames received but quote normalization fails
+        State E: valid ticks received and streaming normally
+        """
+        if not self._connected:
+            return "DISCONNECTED"
+        if self._decode_errors > 0 and self._total_ticks_decoded == 0:
+            return "STATE_C_PROTOBUF_DECODE_FAILED"
+        if self._normalization_errors > 0 and self._total_ticks_decoded == 0:
+            return "STATE_D_NORMALIZATION_FAILED"
+        if self._total_ticks_decoded > 0:
+            return "STATE_E_TICKS_STREAMING"
+        if self._total_binary_messages > 0:
+            return "STATE_C_BINARY_RECEIVED_AWAITING_TICKS"
+        if self.websocket_rtt_ms is not None:
+            return "STATE_B_PING_PONG_ACTIVE_NO_MARKET_DATA"
+        if self._last_message_at is None:
+            return "STATE_A_NO_FRAMES_RECEIVED"
+        return "STATE_B_AWAITING_MARKET_DATA"
 
     @property
     def websocket_rtt_ms(self) -> Optional[float]:
@@ -238,9 +270,11 @@ class UpstoxUpstreamFeed:
                         "instrumentKeys": new_keys,
                     },
                 }
-                await self._ws.send(json.dumps(sub_msg).encode("utf-8"))
+                # Send in binary format (UTF-8 bytes) per Upstox V3 Market Data Feed specification
+                sub_bytes = json.dumps(sub_msg).encode("utf-8")
+                await self._ws.send(sub_bytes)
                 self._last_subscription_sent_at = datetime.now(timezone.utc)
-                logger.info(f"Dynamic Upstox V3 subscription sent for {len(new_keys)} keys: {new_keys}")
+                logger.info(f"[DIAGNOSTIC] Dynamic Upstox V3 subscription sent (Binary Frame, {len(sub_bytes)} bytes) for {len(new_keys)} keys: {new_keys}")
             except Exception as e:
                 logger.debug(f"Dynamic subscription send failed: {e}")
 
@@ -334,8 +368,8 @@ class UpstoxUpstreamFeed:
                 logger.info("Connecting to Upstox Market Data Feed V3...")
                 async with websockets.connect(
                     auth_url,
-                    ping_interval=30,
-                    ping_timeout=30,
+                    ping_interval=20,
+                    ping_timeout=20,
                     close_timeout=10,
                 ) as ws:
                     self._ws = ws
@@ -344,33 +378,49 @@ class UpstoxUpstreamFeed:
                     backoff = 2.0  # Reset backoff on successful connect
                     logger.info("Successfully connected to Upstox Market Data Feed V3.")
 
+                    # Compatibility precaution: brief settling pause before subscription dispatch
+                    await asyncio.sleep(0.5)
+
                     # Send initial subscription message for tracked instruments
-                    if self._subscribed_keys:
+                    valid_keys = [k for k in self._subscribed_keys if k and "|" in k]
+                    if valid_keys:
                         sub_msg = {
-                            "guid": "tradex_sub_init",
+                            "guid": f"tradex_sub_{int(datetime.now(timezone.utc).timestamp())}",
                             "method": "sub",
                             "data": {
                                 "mode": "full",
-                                "instrumentKeys": list(self._subscribed_keys),
+                                "instrumentKeys": sorted(valid_keys),
                             },
                         }
-                        await ws.send(json.dumps(sub_msg).encode("utf-8"))
+                        # Send in binary format (UTF-8 bytes) per Upstox V3 Market Data Feed specification
+                        sub_bytes = json.dumps(sub_msg).encode("utf-8")
+                        await ws.send(sub_bytes)
                         self._last_subscription_sent_at = datetime.now(timezone.utc)
                         logger.info(
-                            f"Upstox V3 subscription sent for {len(self._subscribed_keys)} instruments: "
-                            f"{sorted(list(self._subscribed_keys))}"
+                            f"[DIAGNOSTIC] Upstox V3 subscription sent (Binary Frame, {len(sub_bytes)} bytes) for {len(valid_keys)} instruments: "
+                            f"{sorted(valid_keys)}"
                         )
 
                     while self._is_running:
                         msg = await ws.recv()
-                        self._last_message_at = datetime.now(timezone.utc)
+                        now_utc = datetime.now(timezone.utc)
+                        self._last_websocket_frame_at = now_utc
+                        self._last_message_at = now_utc
                         self._messages_received += 1
+
                         if isinstance(msg, bytes):
+                            self._total_binary_messages += 1
+                            self._last_binary_message_at = now_utc
                             if self._first_binary_message_at is None:
-                                self._first_binary_message_at = self._last_message_at
-                                logger.info(f"First Upstox V3 binary message received (size: {len(msg)} bytes)")
+                                self._first_binary_message_at = now_utc
+                                logger.info(
+                                    f"[DIAGNOSTIC] First Upstox V3 binary message received (size: {len(msg)} bytes). "
+                                    f"Current diagnostic state: {self.diagnostic_state}"
+                                )
                         elif isinstance(msg, str):
-                            logger.info(f"Upstox V3 text frame received: {msg[:200]}")
+                            self._total_text_messages += 1
+                            logger.info(f"[DIAGNOSTIC] Upstox V3 text frame received: {msg[:200]}")
+
                         await self._handle_message(msg)
 
             except asyncio.CancelledError:
@@ -399,20 +449,27 @@ class UpstoxUpstreamFeed:
         """Decodes JSON or binary Protobuf feed payload."""
         now_ts = time.time()
         backend_receive_ms = now_ts * 1000.0
-        self._last_message_at = datetime.now(timezone.utc)
-        self._messages_received += 1
-        self._tick_history.append(now_ts)
-        self._last_tick_at = self._last_message_at
+        now_utc = datetime.now(timezone.utc)
+        self._last_websocket_frame_at = now_utc
+        self._last_message_at = now_utc
 
         try:
             if isinstance(raw_message, bytes):
                 from app.services.market_data.MarketDataFeedV3_pb2 import FeedResponse
 
                 feed_resp = FeedResponse()
-                feed_resp.ParseFromString(raw_message)
+                try:
+                    feed_resp.ParseFromString(raw_message)
+                except Exception as decode_err:
+                    self._decode_errors += 1
+                    logger.warning(
+                        f"[DIAGNOSTIC State C] Protobuf decode failed for binary frame ({len(raw_message)} bytes): {decode_err}"
+                    )
+                    return
 
                 # Feed type 2 is market_info status message
                 if not feed_resp.feeds:
+                    logger.debug(f"[DIAGNOSTIC] FeedResponse received with 0 feeds (type={feed_resp.type})")
                     return
 
                 # Calculate Market Data Latency strictly from trustworthy decoded market tick timing
@@ -491,25 +548,35 @@ class UpstoxUpstreamFeed:
                         change = ltp - cp if cp > 0 else 0.0
                         change_pct = (change / cp * 100.0) if cp > 0 else 0.0
 
-                        norm_quote = MarketQuote(
-                            symbol=symbol,
-                            instrument_key=ikey,
-                            exchange=ikey.split("_")[0] if "_" in ikey else "NSE",
-                            timestamp=quote_time,
-                            ltp=Decimal(str(round(ltp, 2))),
-                            open=Decimal(str(round(open_p or ltp, 2))),
-                            high=Decimal(str(round(high_p or ltp, 2))),
-                            low=Decimal(str(round(low_p or ltp, 2))),
-                            previous_close=Decimal(str(round(cp, 2))),
-                            change=Decimal(str(round(change, 2))),
-                            change_percent=Decimal(str(round(change_pct, 4))),
-                            volume=int(vol),
-                        )
+                        try:
+                            norm_quote = MarketQuote(
+                                symbol=symbol,
+                                instrument_key=ikey,
+                                exchange=ikey.split("_")[0] if "_" in ikey else "NSE",
+                                timestamp=quote_time,
+                                ltp=Decimal(str(round(ltp, 2))),
+                                open=Decimal(str(round(open_p or ltp, 2))),
+                                high=Decimal(str(round(high_p or ltp, 2))),
+                                low=Decimal(str(round(low_p or ltp, 2))),
+                                previous_close=Decimal(str(round(cp, 2))),
+                                change=Decimal(str(round(change, 2))),
+                                change_percent=Decimal(str(round(change_pct, 4))),
+                                volume=int(vol),
+                            )
+                        except Exception as norm_err:
+                            self._normalization_errors += 1
+                            logger.warning(
+                                f"[DIAGNOSTIC State D] MarketQuote normalization failed for {ikey}: {norm_err}"
+                            )
+                            continue
+
                         self._total_ticks_decoded += 1
+                        self._last_tick_at = datetime.now(timezone.utc)
+                        self._tick_history.append(now_ts)
                         if self._first_tick_at is None:
-                            self._first_tick_at = datetime.now(timezone.utc)
+                            self._first_tick_at = self._last_tick_at
                             logger.info(
-                                f"First decoded market tick received: {norm_quote.symbol} "
+                                f"[DIAGNOSTIC State E] First decoded market tick received: {norm_quote.symbol} "
                                 f"({norm_quote.instrument_key}) LTP={norm_quote.ltp}"
                             )
                         await quote_service.cache_quote(norm_quote)
@@ -519,36 +586,50 @@ class UpstoxUpstreamFeed:
                         self._dispatch_order_evaluation(norm_quote)
 
             elif isinstance(raw_message, str):
-                data = json.loads(raw_message)
-                feeds = data.get("feeds", {})
-                for ikey, quote_dict in feeds.items():
-                    norm_quote = normalize_upstox_quote(instrument_key=ikey, raw_quote=quote_dict)
-                    raw_ts = quote_dict.get("timestamp") or quote_dict.get("ltt") or data.get("currentTs")
-                    if raw_ts:
+                try:
+                    data = json.loads(raw_message)
+                    feeds = data.get("feeds", {})
+                    for ikey, quote_dict in feeds.items():
                         try:
-                            if isinstance(raw_ts, (int, float)):
-                                tick_ms = float(raw_ts) if raw_ts > 1e11 else float(raw_ts) * 1000.0
-                            elif isinstance(raw_ts, str):
-                                dt = datetime.fromisoformat(raw_ts.replace("Z", "+00:00"))
-                                tick_ms = dt.timestamp() * 1000.0
-                            else:
-                                tick_ms = None
-                            if tick_ms is not None:
-                                diff_ms = backend_receive_ms - tick_ms
-                                if -500.0 <= diff_ms <= 10000.0:
-                                    self._last_market_data_latency_ms = round(max(0.0, diff_ms), 1)
-                        except Exception:
-                            pass
-                    self._total_ticks_decoded += 1
-                    if self._first_tick_at is None:
-                        self._first_tick_at = datetime.now(timezone.utc)
-                        logger.info(
-                            f"First decoded market tick received (fallback): {norm_quote.symbol} "
-                            f"({norm_quote.instrument_key}) LTP={norm_quote.ltp}"
-                        )
-                    await quote_service.cache_quote(norm_quote)
-                    await market_ws_manager.broadcast_quote(norm_quote)
-                    self._dispatch_order_evaluation(norm_quote)
+                            norm_quote = normalize_upstox_quote(instrument_key=ikey, raw_quote=quote_dict)
+                        except Exception as norm_err:
+                            self._normalization_errors += 1
+                            logger.warning(
+                                f"[DIAGNOSTIC State D] Fallback text quote normalization failed for {ikey}: {norm_err}"
+                            )
+                            continue
+
+                        raw_ts = quote_dict.get("timestamp") or quote_dict.get("ltt") or data.get("currentTs")
+                        if raw_ts:
+                            try:
+                                if isinstance(raw_ts, (int, float)):
+                                    tick_ms = float(raw_ts) if raw_ts > 1e11 else float(raw_ts) * 1000.0
+                                elif isinstance(raw_ts, str):
+                                    dt = datetime.fromisoformat(raw_ts.replace("Z", "+00:00"))
+                                    tick_ms = dt.timestamp() * 1000.0
+                                else:
+                                    tick_ms = None
+                                if tick_ms is not None:
+                                    diff_ms = backend_receive_ms - tick_ms
+                                    if -500.0 <= diff_ms <= 10000.0:
+                                        self._last_market_data_latency_ms = round(max(0.0, diff_ms), 1)
+                            except Exception:
+                                pass
+
+                        self._total_ticks_decoded += 1
+                        self._last_tick_at = datetime.now(timezone.utc)
+                        self._tick_history.append(now_ts)
+                        if self._first_tick_at is None:
+                            self._first_tick_at = self._last_tick_at
+                            logger.info(
+                                f"[DIAGNOSTIC State E] First decoded market tick received (fallback): {norm_quote.symbol} "
+                                f"({norm_quote.instrument_key}) LTP={norm_quote.ltp}"
+                            )
+                        await quote_service.cache_quote(norm_quote)
+                        await market_ws_manager.broadcast_quote(norm_quote)
+                        self._dispatch_order_evaluation(norm_quote)
+                except Exception as json_err:
+                    logger.debug(f"[DIAGNOSTIC] JSON parsing error on text message: {json_err}")
         except Exception as e:
             logger.debug(f"Error handling Upstox WS message: {e}")
 
@@ -575,28 +656,51 @@ class UpstoxUpstreamFeed:
 
     def get_monitoring_metrics(self) -> Dict[str, Any]:
         return {
+            # 1. websocket_connected
+            "websocket_connected": self._connected,
+            # 2. websocket_rtt_ms
+            "websocket_rtt_ms": self.websocket_rtt_ms,
+            # 3. last_websocket_frame_at
+            "last_websocket_frame_at": self._last_websocket_frame_at.isoformat() if self._last_websocket_frame_at else None,
+            # 4. last_binary_message_at
+            "last_binary_message_at": self._last_binary_message_at.isoformat() if self._last_binary_message_at else None,
+            # 5. first_tick_at
+            "first_tick_at": self._first_tick_at.isoformat() if self._first_tick_at else None,
+            # 6. total_binary_messages
+            "total_binary_messages": self._total_binary_messages,
+            # 7. total_ticks_decoded
+            "total_ticks_decoded": self._total_ticks_decoded,
+            # 8. last_tick_at
+            "last_tick_at": self._last_tick_at.isoformat() if self._last_tick_at else None,
+            # 9. reconnect_count
+            "reconnect_count": self._reconnect_count,
+            # 10. last_disconnect_reason
+            "last_disconnect_reason": self._last_disconnect_reason,
+            # 11. active_background_tasks
+            "active_background_tasks": len(self._background_tasks),
+
+            # Structured Diagnostic State (States A, B, C, D, E)
+            "diagnostic_state": self.diagnostic_state,
+            "decode_errors": self._decode_errors,
+            "normalization_errors": self._normalization_errors,
+            "total_text_messages": self._total_text_messages,
+
+            # Preserved backwards-compatible monitoring telemetry
             "status": "connected" if self._connected else "disconnected",
             "state": self._state,
             "connected": self._connected,
             "last_message": self._last_message_at.isoformat() if self._last_message_at else None,
-            "last_tick_at": self._last_tick_at.isoformat() if self._last_tick_at else None,
             "messages_received": self._messages_received,
-            "total_ticks_decoded": self._total_ticks_decoded,
-            "reconnect_count": self._reconnect_count,
             "error_count": self._error_count,
             "last_error": self._last_error,
-            "last_disconnect_reason": self._last_disconnect_reason,
             "subscribed_instruments_count": len(self._subscribed_keys),
             "subscribed_instruments": sorted(list(self._subscribed_keys)),
             "last_subscription_sent_at": self._last_subscription_sent_at.isoformat() if self._last_subscription_sent_at else None,
             "first_binary_message_at": self._first_binary_message_at.isoformat() if self._first_binary_message_at else None,
-            "first_tick_at": self._first_tick_at.isoformat() if self._first_tick_at else None,
             "quote_update_rate": self.get_quote_rate(),
-            "websocket_rtt_ms": self.websocket_rtt_ms,
             "market_data_latency_ms": self.market_data_latency_ms,
             "feed_latency_ms": self.market_data_latency_ms,
             "ws_latency_seconds": round(self._ws.latency, 3) if self._ws and hasattr(self._ws, "latency") and self._ws.latency is not None else None,
-            "active_background_tasks": len(self._background_tasks),
         }
 
 
