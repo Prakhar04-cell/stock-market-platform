@@ -39,8 +39,8 @@ export default function AdminMonitoringPage() {
       const [monData, upData, infra, marketH] = await Promise.allSettled([
         apiRequest("/api/v1/admin/monitoring"),
         apiRequest("/api/v1/upstox/auth/status"),
-        apiRequest("/health/infrastructure"),
-        apiRequest("/health/market-data"),
+        apiRequest("/health/infrastructure").catch(() => apiRequest("/api/v1/health/infrastructure")),
+        apiRequest("/health/market-data").catch(() => apiRequest("/api/v1/health/market-data")),
       ]);
 
       let anySuccess = false;
@@ -86,6 +86,7 @@ export default function AdminMonitoringPage() {
   const isUpstoxAuth =
     upstoxStatus?.authenticated ||
     infraData?.upstox?.status === "AUTHENTICATED" ||
+    infraData?.upstox?.status === "Analytics Token ACTIVE" ||
     monitoringData?.metrics?.upstox_authenticated ||
     marketDataHealth?.authenticated;
 
@@ -101,7 +102,8 @@ export default function AdminMonitoringPage() {
     (infraData?.backend_container?.status === "HEALTHY" ||
       infraData?.backend?.status === "HEALTHY" ||
       monitoringData != null ||
-      marketDataHealth != null);
+      marketDataHealth != null ||
+      upstoxStatus != null);
 
   // Docker / Host Runtime
   const isDockerContainer = infraData?.docker_runtime?.is_container ?? false;
@@ -134,7 +136,8 @@ export default function AdminMonitoringPage() {
   // Redis Cache
   const rawRedisStatus =
     infraData?.redis?.status ||
-    monitoringData?.metrics?.redis_status;
+    monitoringData?.metrics?.redis_status ||
+    (marketDataHealth?.redis === "connected" ? "HEALTHY" : marketDataHealth?.redis === "disconnected" ? "FAILED" : undefined);
   const isRedisHealthy = rawRedisStatus === "HEALTHY" || rawRedisStatus === "CONNECTED";
   const isRedisNotConfigured = rawRedisStatus === "NOT_CONFIGURED";
   const redisLatency =
@@ -160,7 +163,7 @@ export default function AdminMonitoringPage() {
     monitoringData?.metrics?.quote_update_rate ??
     infraData?.websocket?.quote_update_rate ??
     marketDataHealth?.quote_update_rate ??
-    (isWsConnected ? "Live Feed" : "Standby");
+    (isWsConnected ? "Live Feed" : "N/A");
 
   // Market Latency
   const rawMarketLatency =
@@ -477,7 +480,11 @@ export default function AdminMonitoringPage() {
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
             <span className="text-[11px] text-[#6B7280] font-normal block">Subscribed Instruments</span>
             <span className="font-semibold text-[#111827] tabular-nums">
-              {subscribedInstrumentsCount}
+              {subscribedInstrumentsCount > 0
+                ? subscribedInstrumentsCount
+                : isWsConnected
+                ? "0 (No active subscriptions)"
+                : "0"}
             </span>
           </div>
 

@@ -145,7 +145,7 @@ async def get_market_data_health(db: AsyncSession = Depends(get_db)):
         "authenticated": authenticated,
         "websocket": ws_state.lower(),
         "websocket_state": ws_state,
-        "quote_update_rate": metrics.get("quote_update_rate", "Standby"),
+        "quote_update_rate": metrics.get("quote_update_rate", "N/A"),
         "last_update": last_update,
         "latency_ms": latency,
         "redis": redis_status,
@@ -220,14 +220,16 @@ async def get_infrastructure_health(db: AsyncSession = Depends(get_db)):
             "version": settings.VERSION,
         },
         "database": {
-            "status": "CONNECTED" if db_ok else "FAILED",
+            "status": "HEALTHY" if db_ok else "FAILED",
             "provider": db_provider,
             "latency_ms": db_latency,
+            "details": None if db_ok else str(db_provider),
         },
         "redis": {
-            "status": "CONNECTED" if redis_ok else ("NOT_CONFIGURED" if redis_provider == "NOT_CONFIGURED" else "FAILED"),
+            "status": "HEALTHY" if redis_ok else ("NOT_CONFIGURED" if redis_provider == "NOT_CONFIGURED" else "FAILED"),
             "provider": redis_provider,
             "latency_ms": redis_latency,
+            "details": None if redis_ok else str(redis_provider),
         },
         "upstox": {
             "configured": verification["configured"],
@@ -239,7 +241,7 @@ async def get_infrastructure_health(db: AsyncSession = Depends(get_db)):
         "websocket": {
             "status": ws_metrics["state"],
             "connected": upstream_feed.is_connected,
-            "quote_update_rate": ws_metrics.get("quote_update_rate", "Standby"),
+            "quote_update_rate": ws_metrics.get("quote_update_rate", "N/A"),
             "subscribed_instruments_count": ws_metrics.get("subscribed_instruments_count", 0),
             "latency_ms": latency_ms,
         },

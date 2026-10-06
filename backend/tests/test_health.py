@@ -135,7 +135,7 @@ def test_websocket_states_and_quote_rate():
     assert feed.state == "DISCONNECTED"
 
     # Quote rate calculation
-    assert feed.get_quote_rate() == "Standby"
+    assert feed.get_quote_rate() in ["N/A", "Waiting for first tick"]
 
     # Simulate ticks
     import time

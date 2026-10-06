@@ -9,7 +9,7 @@ const rawBaseUrl =
       ? window.location.origin
       : "http://localhost:8000");
 
-export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, "");
+export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, "").replace(/\/api\/v1\/?$/, "");
 
 export interface ApiError {
   code: string;

@@ -420,7 +420,9 @@ class UpstoxUpstreamFeed:
             logger.debug(f"Error handling Upstox WS message: {e}")
 
     def get_quote_rate(self) -> str:
-        """Calculates rolling tick rate over recent 5-second window."""
+        """Calculates rolling tick rate from actual received market ticks."""
+        if self._messages_received == 0 and not self._tick_history:
+            return "Waiting for first tick" if self._connected else "N/A"
         now_ts = time.time()
         recent = [t for t in self._tick_history if now_ts - t <= 5.0]
         if len(recent) >= 2:
@@ -428,9 +430,15 @@ class UpstoxUpstreamFeed:
             if duration > 0.1:
                 rate = round(len(recent) / duration, 1)
                 return f"{rate} updates/sec"
-        if self._last_tick_at and (now_ts - self._last_tick_at.timestamp() <= 10.0):
-            return f"{len(recent)} updates/sec" if recent else "Live Feed"
-        return "Standby"
+        if self._last_tick_at:
+            elapsed = now_ts - self._last_tick_at.timestamp()
+            if elapsed <= 10.0:
+                return f"{len(recent)} updates/sec" if len(recent) > 0 else "Live Feed"
+            elif elapsed <= 60.0:
+                return "Idle (<1/sec)"
+            else:
+                return "Stale (>60s)"
+        return "Waiting for first tick" if self._connected else "N/A"
 
     def get_monitoring_metrics(self) -> Dict[str, Any]:
         return {
