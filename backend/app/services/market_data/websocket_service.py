@@ -1,6 +1,8 @@
 import asyncio
+import collections
 import json
 import logging
+import time
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set
@@ -151,8 +153,12 @@ class UpstoxUpstreamFeed:
     def __init__(self):
         self._is_running = False
         self._connected = False
+        self._state = "DISCONNECTED"
         self._subscribed_keys: Set[str] = set(DEFAULT_SUBSCRIBED_KEYS)
         self._last_message_at: Optional[datetime] = None
+        self._last_tick_at: Optional[datetime] = None
+        self._tick_history: collections.deque = collections.deque(maxlen=120)
+        self._last_feed_latency_ms: Optional[float] = None
         self._messages_received: int = 0
         self._reconnect_count: int = 0
         self._error_count: int = 0
@@ -163,6 +169,22 @@ class UpstoxUpstreamFeed:
     @property
     def is_connected(self) -> bool:
         return self._connected
+
+    @property
+    def state(self) -> str:
+        return self._state
+
+    def _set_state(self, new_state: str):
+        """Helper to transition WebSocket feed state and synchronize connected flag."""
+        self._state = new_state
+        self._connected = (new_state == "CONNECTED")
+
+    def record_tick(self, ts: Optional[float] = None):
+        """Records a market tick timestamp for rolling quote rate calculation."""
+        import time
+        t = ts if ts is not None else time.time()
+        self._tick_history.append(t)
+        self._last_tick_at = datetime.fromtimestamp(t, tz=timezone.utc)
 
     async def add_subscriptions(self, symbols_or_keys: List[str]):
         """Adds instrument keys to upstream feed tracking and sends dynamic sub packet."""
@@ -192,12 +214,14 @@ class UpstoxUpstreamFeed:
         if self._is_running:
             return
         self._is_running = True
+        self._state = "CONNECTING"
         self._task = asyncio.create_task(self._run_loop())
         logger.info("Upstox Upstream WebSocket Feed manager started.")
 
     async def stop(self):
         self._is_running = False
         self._connected = False
+        self._state = "DISCONNECTED"
         if self._ws:
             try:
                 await self._ws.close()
@@ -224,12 +248,15 @@ class UpstoxUpstreamFeed:
             try:
                 # Check provider configuration and authentication status
                 if not upstox_provider.is_configured:
+                    self._state = "DISCONNECTED"
                     await asyncio.sleep(10)
                     continue
 
+                self._state = "CONNECTING" if self._reconnect_count == 0 else "RECONNECTING"
                 auth_url = await upstox_provider.get_ws_feed_authorized_url()
                 if not auth_url:
                     self._connected = False
+                    self._state = "RECONNECTING" if self._reconnect_count > 0 else "ERROR"
                     await asyncio.sleep(15)
                     continue
 
@@ -239,6 +266,7 @@ class UpstoxUpstreamFeed:
                 async with websockets.connect(auth_url, ping_interval=30, ping_timeout=10) as ws:
                     self._ws = ws
                     self._connected = True
+                    self._state = "CONNECTED"
                     backoff = 2.0  # Reset backoff on successful connect
                     logger.info("Successfully connected to Upstox Market Data Feed V3.")
 
@@ -268,15 +296,23 @@ class UpstoxUpstreamFeed:
                 self._error_count += 1
                 self._reconnect_count += 1
                 self._last_error = str(e)
+                self._state = "RECONNECTING" if self._is_running else "ERROR"
                 logger.warning(f"Upstox WebSocket error: {e}. Reconnecting in {backoff:.1f}s...")
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 1.5, max_backoff)
 
         self._connected = False
+        self._state = "DISCONNECTED"
         self._ws = None
 
     async def _handle_message(self, raw_message: Any):
         """Decodes JSON or binary Protobuf feed payload."""
+        now_ts = time.time()
+        self._last_message_at = datetime.now(timezone.utc)
+        self._messages_received += 1
+        self._tick_history.append(now_ts)
+        self._last_tick_at = self._last_message_at
+
         try:
             if isinstance(raw_message, bytes):
                 from app.services.market_data.MarketDataFeedV3_pb2 import FeedResponse
@@ -284,11 +320,16 @@ class UpstoxUpstreamFeed:
                 feed_resp = FeedResponse()
                 feed_resp.ParseFromString(raw_message)
 
+                if feed_resp.currentTs:
+                    diff_ms = (now_ts * 1000) - feed_resp.currentTs
+                    if 0 <= diff_ms < 60000:
+                        self._last_feed_latency_ms = round(diff_ms, 1)
+
                 # Feed type 2 is market_info status message
                 if not feed_resp.feeds:
                     return
 
-                ts_ms = feed_resp.currentTs or int(datetime.now(timezone.utc).timestamp() * 1000)
+                ts_ms = feed_resp.currentTs or int(now_ts * 1000)
                 quote_time = datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc)
 
                 for ikey, f in feed_resp.feeds.items():
@@ -378,16 +419,34 @@ class UpstoxUpstreamFeed:
         except Exception as e:
             logger.debug(f"Error handling Upstox WS message: {e}")
 
+    def get_quote_rate(self) -> str:
+        """Calculates rolling tick rate over recent 5-second window."""
+        now_ts = time.time()
+        recent = [t for t in self._tick_history if now_ts - t <= 5.0]
+        if len(recent) >= 2:
+            duration = recent[-1] - recent[0]
+            if duration > 0.1:
+                rate = round(len(recent) / duration, 1)
+                return f"{rate} updates/sec"
+        if self._last_tick_at and (now_ts - self._last_tick_at.timestamp() <= 10.0):
+            return f"{len(recent)} updates/sec" if recent else "Live Feed"
+        return "Standby"
+
     def get_monitoring_metrics(self) -> Dict[str, Any]:
         return {
             "status": "connected" if self._connected else "disconnected",
+            "state": self._state,
             "connected": self._connected,
             "last_message": self._last_message_at.isoformat() if self._last_message_at else None,
+            "last_tick_at": self._last_tick_at.isoformat() if self._last_tick_at else None,
             "messages_received": self._messages_received,
             "reconnect_count": self._reconnect_count,
             "error_count": self._error_count,
             "last_error": self._last_error,
             "subscribed_instruments_count": len(self._subscribed_keys),
+            "subscribed_instruments": list(self._subscribed_keys),
+            "quote_update_rate": self.get_quote_rate(),
+            "feed_latency_ms": self._last_feed_latency_ms,
         }
 
 

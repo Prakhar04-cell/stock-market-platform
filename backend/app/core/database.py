@@ -1,5 +1,5 @@
 import logging
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
@@ -52,15 +52,20 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-async def check_db_health() -> tuple[bool, float, str]:
-    """Probes the database with a lightweight ping query."""
+async def check_db_health(session: Optional[AsyncSession] = None) -> tuple[bool, float, str]:
+    """Probes the database with a lightweight SELECT 1 query."""
     import time
     t0 = time.time()
     try:
-        async with engine.connect() as conn:
-            await conn.execute(text("SELECT 1"))
+        if session is not None:
+            await session.execute(text("SELECT 1"))
+        else:
+            async with engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
         latency_ms = round((time.time() - t0) * 1000, 2)
-        return True, latency_ms, "PostgreSQL (Neon)"
+        provider = "Neon PostgreSQL" if "neon.tech" in settings.DATABASE_URL else "PostgreSQL"
+        return True, latency_ms, provider
     except Exception as e:
+        latency_ms = round((time.time() - t0) * 1000, 2)
         logger.warning(f"Database health check failed: {e}")
-        return False, 0.0, str(e)
+        return False, latency_ms, str(e)

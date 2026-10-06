@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   Box,
   Cloud,
+  Lock,
 } from "lucide-react";
 
 export default function AdminMonitoringPage() {
@@ -29,6 +30,8 @@ export default function AdminMonitoringPage() {
   const [marketDataHealth, setMarketDataHealth] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<string>("");
+  const [isAdminAuthorized, setIsAdminAuthorized] = useState<boolean>(true);
+  const [isMonitoringUnavailable, setIsMonitoringUnavailable] = useState<boolean>(false);
 
   const loadHealthData = useCallback(async () => {
     setIsLoading(true);
@@ -40,20 +43,34 @@ export default function AdminMonitoringPage() {
         apiRequest("/health/market-data"),
       ]);
 
+      let anySuccess = false;
+
       if (monData.status === "fulfilled") {
         setMonitoringData(monData.value);
+        setIsAdminAuthorized(true);
+        anySuccess = true;
+      } else {
+        // If 403 Forbidden or unauthorized, record non-admin state
+        setIsAdminAuthorized(false);
       }
+
       if (upData.status === "fulfilled") {
         setUpstoxStatus(upData.value);
+        anySuccess = true;
       }
       if (infra.status === "fulfilled") {
         setInfraData(infra.value);
+        anySuccess = true;
       }
       if (marketH.status === "fulfilled") {
         setMarketDataHealth(marketH.value);
+        anySuccess = true;
       }
 
+      setIsMonitoringUnavailable(!anySuccess);
       setLastRefreshed(new Date().toLocaleTimeString());
+    } catch {
+      setIsMonitoringUnavailable(true);
     } finally {
       setIsLoading(false);
     }
@@ -65,6 +82,7 @@ export default function AdminMonitoringPage() {
     return () => clearInterval(interval);
   }, [loadHealthData]);
 
+  // Upstox Authentication status
   const isUpstoxAuth =
     upstoxStatus?.authenticated ||
     infraData?.upstox?.status === "AUTHENTICATED" ||
@@ -77,23 +95,108 @@ export default function AdminMonitoringPage() {
     monitoringData?.metrics?.upstox_configured ||
     marketDataHealth?.configured;
 
-  const isWsConnected =
-    infraData?.websocket?.status === "CONNECTED" ||
-    monitoringData?.metrics?.market_websocket_status === "connected" ||
-    marketDataHealth?.websocket === "connected";
+  // Backend Process Status
+  const isBackendAlive =
+    !isMonitoringUnavailable &&
+    (infraData?.backend_container?.status === "HEALTHY" ||
+      infraData?.backend?.status === "HEALTHY" ||
+      monitoringData != null ||
+      marketDataHealth != null);
 
-  const postgresStatus =
-    infraData?.database?.status ||
-    monitoringData?.metrics?.postgresql_status ||
-    (marketDataHealth ? "HEALTHY" : "UNKNOWN");
-
-  const redisStatus =
-    infraData?.redis?.status ||
-    monitoringData?.metrics?.redis_status ||
-    (marketDataHealth?.redis === "connected" ? "HEALTHY" : "UNKNOWN");
-
+  // Docker / Host Runtime
   const isDockerContainer = infraData?.docker_runtime?.is_container ?? false;
-  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel.app");
+  const dockerRuntimeStatus =
+    infraData?.docker_runtime?.status ||
+    monitoringData?.metrics?.docker_runtime?.status ||
+    (isDockerContainer ? "CONTAINERIZED" : "MANAGED BY HOST");
+
+  const dockerRuntimeDesc =
+    infraData?.docker_runtime?.description ||
+    monitoringData?.metrics?.docker_runtime?.description ||
+    (isDockerContainer
+      ? "Running inside containerized stack."
+      : "Host Docker runtime is managed by Render and is not directly exposed to the application.");
+
+  // Database (PostgreSQL)
+  const rawDbStatus =
+    infraData?.database?.status ||
+    monitoringData?.metrics?.postgresql_status;
+  const isDbHealthy = rawDbStatus === "HEALTHY" || rawDbStatus === "CONNECTED";
+  const dbLatency =
+    infraData?.database?.latency_ms ??
+    monitoringData?.metrics?.postgresql_latency_ms ??
+    null;
+  const dbProvider =
+    infraData?.database?.provider ||
+    monitoringData?.metrics?.postgresql_provider ||
+    "PostgreSQL Database";
+
+  // Redis Cache
+  const rawRedisStatus =
+    infraData?.redis?.status ||
+    monitoringData?.metrics?.redis_status;
+  const isRedisHealthy = rawRedisStatus === "HEALTHY" || rawRedisStatus === "CONNECTED";
+  const isRedisNotConfigured = rawRedisStatus === "NOT_CONFIGURED";
+  const redisLatency =
+    infraData?.redis?.latency_ms ??
+    monitoringData?.metrics?.redis_latency_ms ??
+    null;
+  const redisProvider =
+    infraData?.redis?.provider ||
+    monitoringData?.metrics?.redis_provider ||
+    "Redis Datastore";
+
+  // Market WebSocket State
+  const wsState =
+    infraData?.websocket?.status ||
+    monitoringData?.metrics?.market_websocket_state ||
+    marketDataHealth?.websocket_state ||
+    (infraData?.websocket?.connected ? "CONNECTED" : "DISCONNECTED");
+
+  const isWsConnected = wsState === "CONNECTED";
+
+  // Rolling Quote Rate
+  const quoteUpdateRate =
+    monitoringData?.metrics?.quote_update_rate ??
+    infraData?.websocket?.quote_update_rate ??
+    marketDataHealth?.quote_update_rate ??
+    (isWsConnected ? "Live Feed" : "Standby");
+
+  // Market Latency
+  const rawMarketLatency =
+    monitoringData?.metrics?.market_data_latency_ms ??
+    infraData?.websocket?.latency_ms ??
+    marketDataHealth?.latency_ms;
+  const marketLatencyDisplay =
+    rawMarketLatency !== undefined && rawMarketLatency !== null && rawMarketLatency > 0
+      ? `${rawMarketLatency} ms`
+      : "N/A";
+
+  // Subscribed Instruments Count (never hardcode 15)
+  const subscribedInstrumentsCount =
+    monitoringData?.metrics?.subscribed_instruments_count ??
+    infraData?.websocket?.subscribed_instruments_count ??
+    marketDataHealth?.instruments ??
+    0;
+
+  // Sentry Status
+  const rawSentryStatus =
+    infraData?.sentry?.status ||
+    monitoringData?.metrics?.sentry_status ||
+    "NOT_CONFIGURED";
+  const isSentryActive = rawSentryStatus === "ACTIVE";
+  const sentryDescription =
+    infraData?.sentry?.description ||
+    monitoringData?.metrics?.sentry_description ||
+    "sentry-sdk not installed; skipping Sentry initialization.";
+
+  // Paper Trading Engine Status
+  const paperTradingStatus =
+    monitoringData?.metrics?.paper_trading_engine_status ??
+    "ACTIVE (PAPER ONLY)";
+
+  const isVercel =
+    typeof window !== "undefined" && window.location.hostname.includes("vercel.app");
 
   return (
     <div className="space-y-5 select-none">
@@ -104,7 +207,7 @@ export default function AdminMonitoringPage() {
             System Monitoring &amp; Infrastructure Diagnostics
           </h1>
           <p className="text-xs text-[#6B7280] mt-0.5 font-normal">
-            Real-time diagnostics for Docker / Host runtime, Cloud Database, Redis, and Upstox Market Feed V3.
+            Real-time diagnostics for Host runtime, Cloud Database, Redis, and Upstox Market Feed V3.
           </p>
         </div>
 
@@ -127,6 +230,31 @@ export default function AdminMonitoringPage() {
         </div>
       </div>
 
+      {/* Backend Unavailable Alert Banner */}
+      {isMonitoringUnavailable && (
+        <div className="p-4 rounded-2xl bg-[#FEF2F2] border border-[#FECACA] shadow-card flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-[#DC2626] shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-semibold text-[#991B1B]">
+              Monitoring Data Unavailable
+            </h4>
+            <p className="text-xs text-[#B91C1C] mt-0.5">
+              Unable to reach backend health endpoints at {API_BASE_URL}. Verify backend process status and network connectivity.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Authorization Notice */}
+      {!isAdminAuthorized && !isMonitoringUnavailable && (
+        <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] shadow-xs flex items-center gap-2.5 text-xs text-[#475569]">
+          <Lock className="w-4 h-4 text-[#64748B] shrink-0" />
+          <span>
+            <strong>Admin Telemetry Notice:</strong> Showing public infrastructure health checks. Log in with an administrator account for full internal audit metrics and broker credentials.
+          </span>
+        </div>
+      )}
+
       {/* Production Infrastructure & Docker Runtime Card */}
       <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-card space-y-4">
         <div className="flex items-center justify-between">
@@ -144,7 +272,7 @@ export default function AdminMonitoringPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
           {/* Docker Runtime */}
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
-            <span className="text-[11px] text-[#6B7280] font-normal block flex items-center gap-1.5">
+            <span className="text-[11px] text-[#6B7280] font-normal flex items-center gap-1.5">
               <Box className="w-3.5 h-3.5 text-[#9CA3AF]" />
               Docker Runtime
             </span>
@@ -153,80 +281,75 @@ export default function AdminMonitoringPage() {
                 isDockerContainer ? "text-[#16A34A]" : "text-[#4B5563]"
               }`}
             >
-              {isDockerContainer ? "CONNECTED" : "NOT AVAILABLE"}
+              {dockerRuntimeStatus}
             </span>
-            <p className="text-[10px] text-[#9CA3AF] font-normal">
-              {isDockerContainer ? "Containerized stack" : "Host process (Docker optional)"}
+            <p className="text-[10px] text-[#9CA3AF] font-normal leading-snug">
+              {dockerRuntimeDesc}
             </p>
           </div>
 
           {/* Backend Container */}
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
-            <span className="text-[11px] text-[#6B7280] font-normal block flex items-center gap-1.5">
+            <span className="text-[11px] text-[#6B7280] font-normal flex items-center gap-1.5">
               <Server className="w-3.5 h-3.5 text-[#9CA3AF]" />
               Backend Container
             </span>
             <span
               className={`font-semibold ${
-                isDockerContainer
-                  ? "text-[#16A34A]"
-                  : infraData?.backend?.status === "HEALTHY"
-                  ? "text-[#16A34A]"
-                  : "text-[#D97706]"
+                isBackendAlive ? "text-[#16A34A]" : "text-[#DC2626]"
               }`}
             >
-              {isDockerContainer
-                ? "HEALTHY"
-                : infraData?.backend?.status === "HEALTHY"
-                ? "HEALTHY (NATIVE)"
-                : "UNHEALTHY"}
+              {isBackendAlive ? "HEALTHY" : "UNHEALTHY"}
             </span>
             <p className="text-[10px] text-[#9CA3AF] font-normal">
-              {infraData?.backend?.service || "FastAPI"} v{infraData?.backend?.version || "1.0.0"}
+              {infraData?.backend_container?.service || infraData?.backend?.service || "FastAPI"} v
+              {infraData?.backend_container?.version || infraData?.backend?.version || "1.0.0"}
             </p>
           </div>
 
           {/* PostgreSQL */}
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
-            <span className="text-[11px] text-[#6B7280] font-normal block flex items-center gap-1.5">
+            <span className="text-[11px] text-[#6B7280] font-normal flex items-center gap-1.5">
               <Database className="w-3.5 h-3.5 text-[#9CA3AF]" />
               PostgreSQL
             </span>
             <span
               className={`font-semibold ${
-                postgresStatus === "CONNECTED" || postgresStatus === "HEALTHY"
-                  ? "text-[#16A34A]"
-                  : "text-[#DC2626]"
+                isDbHealthy ? "text-[#16A34A]" : "text-[#DC2626]"
               }`}
             >
-              {postgresStatus === "CONNECTED" || postgresStatus === "HEALTHY"
-                ? "CONNECTED"
-                : "FAILED"}
+              {isDbHealthy ? "HEALTHY" : "FAILED"}
             </span>
             <p className="text-[10px] text-[#9CA3AF] truncate font-normal">
-              {infraData?.database?.provider || "PostgreSQL Database"}
+              {dbProvider} {dbLatency !== null ? `(${dbLatency} ms)` : ""}
             </p>
           </div>
 
           {/* Redis */}
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
-            <span className="text-[11px] text-[#6B7280] font-normal block flex items-center gap-1.5">
+            <span className="text-[11px] text-[#6B7280] font-normal flex items-center gap-1.5">
               <Cpu className="w-3.5 h-3.5 text-[#9CA3AF]" />
               Redis Cache
             </span>
             <span
               className={`font-semibold ${
-                redisStatus === "CONNECTED" || redisStatus === "HEALTHY"
+                isRedisHealthy
                   ? "text-[#16A34A]"
+                  : isRedisNotConfigured
+                  ? "text-[#6B7280]"
                   : "text-[#DC2626]"
               }`}
             >
-              {redisStatus === "CONNECTED" || redisStatus === "HEALTHY"
-                ? "CONNECTED"
+              {isRedisHealthy
+                ? "HEALTHY"
+                : isRedisNotConfigured
+                ? "NOT CONFIGURED"
                 : "FAILED"}
             </span>
             <p className="text-[10px] text-[#9CA3AF] truncate font-normal">
-              {infraData?.redis?.provider || "Redis Datastore"}
+              {isRedisNotConfigured
+                ? "Optional cache & rate limiter"
+                : `${redisProvider} ${redisLatency !== null ? `(${redisLatency} ms)` : ""}`}
             </p>
           </div>
         </div>
@@ -239,13 +362,17 @@ export default function AdminMonitoringPage() {
             className={`p-2.5 rounded-xl border ${
               isUpstoxAuth
                 ? "bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]"
-                : "bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]"
+                : isUpstoxConfigured
+                ? "bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]"
+                : "bg-[#F3F4F6] text-[#6B7280] border-[#E5E7EB]"
             }`}
           >
             {isUpstoxAuth ? (
               <CheckCircle2 className="w-6 h-6 text-[#16A34A]" />
-            ) : (
+            ) : isUpstoxConfigured ? (
               <AlertTriangle className="w-6 h-6 text-[#D97706]" />
+            ) : (
+              <AlertTriangle className="w-6 h-6 text-[#6B7280]" />
             )}
           </div>
           <div>
@@ -257,16 +384,24 @@ export default function AdminMonitoringPage() {
                 className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${
                   isUpstoxAuth
                     ? "bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]"
-                    : "bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]"
+                    : isUpstoxConfigured
+                    ? "bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]"
+                    : "bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]"
                 }`}
               >
-                {isUpstoxAuth ? "AUTHENTICATED" : isUpstoxConfigured ? "EXPIRED" : "NOT CONFIGURED"}
+                {isUpstoxAuth
+                  ? "Analytics Token ACTIVE"
+                  : isUpstoxConfigured
+                  ? "EXPIRED"
+                  : "NOT CONFIGURED"}
               </span>
             </div>
             <p className="text-xs text-[#6B7280] mt-1 font-normal">
               {isUpstoxAuth
-                ? `Authorized with active server-side access token. Market ticks and candlestick bars active.`
-                : "Upstox access token is not configured or requires daily OAuth renewal."}
+                ? "Authorized with 1-year Upstox Analytics Token. Market ticks and candlestick bars active."
+                : isUpstoxConfigured
+                ? "Upstox Analytics Token is missing or invalid."
+                : "UPSTOX_ANALYTICS_TOKEN not configured in backend environment variables."}
             </p>
           </div>
         </div>
@@ -284,7 +419,7 @@ export default function AdminMonitoringPage() {
             </a>
           ) : (
             <a
-              href="/api/v1/upstox/auth/disconnect"
+              href={`${API_BASE_URL}/api/v1/upstox/auth/disconnect`}
               className="px-3 py-1.5 rounded-xl border border-[#E5E7EB] text-[#DC2626] hover:bg-[#FEF2F2] text-xs font-medium transition-colors"
             >
               Disconnect Session
@@ -308,59 +443,101 @@ export default function AdminMonitoringPage() {
           </div>
 
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
-            <span className="text-[11px] text-[#6B7280] font-normal block">Upstox Authentication</span>
-            <span className={`font-semibold ${isUpstoxAuth ? "text-[#16A34A]" : "text-[#D97706]"}`}>
-              {isUpstoxAuth ? "AUTHENTICATED" : isUpstoxConfigured ? "EXPIRED" : "NOT CONFIGURED"}
+            <span className="text-[11px] text-[#6B7280] font-normal block">Market Data Auth</span>
+            <span
+              className={`font-semibold ${
+                isUpstoxAuth
+                  ? "text-[#16A34A]"
+                  : isUpstoxConfigured
+                  ? "text-[#D97706]"
+                  : "text-[#6B7280]"
+              }`}
+            >
+              {isUpstoxAuth ? "Analytics Token ACTIVE" : isUpstoxConfigured ? "EXPIRED" : "NOT CONFIGURED"}
             </span>
           </div>
 
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
             <span className="text-[11px] text-[#6B7280] font-normal block">Market WebSocket</span>
-            <span className={`font-semibold ${isWsConnected ? "text-[#16A34A]" : "text-[#4B5563]"}`}>
-              {isWsConnected ? "CONNECTED" : "DISCONNECTED"}
+            <span
+              className={`font-semibold ${
+                wsState === "CONNECTED"
+                  ? "text-[#16A34A]"
+                  : wsState === "CONNECTING" || wsState === "RECONNECTING"
+                  ? "text-[#D97706]"
+                  : wsState === "ERROR"
+                  ? "text-[#DC2626]"
+                  : "text-[#4B5563]"
+              }`}
+            >
+              {wsState}
             </span>
           </div>
 
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
             <span className="text-[11px] text-[#6B7280] font-normal block">Subscribed Instruments</span>
             <span className="font-semibold text-[#111827] tabular-nums">
-              {monitoringData?.metrics?.subscribed_instruments_count ?? marketDataHealth?.instruments ?? 15}
+              {subscribedInstrumentsCount}
             </span>
           </div>
 
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
             <span className="text-[11px] text-[#6B7280] font-normal block">Quote Update Rate</span>
             <span className="font-semibold text-[#111827]">
-              {monitoringData?.metrics?.quote_update_rate ?? (isWsConnected ? "Live Feed" : "Standby")}
+              {quoteUpdateRate}
             </span>
           </div>
 
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
             <span className="text-[11px] text-[#6B7280] font-normal block">Market Data Latency</span>
             <span className="font-semibold text-[#111827] tabular-nums">
-              {monitoringData?.metrics?.market_data_latency_ms ? `${monitoringData.metrics.market_data_latency_ms} ms` : "0 ms"}
+              {marketLatencyDisplay}
             </span>
           </div>
 
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
             <span className="text-[11px] text-[#6B7280] font-normal block">PostgreSQL Status</span>
-            <span className={`font-semibold ${postgresStatus === "CONNECTED" || postgresStatus === "HEALTHY" ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-              {postgresStatus === "CONNECTED" || postgresStatus === "HEALTHY" ? "CONNECTED" : "FAILED"}
+            <span
+              className={`font-semibold ${
+                isDbHealthy ? "text-[#16A34A]" : "text-[#DC2626]"
+              }`}
+            >
+              {isDbHealthy ? "HEALTHY" : "FAILED"}
             </span>
           </div>
 
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
             <span className="text-[11px] text-[#6B7280] font-normal block">Redis Status</span>
-            <span className={`font-semibold ${redisStatus === "CONNECTED" || redisStatus === "HEALTHY" ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-              {redisStatus === "CONNECTED" || redisStatus === "HEALTHY" ? "CONNECTED" : "FAILED"}
+            <span
+              className={`font-semibold ${
+                isRedisHealthy
+                  ? "text-[#16A34A]"
+                  : isRedisNotConfigured
+                  ? "text-[#6B7280]"
+                  : "text-[#DC2626]"
+              }`}
+            >
+              {isRedisHealthy
+                ? "HEALTHY"
+                : isRedisNotConfigured
+                ? "NOT CONFIGURED"
+                : "FAILED"}
             </span>
           </div>
 
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
             <span className="text-[11px] text-[#6B7280] font-normal block">Sentry Monitoring</span>
-            <span className="font-semibold text-[#16A34A] flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#16A34A]" />
-              ACTIVE (ENABLED)
+            <span
+              className={`font-semibold flex items-center gap-1.5 ${
+                isSentryActive ? "text-[#16A34A]" : "text-[#6B7280]"
+              }`}
+            >
+              <ShieldCheck
+                className={`w-3.5 h-3.5 ${
+                  isSentryActive ? "text-[#16A34A]" : "text-[#9CA3AF]"
+                }`}
+              />
+              {isSentryActive ? "ACTIVE" : "NOT CONFIGURED"}
             </span>
           </div>
 
@@ -368,7 +545,7 @@ export default function AdminMonitoringPage() {
             <span className="text-[11px] text-[#6B7280] font-normal block">Paper Trading Engine</span>
             <span className="font-semibold text-[#16A34A] flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-[#16A34A]" />
-              {monitoringData?.metrics?.paper_trading_engine_status ?? "ACTIVE (PAPER ONLY)"}
+              {paperTradingStatus}
             </span>
           </div>
         </div>

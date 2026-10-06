@@ -8,8 +8,9 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.database import get_db
-from app.core.redis import check_redis_health
+from app.core.database import check_db_health, get_db
+from app.core.redis import check_redis_health, check_redis_ping
+from app.core.sentry import get_sentry_status
 
 router = APIRouter(prefix="/health", tags=["Health & Monitoring"])
 
@@ -19,22 +20,18 @@ START_TIME = time.time()
 @router.get("", summary="Overall platform health aggregator")
 async def get_overall_health(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
     """Aggregates health across all subsystems."""
-    # Check Database
-    db_healthy = False
-    try:
-        await db.execute(text("SELECT 1"))
-        db_healthy = True
-    except Exception:
-        db_healthy = False
+    # Check Database using real SELECT 1
+    db_ok, db_latency, _ = await check_db_health(db)
 
-    # Check Redis
-    redis_healthy = await check_redis_health()
+    # Check Redis using real PING
+    redis_ok, redis_latency, redis_prov = await check_redis_ping()
+    redis_available = redis_ok or redis_prov == "NOT_CONFIGURED"
 
     # Determine overall status
-    if db_healthy and redis_healthy:
+    if db_ok and redis_ok:
         overall_status = "healthy"
-    elif db_healthy:
-        overall_status = "degraded" # DB works, redis degraded
+    elif db_ok:
+        overall_status = "degraded"  # DB works, redis degraded or not configured
     else:
         overall_status = "down"
 
@@ -45,52 +42,58 @@ async def get_overall_health(db: AsyncSession = Depends(get_db)) -> Dict[str, An
         "environment": settings.ENVIRONMENT,
         "uptime_seconds": int(time.time() - START_TIME),
         "components": {
-            "database": "healthy" if db_healthy else "down",
-            "redis": "healthy" if redis_healthy else "down",
-            "market_data": "not_configured",
-            "trading_engine": "not_configured",
+            "database": "healthy" if db_ok else "down",
+            "redis": "healthy" if redis_ok else ("not_configured" if redis_prov == "NOT_CONFIGURED" else "down"),
+            "market_data": "upstox",
+            "trading_engine": "paper_trading_engine",
         },
     }
 
 
 @router.get("/database", summary="Database connectivity health check")
 async def get_database_health(db: AsyncSession = Depends(get_db)):
-    """Executes a ping query to verify primary PostgreSQL database availability."""
-    t0 = time.time()
-    try:
-        await db.execute(text("SELECT 1"))
-        latency_ms = round((time.time() - t0) * 1000, 2)
+    """Executes a real SELECT 1 query to verify primary PostgreSQL database availability and latency."""
+    ok, latency_ms, provider = await check_db_health(db)
+    if ok:
         return {
             "status": "healthy",
             "latency_ms": latency_ms,
-            "database": "PostgreSQL",
-        }
-    except Exception as e:
-        return JSONResponse(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            content={
-                "status": "down",
-                "error": str(e),
-                "database": "PostgreSQL",
-            },
-        )
-
-
-@router.get("/redis", summary="Redis cache and rate limiter connectivity check")
-async def get_redis_health():
-    """Pings Redis to verify connectivity for caching and rate limiting."""
-    t0 = time.time()
-    healthy = await check_redis_health()
-    latency_ms = round((time.time() - t0) * 1000, 2)
-    if healthy:
-        return {
-            "status": "healthy",
-            "latency_ms": latency_ms,
+            "database": provider,
         }
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content={
             "status": "down",
+            "latency_ms": latency_ms,
+            "error": provider,
+            "database": "PostgreSQL",
+        },
+    )
+
+
+@router.get("/redis", summary="Redis cache and rate limiter connectivity check")
+async def get_redis_health():
+    """Pings Redis to verify connectivity and measure latency."""
+    ok, latency_ms, provider = await check_redis_ping()
+    if ok:
+        return {
+            "status": "healthy",
+            "latency_ms": latency_ms,
+            "provider": provider,
+        }
+    if provider == "NOT_CONFIGURED":
+        return {
+            "status": "not_configured",
+            "latency_ms": 0.0,
+            "provider": "Redis",
+            "message": "Redis is not configured in environment.",
+        }
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={
+            "status": "down",
+            "latency_ms": latency_ms,
+            "provider": provider,
             "message": "Redis is unreachable or not connected.",
         },
     )
@@ -113,28 +116,13 @@ async def get_system_health():
 async def get_market_data_health(db: AsyncSession = Depends(get_db)):
     """
     Market Data Provider status probe.
-    Returns:
-    {
-      "status": "healthy",
-      "provider": "upstox",
-      "websocket": "connected" | "disconnected",
-      "last_update": "...",
-      "instruments": 15
-    }
-    Or if token expired:
-    {
-      "status": "authentication_required"
-    }
-    Never reports healthy incorrectly.
+    Surfaces real Upstox token authentication, WebSocket feed state, rolling tick rate, and latency.
     """
-    from sqlalchemy import func
-    from app.core.redis import check_redis_health
-    from app.models.market import Instrument
     from app.services.market_data.upstox_client import upstox_client
     from app.services.market_data.upstox_provider import upstox_provider
     from app.services.market_data.websocket_service import upstream_feed
 
-    redis_ok = await check_redis_health()
+    redis_ok, _, _ = await check_redis_ping()
     redis_status = "connected" if redis_ok else "disconnected"
 
     verification = await upstox_client.verify_token()
@@ -142,24 +130,27 @@ async def get_market_data_health(db: AsyncSession = Depends(get_db)):
     authenticated = verification["authenticated"]
 
     metrics = upstream_feed.get_monitoring_metrics()
-    ws_status = "connected" if upstream_feed.is_connected else "disconnected"
+    ws_state = metrics["state"]
     last_update = metrics.get("last_message") or (
         upstox_provider._last_successful_request.isoformat()
         if upstox_provider._last_successful_request
         else None
     )
 
-    inst_count = (await db.execute(select(func.count(Instrument.id)))).scalar() or 0
+    latency = metrics.get("feed_latency_ms") or upstox_client.get_latency_ms()
 
     return {
         "provider": "upstox",
         "configured": configured,
         "authenticated": authenticated,
-        "websocket": ws_status,
+        "websocket": ws_state.lower(),
+        "websocket_state": ws_state,
+        "quote_update_rate": metrics.get("quote_update_rate", "Standby"),
         "last_update": last_update,
+        "latency_ms": latency,
         "redis": redis_status,
-        "instruments": inst_count,
-        "status": "healthy" if (configured and authenticated and redis_ok) else (
+        "instruments": metrics.get("subscribed_instruments_count", 0),
+        "status": "healthy" if (configured and authenticated and ws_state == "CONNECTED") else (
             "authentication_required" if not authenticated else "degraded"
         ),
     }
@@ -188,38 +179,40 @@ async def get_infrastructure_health(db: AsyncSession = Depends(get_db)):
         except Exception:
             in_docker = False
 
-    # Check DB
-    db_ok = False
-    try:
-        await db.execute(text("SELECT 1"))
-        db_ok = True
-    except Exception:
-        db_ok = False
+    # Check DB using real SELECT 1
+    db_ok, db_latency, db_provider = await check_db_health(db)
 
-    # Check Redis
-    redis_ok = await check_redis_health()
+    # Check Redis using real PING
+    redis_ok, redis_latency, redis_provider = await check_redis_ping()
 
     # Check Upstox
     from app.services.market_data.upstox_client import upstox_client
     from app.services.market_data.websocket_service import upstream_feed
     verification = await upstox_client.verify_token()
+    ws_metrics = upstream_feed.get_monitoring_metrics()
+    sentry_status, sentry_desc = get_sentry_status()
 
-    db_url = settings.DATABASE_URL
-    is_neon = "neon.tech" in db_url
-    is_docker_db = "@postgres:" in db_url
+    docker_status = "RUNNING_IN_DOCKER" if in_docker else "MANAGED BY HOST"
+    docker_desc = (
+        "Running inside containerized stack."
+        if in_docker
+        else "Host Docker runtime is managed by Render and is not directly exposed to the application."
+    )
 
-    redis_url = settings.REDIS_URL
-    is_upstash = "upstash.io" in redis_url
-    is_docker_redis = "@redis:" in redis_url or "redis://redis:" in redis_url
+    latency_ms = ws_metrics.get("feed_latency_ms") or upstox_client.get_latency_ms()
 
     return {
         "environment": settings.ENVIRONMENT,
         "docker_runtime": {
             "is_container": in_docker,
-            "status": "RUNNING_IN_DOCKER" if in_docker else "NOT AVAILABLE (HOST PROCESS)",
+            "status": docker_status,
+            "description": docker_desc,
         },
         "backend_container": {
-            "status": "HEALTHY" if in_docker else "NOT RUNNING (NATIVE HOST)",
+            "status": "HEALTHY",
+            "service": "FastAPI",
+            "version": settings.VERSION,
+            "uptime_seconds": int(time.time() - START_TIME),
         },
         "backend": {
             "status": "HEALTHY",
@@ -228,18 +221,31 @@ async def get_infrastructure_health(db: AsyncSession = Depends(get_db)):
         },
         "database": {
             "status": "CONNECTED" if db_ok else "FAILED",
-            "provider": "Neon PostgreSQL" if is_neon else ("Docker PostgreSQL" if is_docker_db else "PostgreSQL"),
+            "provider": db_provider,
+            "latency_ms": db_latency,
         },
         "redis": {
-            "status": "CONNECTED" if redis_ok else "FAILED",
-            "provider": "Upstash Redis" if is_upstash else ("Docker Redis" if is_docker_redis else "Redis"),
+            "status": "CONNECTED" if redis_ok else ("NOT_CONFIGURED" if redis_provider == "NOT_CONFIGURED" else "FAILED"),
+            "provider": redis_provider,
+            "latency_ms": redis_latency,
         },
         "upstox": {
             "configured": verification["configured"],
-            "status": "AUTHENTICATED" if verification["authenticated"] else ("EXPIRED" if verification["configured"] else "NOT CONFIGURED"),
+            "status": "Analytics Token ACTIVE" if verification["authenticated"] else ("NOT CONFIGURED" if not verification["configured"] else "EXPIRED"),
+            "market_data_authenticated": verification["authenticated"],
+            "token_type": "ANALYTICS_TOKEN",
+            "latency_ms": upstox_client.get_latency_ms(),
         },
         "websocket": {
-            "status": "CONNECTED" if upstream_feed.is_connected else "DISCONNECTED",
+            "status": ws_metrics["state"],
+            "connected": upstream_feed.is_connected,
+            "quote_update_rate": ws_metrics.get("quote_update_rate", "Standby"),
+            "subscribed_instruments_count": ws_metrics.get("subscribed_instruments_count", 0),
+            "latency_ms": latency_ms,
+        },
+        "sentry": {
+            "status": sentry_status,
+            "description": sentry_desc,
         },
     }
 

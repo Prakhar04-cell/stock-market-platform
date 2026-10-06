@@ -44,17 +44,30 @@ async def close_redis():
         redis_client = None
 
 
-async def check_redis_health() -> bool:
-    """Check Redis health by pinging."""
+async def check_redis_ping() -> tuple[bool, float, str]:
+    """Pings Redis and measures round-trip latency in ms."""
+    t0 = time.time()
+    if not settings.REDIS_URL:
+        return False, 0.0, "NOT_CONFIGURED"
     try:
         client = await get_redis_client()
         if client is None:
-            return False
+            return False, 0.0, "Redis client not initialized"
         response = await client.ping()
-        return response is True or response == "PONG" or response == b"PONG"
+        latency_ms = round((time.time() - t0) * 1000, 2)
+        ok = response is True or response == "PONG" or response == b"PONG"
+        provider = "Upstash Redis" if "upstash.io" in settings.REDIS_URL else "Redis"
+        return ok, latency_ms, provider
     except Exception as e:
-        logger.debug(f"Redis health check failed: {e}")
-        return False
+        latency_ms = round((time.time() - t0) * 1000, 2)
+        logger.warning(f"Redis ping failed: {e}")
+        return False, latency_ms, str(e)
+
+
+async def check_redis_health() -> bool:
+    """Check Redis health by pinging."""
+    ok, _, _ = await check_redis_ping()
+    return ok
 
 
 async def test_redis_operations() -> tuple[bool, str]:

@@ -336,3 +336,45 @@ async def test_live_upstox_provider_integration():
     rel_quote = quotes.get("NSE_EQ|INE002A01018") or quotes.get("RELIANCE")
     assert rel_quote is not None
     assert rel_quote.ltp > 0
+
+
+# ==============================================================================
+# 12. UPSTOX ANALYTICS TOKEN PRIORITY & SEPARATION TESTS
+# ==============================================================================
+@pytest.mark.asyncio
+async def test_analytics_token_priority_and_isolation():
+    """
+    Verifies that get_market_data_token() exclusively uses UPSTOX_ANALYTICS_TOKEN
+    and does NOT fall back to OAuth tokens.
+    """
+    client = UpstoxClient()
+    
+    with patch.object(settings, "UPSTOX_ANALYTICS_TOKEN", "mock_analytics_token_xyz"), \
+         patch.object(settings, "UPSTOX_ACCESS_TOKEN", "stale_oauth_token"):
+        
+        token = await client.get_market_data_token()
+        assert token == "mock_analytics_token_xyz"
+        assert token != "stale_oauth_token"
+        
+        # get_access_token also delegates to market data token
+        assert await client.get_access_token() == "mock_analytics_token_xyz"
+
+
+@pytest.mark.asyncio
+async def test_missing_analytics_token_error():
+    """
+    Verifies that if UPSTOX_ANALYTICS_TOKEN is missing, UpstoxAuthRequiredError is raised
+    and does NOT fall back to UPSTOX_ACCESS_TOKEN.
+    """
+    client = UpstoxClient()
+    client._cached_token = None
+    
+    with patch.object(settings, "UPSTOX_ANALYTICS_TOKEN", ""), \
+         patch.object(settings, "UPSTOX_ACCESS_TOKEN", "stale_oauth_token"):
+        
+        with pytest.raises(UpstoxAuthRequiredError) as exc_info:
+            await client.get_market_data_token()
+        
+        assert "UPSTOX_ANALYTICS_TOKEN" in str(exc_info.value)
+        assert "stale_oauth_token" not in str(exc_info.value)
+

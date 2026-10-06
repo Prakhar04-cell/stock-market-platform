@@ -63,3 +63,6 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _FEEDRESPONSE_FEEDSENTRY._serialized_start=2439
   _FEEDRESPONSE_FEEDSENTRY._serialized_end=2535
 # @@protoc_insertion_point(module_scope)
+
+from typing import Any
+FeedResponse: Any = globals().get("FeedResponse")  # type: ignore

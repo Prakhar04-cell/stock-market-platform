@@ -174,9 +174,12 @@ async def upstox_callback(
 
     await db.commit()
 
-    # Update in-memory singleton
+    # Update in-memory singletons
+    from app.services.market_data.upstox_client import upstox_client
+
     upstox_provider._cached_token = access_token
     upstox_provider._token_expires_at = expires_at
+    upstox_client.set_token(access_token, expires_at)
 
     logger.info(f"Upstox OAuth successfully completed for user {user_id} ({user_name}).")
 
@@ -202,22 +205,36 @@ async def upstox_status(
     user_name = None
     expires_at = None
 
-    if not settings.UPSTOX_ACCESS_TOKEN:
-        stmt = select(ProviderCredential).where(
-            ProviderCredential.provider_name == "upstox",
-            ProviderCredential.is_active.is_(True),
-        )
-        cred = (await db.execute(stmt)).scalar_one_or_none()
-        if cred:
-            user_id = cred.user_id
-            user_name = cred.user_name
-            expires_at = cred.expires_at.isoformat() if cred.expires_at else None
+    stmt = select(ProviderCredential).where(
+        ProviderCredential.provider_name == "upstox",
+        ProviderCredential.is_active.is_(True),
+    ).order_by(ProviderCredential.created_at.desc())
+    cred = (await db.execute(stmt)).scalar_one_or_none()
+    oauth_authenticated = False
+    if cred:
+        user_id = cred.user_id
+        user_name = cred.user_name
+        expires_at = cred.expires_at.isoformat() if cred.expires_at else None
+        if cred.expires_at and datetime.now(timezone.utc) < cred.expires_at:
+            oauth_authenticated = True
+
+    oauth_configured = bool(settings.UPSTOX_CLIENT_ID and settings.UPSTOX_CLIENT_SECRET)
+    oauth_status = (
+        "AUTHENTICATED"
+        if oauth_authenticated
+        else ("EXPIRED" if cred else ("NOT CONFIGURED" if not oauth_configured else "NOT AUTHENTICATED"))
+    )
 
     return {
         "configured": verification["configured"],
         "authenticated": verification["authenticated"],
         "provider": "upstox",
         "message": verification["message"],
+        "token_type": verification.get("token_type", "ANALYTICS_TOKEN"),
+        "market_data_status": "Analytics Token ACTIVE" if verification["authenticated"] else "NOT CONFIGURED",
+        "oauth_status": oauth_status,
+        "oauth_configured": oauth_configured,
+        "oauth_authenticated": oauth_authenticated,
         "user_id": user_id,
         "user_name": user_name,
         "expires_at": expires_at,
@@ -232,6 +249,8 @@ async def upstox_disconnect(
     """
     Deactivates Upstox connection and invalidates stored access tokens.
     """
+    from app.services.market_data.upstox_client import upstox_client
+
     stmt = select(ProviderCredential).where(ProviderCredential.provider_name == "upstox")
     cred = (await db.execute(stmt)).scalar_one_or_none()
     if cred:
@@ -239,6 +258,7 @@ async def upstox_disconnect(
         await db.commit()
 
     upstox_provider.invalidate_token()
+    upstox_client.invalidate_token()
 
     await record_audit_log(
         db=db,

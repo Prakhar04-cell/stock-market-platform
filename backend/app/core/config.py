@@ -18,6 +18,20 @@ class Settings(BaseSettings):
     BACKEND_PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:3000"
 
+    @field_validator("ENVIRONMENT", mode="before")
+    @classmethod
+    def assemble_environment(cls, v: Any) -> str:
+        is_render = bool(os.getenv("RENDER") or os.getenv("RENDER_SERVICE_ID"))
+        env_val = os.getenv("ENVIRONMENT")
+        if is_render:
+            # On Render production host, default to 'production' if unset or default 'development'
+            if not env_val or env_val.lower() in ("development", "dev"):
+                return "production"
+            return env_val
+        if env_val:
+            return env_val
+        return str(v) if v else "development"
+
     # CORS
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     CORS_ORIGIN_REGEX: Optional[str] = r"^https:\/\/.*\.vercel\.app$"
@@ -109,6 +123,7 @@ class Settings(BaseSettings):
     SENTRY_DSN: str = ""
 
     # Upstox API Configuration (Official API)
+    UPSTOX_ANALYTICS_TOKEN: str = ""  # Read-only Analytics Token (1-year validity) for market data
     UPSTOX_CLIENT_ID: str = ""
     UPSTOX_CLIENT_SECRET: str = ""
     UPSTOX_REDIRECT_URI: str = "http://localhost:8000/api/v1/upstox/auth/callback"

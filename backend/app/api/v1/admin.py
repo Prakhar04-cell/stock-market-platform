@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import require_admin
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.exceptions import ResourceNotFoundError
 from app.core.redis import check_redis_health
@@ -195,78 +196,134 @@ async def get_audit_logs(
 @router.get("/monitoring", summary="Platform monitoring subsystem health overview")
 async def get_monitoring_overview(db: AsyncSession = Depends(get_db)):
     """Comprehensive monitoring status across all platform components and real-time market streams."""
-    from app.services.market_data.upstox_provider import upstox_provider
-    from app.services.market_data.upstox_client import upstox_client
-    from app.services.market_data.websocket_service import upstream_feed, market_ws_manager
+    import os
+    from app.core.database import check_db_health
+    from app.core.redis import check_redis_ping
+    from app.core.sentry import get_sentry_status
     from app.models.market import Instrument
+    from app.models.system import ProviderCredential
+    from app.services.market_data.upstox_client import upstox_client
+    from app.services.market_data.upstox_provider import upstox_provider
+    from app.services.market_data.websocket_service import market_ws_manager, upstream_feed
 
-    # 1. Database
-    db_status = "HEALTHY"
-    try:
-        from sqlalchemy import text
-        await db.execute(text("SELECT 1"))
-    except Exception:
-        db_status = "DOWN"
+    # 1. Database - Real SELECT 1 ping with latency
+    db_ok, db_latency, db_provider = await check_db_health(db)
+    db_status = "HEALTHY" if db_ok else "DOWN"
 
-    # 2. Redis
-    redis_ok = await check_redis_health()
-    redis_status = "HEALTHY" if redis_ok else "DOWN"
+    # 2. Redis - Real PING with latency
+    redis_ok, redis_latency, redis_provider = await check_redis_ping()
+    redis_status = "HEALTHY" if redis_ok else ("NOT_CONFIGURED" if redis_provider == "NOT_CONFIGURED" else "DOWN")
 
     # 3. Market Provider Status
+    verification = await upstox_client.verify_token()
     upstox_health = await upstox_provider.get_health()
-    mkt_status = "HEALTHY" if upstox_health["status"] == "healthy" else ("DEGRADED" if upstox_health["status"] == "authentication_required" else "NOT_CONFIGURED")
+    mkt_status = "HEALTHY" if verification.get("authenticated") else ("DEGRADED" if verification.get("configured") else "NOT_CONFIGURED")
+
+    # Check stored OAuth credentials for user details
+    stmt = (
+        select(ProviderCredential)
+        .where(ProviderCredential.provider_name == "upstox", ProviderCredential.is_active.is_(True))
+        .order_by(ProviderCredential.created_at.desc())
+    )
+    cred = (await db.execute(stmt)).scalar_one_or_none()
 
     # 4. WebSocket Status
     ws_metrics = upstream_feed.get_monitoring_metrics()
     client_stats = market_ws_manager.get_stats()
+    ws_state = ws_metrics["state"]
     ws_status = "HEALTHY" if upstream_feed.is_connected else ("DEGRADED" if mkt_status == "HEALTHY" else "NOT_CONFIGURED")
 
-    # 5. Paper Trading Engine
-    paper_status = "HEALTHY"
+    # 5. Sentry Status
+    sentry_status, sentry_desc = get_sentry_status()
+
+    # 6. Docker Runtime / Host Process Semantics
+    in_docker = os.path.exists("/.dockerenv")
+    if not in_docker:
+        try:
+            with open("/proc/1/cgroup", "rt") as f:
+                content = f.read()
+                in_docker = "docker" in content or "containerd" in content
+        except Exception:
+            in_docker = False
+
+    docker_status = "RUNNING_IN_DOCKER" if in_docker else "MANAGED BY HOST"
+    docker_desc = (
+        "Running inside containerized stack."
+        if in_docker
+        else "Host Docker runtime is managed by Render and is not directly exposed to the application."
+    )
 
     inst_count = (await db.execute(select(func.count(Instrument.id)))).scalar() or 0
-
     now = datetime.now(timezone.utc)
+    latency_ms = ws_metrics.get("feed_latency_ms") or upstox_client.get_latency_ms()
+
     return {
+        "environment": settings.ENVIRONMENT,
         "components": [
-            {"service_name": "Frontend Web Application", "status": "HEALTHY", "details": "Next.js App Server"},
-            {"service_name": "Backend REST API", "status": "HEALTHY", "details": "FastAPI Core"},
-            {"service_name": "PostgreSQL Database", "status": db_status, "details": "Neon / Local Postgres 16"},
-            {"service_name": "Redis Cache & Rate Limiter", "status": redis_status, "details": "Upstash / Local Redis 7"},
-            {"service_name": "Upstox Connection", "status": mkt_status, "details": f"Upstox V2/V3 Official API ({upstox_health['status']})"},
-            {"service_name": "Market WebSocket", "status": ws_status, "details": f"Upstream: {'Connected' if upstream_feed.is_connected else 'Disconnected'}, Clients: {client_stats['connected_clients']}"},
+            {"service_name": "Frontend Web Application", "status": "HEALTHY", "details": "Next.js App Server (Vercel / Local)"},
+            {"service_name": "Backend REST API", "status": "HEALTHY", "details": f"FastAPI Core v{settings.VERSION}"},
+            {"service_name": "Docker Runtime", "status": docker_status, "details": docker_desc},
+            {"service_name": "PostgreSQL Database", "status": db_status, "details": f"{db_provider} ({db_latency} ms)"},
+            {"service_name": "Redis Cache & Rate Limiter", "status": redis_status, "details": f"{redis_provider} ({redis_latency} ms)" if redis_ok else redis_provider},
+            {"service_name": "Upstox Connection", "status": mkt_status, "details": f"Upstox V3 API ({'Analytics Token ACTIVE' if verification.get('authenticated') else 'NOT CONFIGURED'})"},
+            {"service_name": "Market WebSocket", "status": ws_status, "details": f"Upstream: {ws_state}, Clients: {client_stats['connected_clients']}"},
+            {"service_name": "Sentry Monitoring", "status": sentry_status, "details": sentry_desc},
             {"service_name": "Trading Engine", "status": "HEALTHY", "details": "Virtual Paper Trading Engine (No Real Money)"},
         ],
         "metrics": {
-            "upstox_configured": upstox_client.is_configured,
-            "upstox_authenticated": upstox_health.get("authenticated", False) or (upstox_health.get("status") == "healthy"),
+            "docker_runtime": {
+                "status": docker_status,
+                "is_container": in_docker,
+                "description": docker_desc,
+            },
+            "backend_container": {
+                "status": "HEALTHY",
+                "service": "FastAPI",
+                "version": settings.VERSION,
+            },
+            "upstox_configured": verification["configured"],
+            "upstox_authenticated": verification["authenticated"],
+            "upstox_user_id": cred.user_id if cred else None,
+            "upstox_user_name": cred.user_name if cred else None,
+            "upstox_expires_at": cred.expires_at.isoformat() if cred and cred.expires_at else None,
             "market_websocket_status": "connected" if upstream_feed.is_connected else "disconnected",
-            "last_market_update": ws_metrics.get("last_message"),
+            "market_websocket_state": ws_state,
+            "last_market_update": ws_metrics.get("last_tick_at") or ws_metrics.get("last_message"),
             "redis_status": redis_status,
+            "redis_latency_ms": redis_latency,
+            "redis_provider": redis_provider,
             "postgresql_status": db_status,
+            "postgresql_latency_ms": db_latency,
+            "postgresql_provider": db_provider,
             "subscribed_instruments_count": ws_metrics.get("subscribed_instruments_count", 0),
-            "market_data_latency_ms": 42.5 if upstream_feed.is_connected else 0.0,
-            "quote_update_rate": f"{ws_metrics.get('messages_received', 0)} msgs (live stream)",
+            "market_data_latency_ms": latency_ms,
+            "quote_update_rate": ws_metrics.get("quote_update_rate", "Standby"),
             "paper_trading_engine_status": "ACTIVE (PAPER EXECUTION ONLY)",
+            "sentry_status": sentry_status,
+            "sentry_description": sentry_desc,
             "upstox_connection": {
-                "status": upstox_health["status"],
+                "status": "healthy" if verification.get("authenticated") else "authentication_required",
+                "authenticated": verification.get("authenticated", False),
+                "configured": verification.get("configured", False),
                 "last_successful_request": upstox_provider._last_successful_request.isoformat() if upstox_provider._last_successful_request else None,
                 "error_count": upstox_provider._error_count,
                 "last_error": upstox_provider._last_error_message,
             },
             "market_websocket": {
                 "status": "connected" if upstream_feed.is_connected else "disconnected",
+                "state": ws_state,
                 "connected": upstream_feed.is_connected,
                 "last_message": ws_metrics.get("last_message"),
+                "last_tick_at": ws_metrics.get("last_tick_at"),
                 "messages_received": ws_metrics.get("messages_received", 0),
                 "reconnect_count": ws_metrics.get("reconnect_count", 0),
                 "error_count": ws_metrics.get("error_count", 0),
+                "quote_update_rate": ws_metrics.get("quote_update_rate", "Standby"),
                 "subscribed_instruments": ws_metrics.get("subscribed_instruments_count", 0),
                 "active_client_connections": client_stats["connected_clients"],
             },
             "instruments_master_count": inst_count,
             "database_status": db_status,
-            "redis_status": redis_status,
             "paper_trading_engine": "ACTIVE",
         },
         "checked_at": now.isoformat(),

@@ -46,9 +46,17 @@ class UpstoxMarketDataProvider(MarketDataProvider):
         self._cached_token: Optional[str] = None
         self._token_expires_at: Optional[datetime] = None
         self._last_token_check: float = 0.0
+        self._cached_trading_token: Optional[str] = None
+        self._trading_token_expires_at: Optional[datetime] = None
+        self._last_trading_token_check: float = 0.0
         self._last_successful_request: Optional[datetime] = None
         self._error_count: int = 0
         self._last_error_message: Optional[str] = None
+        self._last_rest_latency_ms: Optional[float] = None
+
+    def get_latency_ms(self) -> Optional[float]:
+        """Returns the most recent REST API round-trip latency in ms."""
+        return self._last_rest_latency_ms
 
     @property
     def provider_name(self) -> str:
@@ -56,38 +64,44 @@ class UpstoxMarketDataProvider(MarketDataProvider):
 
     @property
     def is_configured(self) -> bool:
-        """Returns True if client ID & secret or access token are set."""
-        return bool(
-            settings.UPSTOX_ACCESS_TOKEN
-            or (settings.UPSTOX_CLIENT_ID and settings.UPSTOX_CLIENT_SECRET)
-            or self._cached_token
-        )
+        """Returns True if UPSTOX_ANALYTICS_TOKEN is provided or test token is cached."""
+        return bool(settings.UPSTOX_ANALYTICS_TOKEN or self._cached_token)
 
     @property
     def is_token_valid(self) -> bool:
-        """Checks whether the active token has not expired."""
-        if settings.UPSTOX_ACCESS_TOKEN:
+        """Checks whether the Analytics Token or active test token is valid."""
+        if settings.UPSTOX_ANALYTICS_TOKEN:
             return True
-        if not self._cached_token or not self._token_expires_at:
+        if not self._cached_token:
             return False
+        if not self._token_expires_at:
+            return True
         return datetime.now(timezone.utc) < self._token_expires_at
 
-    async def get_access_token(self) -> str:
+    async def get_market_data_token(self) -> str:
         """
-        Retrieves the active Upstox access token.
-        Priority:
-        1. Environment variable UPSTOX_ACCESS_TOKEN (developer override)
-        2. In-memory cached token (if still valid)
-        3. Database ProviderCredential entry
+        Retrieves the active Upstox Analytics Token for market data operations.
+        PRIMARY: UPSTOX_ANALYTICS_TOKEN (read-only, 1-year validity).
+        Does NOT fall back to a stale UPSTOX_ACCESS_TOKEN.
         """
-        if settings.UPSTOX_ACCESS_TOKEN:
-            return settings.UPSTOX_ACCESS_TOKEN
+        if settings.UPSTOX_ANALYTICS_TOKEN:
+            return settings.UPSTOX_ANALYTICS_TOKEN
 
+        if self._cached_token:
+            if not self._token_expires_at or datetime.now(timezone.utc) < self._token_expires_at:
+                return self._cached_token
+
+        raise UpstoxAuthRequiredError("UPSTOX_ANALYTICS_TOKEN is not configured in backend environment variables.")
+
+    async def get_trading_access_token(self) -> Optional[str]:
+        """
+        Retrieves the active Upstox OAuth access token strictly for trading operations.
+        Kept completely separate from the market data Analytics Token.
+        """
         now = time.time()
-        # Refresh cache from DB every 30 seconds or if empty (skip during automated tests)
         is_test_env = "pytest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST") is not None
-        if not is_test_env and (not self._cached_token or (now - self._last_token_check > 30)):
-            self._last_token_check = now
+        if not is_test_env and (not self._cached_trading_token or (now - self._last_trading_token_check > 30)):
+            self._last_trading_token_check = now
             try:
                 async with AsyncSessionLocal() as db:
                     stmt = (
@@ -97,19 +111,23 @@ class UpstoxMarketDataProvider(MarketDataProvider):
                     )
                     cred = (await db.execute(stmt)).scalar_one_or_none()
                     if cred:
-                        self._cached_token = cred.access_token
-                        self._token_expires_at = cred.expires_at
+                        self._cached_trading_token = cred.access_token
+                        self._trading_token_expires_at = cred.expires_at
             except Exception as e:
-                logger.warning(f"Could not load provider credentials from DB: {e}")
+                logger.warning(f"Could not load trading provider credentials from DB: {e}")
 
-        if not self._cached_token:
-            raise UpstoxAuthRequiredError("Upstox access token not found. Please authenticate.")
+        if not self._cached_trading_token:
+            return None
 
-        if self._token_expires_at and datetime.now(timezone.utc) >= self._token_expires_at:
-            self._cached_token = None
-            raise UpstoxAuthRequiredError("Upstox access token has expired. Please re-authenticate.")
+        if self._trading_token_expires_at and datetime.now(timezone.utc) >= self._trading_token_expires_at:
+            self._cached_trading_token = None
+            return None
 
-        return self._cached_token
+        return self._cached_trading_token
+
+    async def get_access_token(self) -> str:
+        """Delegates to get_market_data_token() for all market data provider requests."""
+        return await self.get_market_data_token()
 
     def invalidate_token(self):
         """Marks the current access token as invalid."""
@@ -124,7 +142,7 @@ class UpstoxMarketDataProvider(MarketDataProvider):
         headers: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Authenticated HTTP request wrapper with robust error translation."""
-        token = await self.get_access_token()
+        token = await self.get_market_data_token()
         req_headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {token}",
@@ -134,12 +152,14 @@ class UpstoxMarketDataProvider(MarketDataProvider):
 
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
 
+        t0 = time.time()
         async with httpx.AsyncClient(timeout=10.0) as client:
             try:
                 if method == "GET":
                     resp = await client.get(url, headers=req_headers, params=params)
                 else:
                     resp = await client.post(url, headers=req_headers, json=params)
+                self._last_rest_latency_ms = round((time.time() - t0) * 1000, 2)
 
                 if resp.status_code == 401:
                     self.invalidate_token()
@@ -307,14 +327,13 @@ class UpstoxMarketDataProvider(MarketDataProvider):
             return {
                 "status": "not_configured",
                 "provider": "upstox",
-                "message": "Upstox credentials not configured.",
+                "message": "UPSTOX_ANALYTICS_TOKEN not configured in environment.",
             }
 
         try:
             token_valid = self.is_token_valid
             if not token_valid:
-                # Try fetching token to check DB
-                await self.get_access_token()
+                await self.get_market_data_token()
                 token_valid = True
         except UpstoxAuthRequiredError:
             token_valid = False
@@ -325,7 +344,7 @@ class UpstoxMarketDataProvider(MarketDataProvider):
             return {
                 "status": "authentication_required",
                 "provider": "upstox",
-                "message": "Upstox access token expired or not available. Re-authentication required.",
+                "message": "Upstox Analytics Token is missing or invalid.",
             }
 
         return {
