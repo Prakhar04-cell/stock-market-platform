@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api-client";
 import { MobileProfileView } from "@/components/mobile";
+import { clearPositionsCache } from "@/lib/positions-service";
 
 interface UserProfile {
   id: string;
@@ -108,6 +109,7 @@ export default function ProfilePage() {
     if (typeof window !== "undefined") {
       localStorage.removeItem("tradex_token");
       localStorage.removeItem("tradex_refresh_token");
+      clearPositionsCache();
     }
     router.push("/login");
   };

@@ -46,6 +46,9 @@ async function refreshAccessToken(): Promise<string | null> {
     if (!res.ok) {
       localStorage.removeItem("tradex_token");
       localStorage.removeItem("tradex_refresh_token");
+      try {
+        sessionStorage.removeItem("bullrun_positions_cache");
+      } catch {}
       return null;
     }
 

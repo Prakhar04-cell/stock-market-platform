@@ -33,6 +33,7 @@ import {
   formatPnL,
 } from "@/lib/formatters";
 import { useMarketWebSocket } from "@/lib/market-ws";
+import { clearPositionsCache } from "@/lib/positions-service";
 
 interface SearchResultItem {
   instrument_key: string;
@@ -280,6 +281,7 @@ export function Topbar() {
     if (typeof window !== "undefined") {
       localStorage.removeItem("tradex_token");
       localStorage.removeItem("tradex_refresh_token");
+      clearPositionsCache();
       router.push("/login");
     }
   };

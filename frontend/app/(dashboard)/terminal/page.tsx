@@ -10,6 +10,12 @@ import { useMarketWebSocket, WsPriceUpdate } from "@/lib/market-ws";
 import { ChartContainer } from "@/components/ui/chart-container";
 import { OrderPad } from "@/components/trading/order-pad-modal";
 
+import {
+  PositionItem,
+  getCachedPositions,
+  fetchPositionsWithCache,
+} from "@/lib/positions-service";
+
 interface TerminalQuote {
   symbol: string;
   ltp: number;
@@ -34,15 +40,6 @@ interface OrderItem {
   created_at: string;
 }
 
-interface PositionItem {
-  symbol: string;
-  product_type?: string;
-  quantity: number;
-  entry_price: number;
-  current_price?: number;
-  unrealized_pnl?: number;
-  pnl_percent?: number;
-}
 
 const SYMBOLS_LIST = [
   { symbol: "RELIANCE", name: "Reliance Industries Ltd", exchange: "NSE" },
@@ -73,7 +70,7 @@ export default function TerminalPage() {
   });
 
   const [bottomTab, setBottomTab] = useState<"POSITIONS" | "ORDERS" | "EXECUTED" | "FUNDS">("POSITIONS");
-  const [positions, setPositions] = useState<PositionItem[]>([]);
+  const [positions, setPositions] = useState<PositionItem[]>(() => getCachedPositions() ?? []);
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [walletBalance, setWalletBalance] = useState({ available: 124500, used: 45000 });
 
@@ -104,28 +101,17 @@ export default function TerminalPage() {
   const loadBottomData = useCallback(async () => {
     try {
       const [posData, ordData, walData] = await Promise.allSettled([
-        apiRequest<PositionItem[]>("/api/v1/positions"),
+        fetchPositionsWithCache(),
         apiRequest<OrderItem[]>("/api/v1/orders"),
         apiRequest<any>("/api/v1/wallet"),
       ]);
 
       if (posData.status === "fulfilled" && posData.value) {
         setPositions(posData.value);
-      } else {
-        setPositions([
-          { symbol: "RELIANCE", product_type: "MIS", quantity: 150, entry_price: 2804.9, unrealized_pnl: 6090, pnl_percent: 1.45 },
-          { symbol: "TCS", product_type: "CNC", quantity: 50, entry_price: 3860.0, unrealized_pnl: 2600, pnl_percent: 1.35 },
-          { symbol: "HDFCBANK", product_type: "MIS", quantity: 100, entry_price: 1690.0, unrealized_pnl: -580, pnl_percent: -0.34 },
-        ]);
       }
 
       if (ordData.status === "fulfilled" && ordData.value) {
         setOrders(ordData.value);
-      } else {
-        setOrders([
-          { id: "ORD-98421", symbol: "RELIANCE", side: "BUY", order_type: "LIMIT", product_type: "CNC", quantity: 150, price: 2840.0, status: "OPEN", created_at: new Date().toISOString() },
-          { id: "ORD-98420", symbol: "TCS", side: "SELL", order_type: "MARKET", product_type: "MIS", quantity: 50, price: 3890.5, status: "COMPLETED", created_at: new Date().toISOString() },
-        ]);
       }
 
       if (walData.status === "fulfilled" && walData.value) {
@@ -353,30 +339,38 @@ export default function TerminalPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-container text-body-sm">
-                    {positions.map((p, idx) => {
-                      const curLtp = p.symbol === selectedSymbol ? ltp : (p.current_price ?? p.entry_price);
-                      const diff = curLtp - p.entry_price;
-                      const pnl = diff * p.quantity;
-                      const pnlPct = p.entry_price > 0 ? (diff / p.entry_price) * 100 : 0;
-                      const isPos = pnl >= 0;
+                    {positions.length > 0 ? (
+                      positions.map((p, idx) => {
+                        const curLtp = p.symbol === selectedSymbol ? ltp : (p.current_price ?? p.entry_price);
+                        const diff = curLtp - p.entry_price;
+                        const pnl = diff * p.quantity;
+                        const pnlPct = p.entry_price > 0 ? (diff / p.entry_price) * 100 : 0;
+                        const isPos = pnl >= 0;
 
-                      return (
-                        <tr key={idx} className="hover:bg-surface-container-low transition-colors">
-                          <td className="py-2 font-medium text-on-surface">{p.symbol}</td>
-                          <td className="py-2">
-                            <span className="px-1.5 py-0.5 rounded text-xs bg-secondary-container text-on-secondary-container">
-                              {p.product_type || "MIS"}
-                            </span>
-                          </td>
-                          <td className="py-2 text-right">{p.quantity}</td>
-                          <td className="py-2 text-right text-on-surface-variant">{formatINR(p.entry_price)}</td>
-                          <td className="py-2 text-right font-medium text-on-surface">{formatINR(curLtp)}</td>
-                          <td className={`py-2 text-right font-medium ${isPos ? "text-tertiary" : "text-error"}`}>
-                            {isPos ? "+" : ""}{formatINR(pnl)} ({isPos ? "+" : ""}{formatPercentage(pnlPct)})
-                          </td>
-                        </tr>
-                      );
-                    })}
+                        return (
+                          <tr key={idx} className="hover:bg-surface-container-low transition-colors">
+                            <td className="py-2 font-medium text-on-surface">{p.symbol}</td>
+                            <td className="py-2">
+                              <span className="px-1.5 py-0.5 rounded text-xs bg-secondary-container text-on-secondary-container">
+                                {p.product_type || "MIS"}
+                              </span>
+                            </td>
+                            <td className="py-2 text-right">{p.quantity}</td>
+                            <td className="py-2 text-right text-on-surface-variant">{formatINR(p.entry_price)}</td>
+                            <td className="py-2 text-right font-medium text-on-surface">{formatINR(curLtp)}</td>
+                            <td className={`py-2 text-right font-medium ${isPos ? "text-tertiary" : "text-error"}`}>
+                              {isPos ? "+" : ""}{formatINR(pnl)} ({isPos ? "+" : ""}{formatPercentage(pnlPct)})
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="py-6 text-center text-outline">
+                          No open positions found.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               )}
