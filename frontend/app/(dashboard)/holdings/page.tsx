@@ -41,9 +41,28 @@ interface PortfolioData {
   holdings: HoldingItem[];
 }
 
+interface JavaPortfolioAnalytics {
+  userId: string;
+  totalInvestedAmount: number;
+  currentPortfolioValue: number;
+  totalUnrealizedPnL: number;
+  holdingsCount: number;
+  largestHoldingSymbol?: string;
+  largestHoldingPercentage?: number;
+  portfolioConcentration?: number;
+  diversificationIndicator?: string;
+  assetAllocations?: Array<{
+    symbol: string;
+    stockName?: string;
+    percentage: number;
+    currentValue: number;
+  }>;
+}
+
 export default function HoldingsPage() {
   const router = useRouter();
   const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
+  const [javaAnalytics, setJavaAnalytics] = useState<JavaPortfolioAnalytics | null>(null);
   const [holdings, setHoldings] = useState<HoldingItem[]>([]);
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -65,19 +84,32 @@ export default function HoldingsPage() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await apiRequest<PortfolioData>("/api/v1/portfolio");
-      setPortfolio(data);
-      if (data?.holdings && data.holdings.length > 0) {
-        setHoldings(data.holdings);
-        const prices: Record<string, number> = {};
-        data.holdings.forEach((h) => {
-          if (h.current_price) {
-            prices[h.symbol.toUpperCase()] = Number(h.current_price);
-          }
-        });
-        setLivePrices((prev) => ({ ...prev, ...prices }));
+      const [pRes, aRes] = await Promise.allSettled([
+        apiRequest<PortfolioData>("/api/v1/portfolio"),
+        apiRequest<JavaPortfolioAnalytics>("/api/java/portfolio/me"),
+      ]);
+
+      if (pRes.status === "fulfilled" && pRes.value) {
+        const data = pRes.value;
+        setPortfolio(data);
+        if (data?.holdings && data.holdings.length > 0) {
+          setHoldings(data.holdings);
+          const prices: Record<string, number> = {};
+          data.holdings.forEach((h) => {
+            if (h.current_price) {
+              prices[h.symbol.toUpperCase()] = Number(h.current_price);
+            }
+          });
+          setLivePrices((prev) => ({ ...prev, ...prices }));
+        } else {
+          setHoldings([]);
+        }
       } else {
         setHoldings([]);
+      }
+
+      if (aRes.status === "fulfilled" && aRes.value) {
+        setJavaAnalytics(aRes.value);
       }
     } catch {
       setHoldings([]);
@@ -356,69 +388,72 @@ export default function HoldingsPage() {
 
       {/* Grid: Sector Allocation & Performance Overview */}
       <div className="px-space-lg lg:px-space-xl grid grid-cols-1 lg:grid-cols-3 gap-space-lg mb-space-xl">
-        {/* Sector Allocation */}
+        {/* Asset / Sector Allocation (Java Analytics Powered) */}
         <div className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm border border-outline-variant/20 flex flex-col justify-between lg:col-span-1">
           <div>
             <div className="flex items-center justify-between mb-space-md">
-              <h2 className="text-headline-sm text-on-surface font-semibold">Sector Allocation</h2>
-              <span className="text-label-sm text-outline font-tabular-data">4 Sectors</span>
+              <h2 className="text-headline-sm text-on-surface font-semibold">Asset Allocation</h2>
+              <span className="text-label-sm text-outline font-tabular-data">
+                {javaAnalytics?.holdingsCount ?? holdings.length} Assets
+              </span>
             </div>
-            <div className="space-y-space-md">
-              <div>
-                <div className="flex justify-between text-body-sm mb-space-xs">
-                  <span className="text-on-surface font-medium flex items-center gap-space-xs">
-                    <span className="w-3 h-3 rounded-full bg-primary inline-block"></span>
-                    Information Technology
-                  </span>
-                  <span className="font-tabular-data text-on-surface-variant">35%</span>
-                </div>
-                <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-                  <div className="bg-primary h-full rounded-full" style={{ width: "35%" }}></div>
-                </div>
+
+            {holdings.length > 0 ? (
+              <div className="space-y-space-md">
+                {(javaAnalytics?.assetAllocations && javaAnalytics.assetAllocations.length > 0
+                  ? javaAnalytics.assetAllocations.slice(0, 4)
+                  : holdings.slice(0, 4).map((h) => ({
+                      symbol: h.symbol,
+                      percentage: Math.round(
+                        ((h.current_value || h.quantity * h.average_buy_price) /
+                          Math.max(1, currentValue || totalInvested)) *
+                          100
+                      ),
+                    }))
+                ).map((item, idx) => {
+                  const colors = ["bg-primary", "bg-tertiary", "bg-secondary", "bg-outline-variant"];
+                  return (
+                    <div key={item.symbol || idx}>
+                      <div className="flex justify-between text-body-sm mb-space-xs">
+                        <span className="text-on-surface font-medium flex items-center gap-space-xs">
+                          <span className={`w-2.5 h-2.5 rounded-full ${colors[idx % colors.length]} inline-block`}></span>
+                          {item.symbol}
+                        </span>
+                        <span className="font-tabular-data text-on-surface-variant">{item.percentage}%</span>
+                      </div>
+                      <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+                        <div
+                          className={`${colors[idx % colors.length]} h-full rounded-full transition-all`}
+                          style={{ width: `${item.percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div>
-                <div className="flex justify-between text-body-sm mb-space-xs">
-                  <span className="text-on-surface font-medium flex items-center gap-space-xs">
-                    <span className="w-3 h-3 rounded-full bg-tertiary inline-block"></span>
-                    Banking &amp; Finance
-                  </span>
-                  <span className="font-tabular-data text-on-surface-variant">28%</span>
-                </div>
-                <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-                  <div className="bg-tertiary h-full rounded-full" style={{ width: "28%" }}></div>
-                </div>
+            ) : (
+              <div className="py-8 flex flex-col items-center justify-center text-center">
+                <span className="material-symbols-outlined text-[28px] text-outline mb-1.5">pie_chart</span>
+                <p className="text-body-sm font-medium text-on-surface">No holdings in portfolio</p>
+                <p className="text-body-xs text-outline mt-0.5 max-w-xs">
+                  Asset allocation and concentration will calculate automatically once orders are executed.
+                </p>
               </div>
-              <div>
-                <div className="flex justify-between text-body-sm mb-space-xs">
-                  <span className="text-on-surface font-medium flex items-center gap-space-xs">
-                    <span className="w-3 h-3 rounded-full bg-secondary inline-block"></span>
-                    Energy &amp; Utilities
-                  </span>
-                  <span className="font-tabular-data text-on-surface-variant">22%</span>
-                </div>
-                <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-                  <div className="bg-secondary h-full rounded-full" style={{ width: "22%" }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-body-sm mb-space-xs">
-                  <span className="text-on-surface font-medium flex items-center gap-space-xs">
-                    <span className="w-3 h-3 rounded-full bg-outline-variant inline-block"></span>
-                    Pharmaceuticals
-                  </span>
-                  <span className="font-tabular-data text-on-surface-variant">15%</span>
-                </div>
-                <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-                  <div className="bg-outline-variant h-full rounded-full" style={{ width: "15%" }}></div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
           <div className="mt-space-lg pt-space-md border-t border-surface-container flex items-center justify-between text-body-sm text-outline">
-            <span>Diversification Score</span>
+            <span>Diversification</span>
             <span className="text-tertiary font-medium flex items-center gap-1 font-tabular-data">
               <span className="material-symbols-outlined text-[16px]">verified</span>
-              Optimal (8.4/10)
+              {javaAnalytics?.diversificationIndicator
+                ? javaAnalytics.diversificationIndicator.replace(/_/g, " ")
+                : holdings.length >= 5
+                ? "WELL DIVERSIFIED"
+                : holdings.length >= 2
+                ? "MODERATE"
+                : holdings.length === 1
+                ? "CONCENTRATED"
+                : "N/A"}
             </span>
           </div>
         </div>

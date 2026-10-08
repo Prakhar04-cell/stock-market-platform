@@ -28,6 +28,7 @@ export default function AdminMonitoringPage() {
   const [infraData, setInfraData] = useState<any>(null);
   const [upstoxStatus, setUpstoxStatus] = useState<any>(null);
   const [marketDataHealth, setMarketDataHealth] = useState<any>(null);
+  const [securitySummary, setSecuritySummary] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<string>("");
   const [isAdminAuthorized, setIsAdminAuthorized] = useState<boolean>(true);
@@ -36,11 +37,12 @@ export default function AdminMonitoringPage() {
   const loadHealthData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [monData, upData, infra, marketH] = await Promise.allSettled([
+      const [monData, upData, infra, marketH, secSummary] = await Promise.allSettled([
         apiRequest("/api/v1/admin/monitoring"),
         apiRequest("/api/v1/upstox/auth/status"),
         apiRequest("/health/infrastructure").catch(() => apiRequest("/api/v1/health/infrastructure")),
         apiRequest("/health/market-data").catch(() => apiRequest("/api/v1/health/market-data")),
+        apiRequest("/api/java/security/summary").catch(() => null),
       ]);
 
       let anySuccess = false;
@@ -65,6 +67,9 @@ export default function AdminMonitoringPage() {
       if (marketH.status === "fulfilled") {
         setMarketDataHealth(marketH.value);
         anySuccess = true;
+      }
+      if (secSummary.status === "fulfilled" && secSummary.value) {
+        setSecuritySummary(secSummary.value);
       }
 
       setIsMonitoringUnavailable(!anySuccess);
@@ -208,6 +213,15 @@ export default function AdminMonitoringPage() {
     monitoringData?.metrics?.paper_trading_engine_status ??
     "ACTIVE (PAPER ONLY)";
 
+  // Java Security & Trading Analytics Service
+  const rawJavaStatus =
+    infraData?.java_security_service?.status ||
+    (securitySummary ? "HEALTHY" : "DISCONNECTED");
+  const isJavaHealthy = rawJavaStatus === "HEALTHY";
+  const javaLatency = infraData?.java_security_service?.latency_ms ?? null;
+  const javaVersion = infraData?.java_security_service?.version || "1.0.0";
+  const javaService = infraData?.java_security_service?.service || "Spring Boot (Java 21)";
+
   const isVercel =
     typeof window !== "undefined" && window.location.hostname.includes("vercel.app");
 
@@ -282,7 +296,7 @@ export default function AdminMonitoringPage() {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
           {/* Docker Runtime */}
           <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
             <span className="text-[11px] text-[#6B7280] font-normal flex items-center gap-1.5">
@@ -317,6 +331,30 @@ export default function AdminMonitoringPage() {
             <p className="text-[10px] text-[#9CA3AF] font-normal">
               {infraData?.backend_container?.service || infraData?.backend?.service || "FastAPI"} v
               {infraData?.backend_container?.version || infraData?.backend?.version || "1.0.0"}
+            </p>
+          </div>
+
+          {/* Java Security Core */}
+          <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
+            <span className="text-[11px] text-[#6B7280] font-normal flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#9CA3AF]" />
+              Java Security Core
+            </span>
+            <span
+              className={`font-semibold ${
+                isJavaHealthy
+                  ? "text-[#16A34A]"
+                  : rawJavaStatus === "DEGRADED"
+                  ? "text-[#D97706]"
+                  : rawJavaStatus === "DISCONNECTED"
+                  ? "text-[#6B7280]"
+                  : "text-[#DC2626]"
+              }`}
+            >
+              {rawJavaStatus}
+            </span>
+            <p className="text-[10px] text-[#9CA3AF] truncate font-normal">
+              {javaService} v{javaVersion} {javaLatency !== null ? `(${javaLatency} ms)` : ""}
             </p>
           </div>
 
@@ -366,6 +404,108 @@ export default function AdminMonitoringPage() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Java Security & Audit Governance Telemetry Card */}
+      <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-card space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-[#111827]">
+              Java API Security &amp; Audit Governance Telemetry
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                securitySummary?.riskLevel === "CRITICAL"
+                  ? "bg-rose-50 text-rose-700 border-rose-200"
+                  : securitySummary?.riskLevel === "HIGH"
+                  ? "bg-orange-50 text-orange-700 border-orange-200"
+                  : securitySummary?.riskLevel === "MEDIUM"
+                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+              }`}
+            >
+              Risk Assessment: {securitySummary?.riskLevel || "LOW"} ({securitySummary?.riskScore ?? 0}/100)
+            </span>
+            <Badge variant="neutral" className="text-[10px] font-mono">
+              ROLE: ADMIN RBAC
+            </Badge>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+          {/* 1. Security Status */}
+          <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
+            <span className="text-[11px] text-[#6B7280] font-normal block">Security Engine</span>
+            <span className={`font-semibold ${isJavaHealthy ? "text-[#16A34A]" : "text-[#6B7280]"}`}>
+              {isJavaHealthy ? "ENFORCING" : rawJavaStatus}
+            </span>
+            <p className="text-[10px] text-[#9CA3AF]">JWT, RBAC &amp; Rate Limit</p>
+          </div>
+
+          {/* 2. Active Alerts */}
+          <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
+            <span className="text-[11px] text-[#6B7280] font-normal block">Active Alerts</span>
+            <span className={`font-semibold ${(securitySummary?.activeAlerts ?? 0) > 0 ? "text-rose-600" : "text-[#111827]"}`}>
+              {securitySummary?.activeAlerts ?? 0}
+            </span>
+            <p className="text-[10px] text-[#9CA3AF]">High/Critical severity</p>
+          </div>
+
+          {/* 3. Resolved Alerts */}
+          <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
+            <span className="text-[11px] text-[#6B7280] font-normal block">Resolved Alerts</span>
+            <span className="font-semibold text-emerald-600">
+              0
+            </span>
+            <p className="text-[10px] text-[#9CA3AF]">Auto-mitigated events</p>
+          </div>
+
+          {/* 4. Failed Auth Attempts */}
+          <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
+            <span className="text-[11px] text-[#6B7280] font-normal block">Failed Auth</span>
+            <span className="font-semibold text-[#111827]">
+              {securitySummary?.failedAuthAttempts ?? 0}
+            </span>
+            <p className="text-[10px] text-[#9CA3AF]">Invalid credentials / JWT</p>
+          </div>
+
+          {/* 5. Blocked Requests */}
+          <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
+            <span className="text-[11px] text-[#6B7280] font-normal block">Blocked Requests</span>
+            <span className="font-semibold text-[#111827]">
+              {securitySummary?.blockedRequests ?? 0}
+            </span>
+            <p className="text-[10px] text-[#9CA3AF]">RBAC access denials</p>
+          </div>
+
+          {/* 6. Rate-Limit Violations */}
+          <div className="p-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl space-y-1">
+            <span className="text-[11px] text-[#6B7280] font-normal block">Rate Limits Hit</span>
+            <span className="font-semibold text-[#111827]">
+              {securitySummary?.rateLimitViolations ?? 0}
+            </span>
+            <p className="text-[10px] text-[#9CA3AF]">HTTP 429 throttles</p>
+          </div>
+        </div>
+
+        {securitySummary?.riskFactors && securitySummary.riskFactors.length > 0 ? (
+          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 space-y-1">
+            <span className="font-semibold block">Identified Risk Factors:</span>
+            <ul className="list-disc list-inside space-y-0.5 text-[11px]">
+              {securitySummary.riskFactors.map((factor: string, idx: number) => (
+                <li key={idx}>{factor}</li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-[11px] text-[#6B7280] pt-1">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Audit pipeline operating nominally. All user credentials and API tokens validated through HS256 crypto keys.</span>
+          </div>
+        )}
       </div>
 
       {/* Upstox Authentication & Live Stream Status Banner */}

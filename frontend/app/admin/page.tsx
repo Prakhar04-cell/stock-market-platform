@@ -11,10 +11,21 @@ interface AdminMetrics {
   active_users: number;
   orders_today: number;
   executed_orders?: number;
+  failed_orders?: number;
   trading_volume_today?: number;
-  system_health?: number;
-  api_status?: string;
+  system_status?: string;
   security_incidents?: number;
+}
+
+interface SecuritySummary {
+  totalEvents: number;
+  activeAlerts: number;
+  failedAuthAttempts: number;
+  blockedRequests: number;
+  rateLimitViolations: number;
+  riskScore: number;
+  riskLevel: string;
+  riskFactors?: string[];
 }
 
 interface AuditLogItem {
@@ -30,45 +41,32 @@ interface AuditLogItem {
 export default function AdminOverviewPage() {
   const router = useRouter();
 
-  const [metrics, setMetrics] = useState<AdminMetrics>({
-    total_users: 48250,
-    active_users: 14890,
-    orders_today: 124580,
-    trading_volume_today: 4825000000,
-    system_health: 99.98,
-    api_status: "Operational",
-    security_incidents: 0,
-  });
-
+  const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
+  const [securitySummary, setSecuritySummary] = useState<SecuritySummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [mRes, lRes] = await Promise.allSettled([
+      const [mRes, lRes, sRes] = await Promise.allSettled([
         apiRequest<AdminMetrics>("/api/v1/admin/metrics"),
         apiRequest<AuditLogItem[]>("/api/v1/admin/audit-logs?limit=8"),
+        apiRequest<SecuritySummary>("/api/java/security/summary"),
       ]);
 
       if (mRes.status === "fulfilled" && mRes.value) {
-        setMetrics((prev) => ({
-          ...prev,
-          ...mRes.value,
-          total_users: mRes.value.total_users || prev.total_users,
-          active_users: mRes.value.active_users || prev.active_users,
-        }));
+        setMetrics(mRes.value);
       }
 
-      if (lRes.status === "fulfilled" && lRes.value) {
+      if (lRes.status === "fulfilled" && lRes.value && Array.isArray(lRes.value)) {
         setAuditLogs(lRes.value);
       } else {
-        setAuditLogs([
-          { id: "log-1", user_email: "rajesh.k@gmail.com", action: "BUY LIMIT 500 INFY", target: "₹8,10,000", ip_address: "103.21.58.12 (Mumbai)", status: "COMPLETED", created_at: new Date(Date.now() - 1000 * 60 * 3).toISOString() },
-          { id: "log-2", user_email: "priya.m@yahoo.com", action: "SELL MARKET 120 RELIANCE", target: "₹3,42,060", ip_address: "49.36.128.4 (Delhi)", status: "COMPLETED", created_at: new Date(Date.now() - 1000 * 60 * 8).toISOString() },
-          { id: "log-3", user_email: "anand.s@outlook.com", action: "BUY MIS 1000 SBIN", target: "₹8,12,300", ip_address: "117.247.88.9 (Bengaluru)", status: "EXECUTED", created_at: new Date(Date.now() - 1000 * 60 * 15).toISOString() },
-          { id: "log-4", user_email: "sneha.v@gmail.com", action: "2FA MPIN Verified", target: "Session Started", ip_address: "152.57.19.44 (Pune)", status: "SUCCESS", created_at: new Date(Date.now() - 1000 * 60 * 22).toISOString() },
-        ]);
+        setAuditLogs([]);
+      }
+
+      if (sRes.status === "fulfilled" && sRes.value) {
+        setSecuritySummary(sRes.value);
       }
     } catch {
       // Fallback
@@ -146,7 +144,7 @@ export default function AdminOverviewPage() {
 
       {/* Main Content Layout */}
       <div className="px-space-lg lg:px-space-xl py-space-lg flex flex-col gap-space-xl">
-        {/* Stat Cards Grid (7 Cards as in Stitch UI) */}
+        {/* Stat Cards Grid (7 Cards as in Platform Control Center) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
           {/* 1. Total Users */}
           <div className="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between gap-space-md border border-outline-variant/20">
@@ -160,11 +158,10 @@ export default function AdminOverviewPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-headline-lg font-tabular-data font-semibold text-on-surface">
-                {metrics.total_users.toLocaleString()}
+                {isLoading ? "—" : (metrics?.total_users !== undefined ? metrics.total_users.toLocaleString() : "0")}
               </span>
-              <div className="flex items-center gap-space-xs text-label-sm text-tertiary mt-space-xs font-medium">
-                <span className="material-symbols-outlined text-[16px]">trending_up</span>
-                <span>+12.4% this month</span>
+              <div className="flex items-center gap-space-xs text-label-sm text-on-surface-variant mt-space-xs font-medium">
+                <span>Active accounts: {metrics?.active_users ?? 0}</span>
               </div>
             </div>
           </div>
@@ -181,10 +178,10 @@ export default function AdminOverviewPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-headline-lg font-tabular-data font-semibold text-on-surface">
-                {metrics.active_users.toLocaleString()}
+                {isLoading ? "—" : (metrics?.active_users !== undefined ? metrics.active_users.toLocaleString() : "0")}
               </span>
               <div className="flex items-center gap-space-xs text-label-sm text-on-surface-variant mt-space-xs">
-                <span>Peak concurrent: 4,120</span>
+                <span>Verified paper traders</span>
               </div>
             </div>
           </div>
@@ -201,11 +198,11 @@ export default function AdminOverviewPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-headline-lg font-tabular-data font-semibold text-on-surface">
-                {metrics.orders_today.toLocaleString()}
+                {isLoading ? "—" : (metrics?.orders_today !== undefined ? metrics.orders_today.toLocaleString() : "0")}
               </span>
               <div className="flex items-center gap-space-xs text-label-sm text-tertiary mt-space-xs font-medium">
-                <span className="material-symbols-outlined text-[16px]">trending_up</span>
-                <span>+8.2% vs yesterday</span>
+                <span>Executed: {metrics?.executed_orders ?? 0}</span>
+                {metrics?.failed_orders ? <span className="text-error font-normal">({metrics.failed_orders} rejected)</span> : null}
               </div>
             </div>
           </div>
@@ -222,11 +219,10 @@ export default function AdminOverviewPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-headline-lg font-tabular-data font-semibold text-on-surface">
-                ₹482.50 Cr
+                {isLoading ? "—" : formatINR(metrics?.trading_volume_today || 0)}
               </span>
-              <div className="flex items-center gap-space-xs text-label-sm text-tertiary mt-space-xs font-medium">
-                <span className="material-symbols-outlined text-[16px]">trending_up</span>
-                <span>+15.1% avg</span>
+              <div className="flex items-center gap-space-xs text-label-sm text-on-surface-variant mt-space-xs font-medium">
+                <span>{metrics?.trading_volume_today ? "Cumulative executed turnover" : "No executions recorded today"}</span>
               </div>
             </div>
           </div>
@@ -243,11 +239,11 @@ export default function AdminOverviewPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-headline-lg font-tabular-data font-semibold text-on-surface">
-                {metrics.system_health ?? 99.98}%
+                {metrics?.system_status || "OPERATIONAL"}
               </span>
               <div className="flex items-center gap-space-xs text-label-sm text-tertiary mt-space-xs font-medium">
                 <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
-                <span>All systems normal</span>
+                <span>All telemetry nominal</span>
               </div>
             </div>
           </div>
@@ -264,10 +260,10 @@ export default function AdminOverviewPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-headline-md font-semibold text-on-surface mt-1">
-                {metrics.api_status || "Operational"}
+                {metrics?.system_status === "DEGRADED" ? "Degraded" : "Operational"}
               </span>
               <div className="flex items-center gap-space-xs text-label-sm text-on-surface-variant mt-space-xs">
-                <span>Latency: 24ms avg</span>
+                <span>Core Gateway &amp; Auth Active</span>
               </div>
             </div>
           </div>
@@ -286,21 +282,33 @@ export default function AdminOverviewPage() {
               <div className="flex items-center gap-space-md">
                 <div className="flex flex-col">
                   <span className="text-headline-md font-semibold font-tabular-data text-on-surface">
-                    0 Active
+                    {securitySummary ? `${securitySummary.activeAlerts} Active` : `${metrics?.security_incidents ?? 0} Incidents`}
                   </span>
-                  <span className="text-body-sm text-on-surface-variant">Critical Incidents</span>
+                  <span className="text-body-sm text-on-surface-variant">Active Security Incidents</span>
                 </div>
                 <div className="w-px h-8 bg-surface-container"></div>
                 <div className="flex flex-col">
                   <span className="text-headline-md font-semibold font-tabular-data text-tertiary">
-                    2 Resolved
+                    {securitySummary ? `${securitySummary.rateLimitViolations} Rate Limits` : "0 Blocked"}
                   </span>
-                  <span className="text-body-sm text-on-surface-variant">Auto-mitigated today</span>
+                  <span className="text-body-sm text-on-surface-variant">Throttled &amp; Mitigated</span>
                 </div>
               </div>
-              <span className="px-space-md py-space-xs bg-tertiary-container/10 text-tertiary text-label-sm rounded-lg font-medium">
-                Secure
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`px-space-md py-space-xs text-label-sm rounded-lg font-medium border ${
+                    securitySummary?.riskLevel === "CRITICAL"
+                      ? "bg-rose-50 text-rose-700 border-rose-200"
+                      : securitySummary?.riskLevel === "HIGH"
+                      ? "bg-orange-50 text-orange-700 border-orange-200"
+                      : securitySummary?.riskLevel === "MEDIUM"
+                      ? "bg-amber-50 text-amber-700 border-amber-200"
+                      : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  }`}
+                >
+                  {securitySummary ? `Risk: ${securitySummary.riskLevel} (${securitySummary.riskScore}/100)` : "Risk: Low"}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -311,44 +319,51 @@ export default function AdminOverviewPage() {
           <div className="lg:col-span-2 bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md border border-outline-variant/20">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-headline-sm font-semibold text-on-surface">User Growth Trajectory</h2>
-                <p className="text-body-sm text-outline">Registered traders across past 6 months</p>
+                <h2 className="text-headline-sm font-semibold text-on-surface">User Growth &amp; Engagement</h2>
+                <p className="text-body-sm text-outline">Registered traders across platform</p>
               </div>
               <span className="px-space-sm py-1 bg-surface-container rounded-lg text-label-sm text-on-surface font-medium">
-                Past 6M
+                Live Status
               </span>
             </div>
-            <div className="w-full h-56 flex items-end justify-between gap-3 pt-6 pb-2 px-4 bg-surface-container/20 rounded-xl relative">
-              <div className="absolute inset-0 flex flex-col justify-between p-4 pointer-events-none opacity-20">
-                <div className="w-full h-px bg-outline"></div>
-                <div className="w-full h-px bg-outline"></div>
-                <div className="w-full h-px bg-outline"></div>
-              </div>
-              {[
-                { m: "May", h: "45%", val: "28K" },
-                { m: "Jun", h: "55%", val: "32K" },
-                { m: "Jul", h: "68%", val: "38K" },
-                { m: "Aug", h: "78%", val: "42K" },
-                { m: "Sep", h: "88%", val: "45K" },
-                { m: "Oct", h: "98%", val: "48.2K", active: true },
-              ].map((bar, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative z-10">
-                  <div
-                    className={`w-full rounded-t transition-all ${
-                      bar.active ? "bg-primary" : "bg-primary/20 group-hover:bg-primary"
-                    }`}
-                    style={{ height: bar.h }}
-                  ></div>
-                  <span
-                    className={`text-[11px] font-tabular-data ${
-                      bar.active ? "text-on-surface font-semibold" : "text-outline"
-                    }`}
-                  >
-                    {bar.m}
-                  </span>
+
+            {metrics && metrics.total_users > 0 ? (
+              <div className="space-y-4 pt-2">
+                <div className="p-4 bg-surface-container-low/40 rounded-xl border border-outline-variant/10 space-y-3">
+                  <div className="flex justify-between text-body-sm">
+                    <span className="font-medium text-on-surface">Active User Ratio</span>
+                    <span className="font-tabular-data text-outline">
+                      {metrics.total_users > 0
+                        ? `${Math.round((metrics.active_users / metrics.total_users) * 100)}%`
+                        : "0%"}
+                    </span>
+                  </div>
+                  <div className="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+                    <div
+                      className="bg-primary h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.max(5, (metrics.active_users / Math.max(1, metrics.total_users)) * 100)
+                        )}%`,
+                      }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-body-xs text-outline pt-1">
+                    <span>Active: {metrics.active_users}</span>
+                    <span>Total Accounts: {metrics.total_users}</span>
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="w-full h-44 flex flex-col items-center justify-center p-6 bg-surface-container/20 rounded-xl border border-dashed border-outline-variant/30 text-center">
+                <span className="material-symbols-outlined text-[32px] text-outline mb-2">person_add</span>
+                <p className="text-body-md font-medium text-on-surface">No user registration history yet</p>
+                <p className="text-body-xs text-outline max-w-sm mt-1">
+                  New trader signups and active paper accounts will be tracked here in real-time.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Trade Volume Distribution */}
@@ -357,35 +372,28 @@ export default function AdminOverviewPage() {
               <h2 className="text-headline-sm font-semibold text-on-surface">Volume By Exchange</h2>
               <p className="text-body-sm text-outline">Intraday liquidity share</p>
             </div>
-            <div className="space-y-space-md">
-              <div>
-                <div className="flex justify-between text-body-sm mb-1">
-                  <span className="font-medium text-on-surface">NSE Equities</span>
-                  <span className="font-tabular-data text-outline">68%</span>
+            {metrics?.trading_volume_today && metrics.trading_volume_today > 0 ? (
+              <div className="space-y-space-md">
+                <div>
+                  <div className="flex justify-between text-body-sm mb-1">
+                    <span className="font-medium text-on-surface">NSE Equities</span>
+                    <span className="font-tabular-data text-outline">100%</span>
+                  </div>
+                  <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+                    <div className="bg-primary h-full rounded-full" style={{ width: "100%" }}></div>
+                  </div>
                 </div>
-                <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-                  <div className="bg-primary h-full rounded-full" style={{ width: "68%" }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-body-sm mb-1">
-                  <span className="font-medium text-on-surface">NSE F&amp;O Derivatives</span>
-                  <span className="font-tabular-data text-outline">24%</span>
-                </div>
-                <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-                  <div className="bg-tertiary h-full rounded-full" style={{ width: "24%" }}></div>
+                <div className="text-body-xs text-outline">
+                  Total Turnover: {formatINR(metrics.trading_volume_today)}
                 </div>
               </div>
-              <div>
-                <div className="flex justify-between text-body-sm mb-1">
-                  <span className="font-medium text-on-surface">BSE Equities</span>
-                  <span className="font-tabular-data text-outline">8%</span>
-                </div>
-                <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-                  <div className="bg-secondary h-full rounded-full" style={{ width: "8%" }}></div>
-                </div>
+            ) : (
+              <div className="py-8 flex flex-col items-center justify-center text-center">
+                <span className="material-symbols-outlined text-[28px] text-outline mb-1.5">show_chart</span>
+                <p className="text-body-sm font-medium text-on-surface">No trading volume recorded today</p>
+                <p className="text-body-xs text-outline mt-0.5">Awaiting executed market/limit orders</p>
               </div>
-            </div>
+            )}
             <div className="pt-2 border-t border-surface-container text-body-sm text-outline flex items-center justify-between">
               <span>Primary Gateway</span>
               <span className="text-tertiary font-medium">Upstox Active</span>
@@ -410,47 +418,59 @@ export default function AdminOverviewPage() {
               <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
             </Link>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-body-md font-tabular-data">
-              <thead>
-                <tr className="bg-surface-container-low text-outline text-label-sm uppercase tracking-wider border-b border-surface-container-high">
-                  <th className="py-space-md px-space-md font-medium">User / Client</th>
-                  <th className="py-space-md px-space-md font-medium">Action</th>
-                  <th className="py-space-md px-space-md font-medium">Value / Target</th>
-                  <th className="py-space-md px-space-md font-medium">IP &amp; Region</th>
-                  <th className="py-space-md px-space-md font-medium">Timestamp</th>
-                  <th className="py-space-md px-space-md font-medium text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-container">
-                {auditLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-surface-container-low/50 transition-colors">
-                    <td className="py-space-md px-space-md font-medium text-on-surface">
-                      {log.user_email || "System Service"}
-                    </td>
-                    <td className="py-space-md px-space-md">{log.action}</td>
-                    <td className="py-space-md px-space-md font-semibold text-on-surface">
-                      {log.target || "N/A"}
-                    </td>
-                    <td className="py-space-md px-space-md text-outline">
-                      {log.ip_address || "Internal"}
-                    </td>
-                    <td className="py-space-md px-space-md text-outline">
-                      {new Date(log.created_at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </td>
-                    <td className="py-space-md px-space-md text-right">
-                      <span className="px-space-sm py-0.5 rounded-full bg-tertiary-container/10 text-tertiary text-label-sm font-semibold">
-                        {log.status || "OK"}
-                      </span>
-                    </td>
+          {auditLogs.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-body-md font-tabular-data">
+                <thead>
+                  <tr className="bg-surface-container-low text-outline text-label-sm uppercase tracking-wider border-b border-surface-container-high">
+                    <th className="py-space-md px-space-md font-medium">User / Client</th>
+                    <th className="py-space-md px-space-md font-medium">Action</th>
+                    <th className="py-space-md px-space-md font-medium">Value / Target</th>
+                    <th className="py-space-md px-space-md font-medium">IP &amp; Region</th>
+                    <th className="py-space-md px-space-md font-medium">Timestamp</th>
+                    <th className="py-space-md px-space-md font-medium text-right">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-surface-container">
+                  {auditLogs.map((log) => (
+                    <tr key={log.id} className="hover:bg-surface-container-low/50 transition-colors">
+                      <td className="py-space-md px-space-md font-medium text-on-surface">
+                        {log.user_email || "System Service"}
+                      </td>
+                      <td className="py-space-md px-space-md">{log.action}</td>
+                      <td className="py-space-md px-space-md font-semibold text-on-surface">
+                        {log.target || "N/A"}
+                      </td>
+                      <td className="py-space-md px-space-md text-outline">
+                        {log.ip_address || "Internal"}
+                      </td>
+                      <td className="py-space-md px-space-md text-outline">
+                        {new Date(log.created_at).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </td>
+                      <td className="py-space-md px-space-md text-right">
+                        <span className="px-space-sm py-0.5 rounded-full bg-tertiary-container/10 text-tertiary text-label-sm font-semibold">
+                          {log.status || "OK"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-12 px-6 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center text-outline mb-3">
+                <span className="material-symbols-outlined text-[24px]">verified_user</span>
+              </div>
+              <h3 className="text-body-lg font-semibold text-on-surface">No Surveillance Audit Events Recorded</h3>
+              <p className="text-body-sm text-outline max-w-sm mt-1">
+                Authentication events, high-value trades, and administrative operations will appear here in real time.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

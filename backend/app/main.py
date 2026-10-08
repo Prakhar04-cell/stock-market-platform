@@ -7,7 +7,7 @@ from decimal import Decimal
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from app.api.health import router as health_router
 from app.api.v1.router import api_router
@@ -332,6 +332,63 @@ async def generic_exception_handler(request: Request, exc: Exception):
 app.include_router(health_router)
 app.include_router(health_router, prefix=settings.API_V1_STR)
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+# Transparent Proxy to Java Security & Trading Analytics Service
+@app.api_route(
+    "/api/java/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+@app.api_route(
+    "/api/v1/java/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+async def proxy_to_java_service(request: Request, path: str):
+    """Transparently proxies /api/java/* and /api/v1/java/* to the Java Spring Boot service."""
+    target_url = f"{settings.JAVA_SERVICE_URL.rstrip('/')}/api/java/{path}"
+    if request.url.query:
+        target_url = f"{target_url}?{request.url.query}"
+
+    headers = dict(request.headers)
+    headers.pop("host", None)
+
+    body = await request.body()
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.request(
+                method=request.method,
+                url=target_url,
+                headers=headers,
+                content=body,
+            )
+            excluded_headers = {"content-encoding", "content-length", "transfer-encoding", "connection"}
+            response_headers = {k: v for k, v in resp.headers.items() if k.lower() not in excluded_headers}
+            return Response(
+                content=resp.content,
+                status_code=resp.status_code,
+                headers=response_headers,
+                media_type=resp.headers.get("content-type"),
+            )
+    except (httpx.ConnectError, httpx.ConnectTimeout):
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=format_error_response(
+                code="JAVA_SERVICE_UNAVAILABLE",
+                message="Java Security & Trading Analytics Service is currently unreachable.",
+            ),
+        )
+    except Exception as exc:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=format_error_response(
+                code="JAVA_SERVICE_ERROR",
+                message=f"Error communicating with Java service: {str(exc)}",
+            ),
+        )
 
 
 @app.get("/", tags=["Root"])

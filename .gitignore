@@ -79,3 +79,8 @@ Thumbs.db
 
 # Docker
 .docker/
+
+# Java / Maven
+target/
+**/target/
+*.class

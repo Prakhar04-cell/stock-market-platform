@@ -38,6 +38,11 @@ async def get_admin_metrics(db: AsyncSession = Depends(get_db)):
     failed_orders = (await db.execute(select(func.count(Order.id)).where(Order.status == "REJECTED"))).scalar() or 0
     security_incidents = (await db.execute(select(func.count(SecurityIncident.id)))).scalar() or 0
 
+    # Calculate real cumulative trading volume from executed orders
+    vol_stmt = select(func.coalesce(func.sum(OrderExecution.executed_quantity * OrderExecution.execution_price), 0))
+    vol_result = (await db.execute(vol_stmt)).scalar()
+    trading_volume_today = float(vol_result) if vol_result is not None else 0.0
+
     redis_ok = await check_redis_health()
     system_status = "HEALTHY" if redis_ok else "DEGRADED"
 
@@ -48,6 +53,7 @@ async def get_admin_metrics(db: AsyncSession = Depends(get_db)):
         executed_orders=executed_orders,
         failed_orders=failed_orders,
         security_incidents=security_incidents,
+        trading_volume_today=trading_volume_today,
         system_status=system_status,
     )
 

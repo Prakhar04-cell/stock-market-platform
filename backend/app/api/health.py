@@ -226,6 +226,27 @@ async def get_infrastructure_health(db: AsyncSession = Depends(get_db)):
     ws_rtt_ms = ws_metrics.get("websocket_rtt_ms")
     market_latency_ms = ws_metrics.get("market_data_latency_ms")
 
+    # Probe Java Security & Trading Analytics Service
+    java_status = "DISCONNECTED"
+    java_details = None
+    java_service_info = {}
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=1.5) as client:
+            t0 = time.time()
+            j_resp = await client.get(f"{settings.JAVA_SERVICE_URL.rstrip('/')}/api/java/health")
+            java_latency = round((time.time() - t0) * 1000, 2)
+            if j_resp.status_code == 200:
+                java_service_info = j_resp.json()
+                java_service_info["latency_ms"] = java_latency
+                java_status = "HEALTHY"
+            else:
+                java_status = "UNHEALTHY"
+                java_details = f"HTTP {j_resp.status_code}"
+    except Exception as exc:
+        java_status = "DISCONNECTED"
+        java_details = str(exc)
+
     return {
         "environment": settings.ENVIRONMENT,
         "docker_runtime": {
@@ -243,6 +264,13 @@ async def get_infrastructure_health(db: AsyncSession = Depends(get_db)):
             "status": "HEALTHY",
             "service": "FastAPI",
             "version": settings.VERSION,
+        },
+        "java_security_service": {
+            "status": java_status,
+            "service": java_service_info.get("service", "Java Security & Analytics Service"),
+            "version": java_service_info.get("version", "1.0.0"),
+            "latency_ms": java_service_info.get("latency_ms"),
+            "details": java_details,
         },
         "database": {
             "status": "HEALTHY" if db_ok else "FAILED",

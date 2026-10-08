@@ -11,6 +11,7 @@ class AdminDashboardMetrics(BaseModel):
     executed_orders: int
     failed_orders: int
     security_incidents: int
+    trading_volume_today: Optional[float] = 0.0
     system_status: str # HEALTHY, DEGRADED, DOWN
 
 

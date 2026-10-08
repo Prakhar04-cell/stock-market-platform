@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     BACKEND_HOST: str = "0.0.0.0"
     BACKEND_PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:3000"
+    JAVA_SERVICE_URL: str = "http://localhost:8081"
 
     @field_validator("ENVIRONMENT", mode="before")
     @classmethod
