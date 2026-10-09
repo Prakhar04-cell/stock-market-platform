@@ -127,6 +127,39 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    @ExceptionHandler(InvalidAnalyticsRequestException.class)
+    public ResponseEntity<ErrorResponseDto> handleInvalidAnalyticsRequest(InvalidAnalyticsRequestException ex, HttpServletRequest request) {
+        ErrorResponseDto error = new ErrorResponseDto(
+            HttpStatus.BAD_REQUEST.value(),
+            "INVALID_ANALYTICS_REQUEST",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(PortfolioDataNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handlePortfolioDataNotFound(PortfolioDataNotFoundException ex, HttpServletRequest request) {
+        ErrorResponseDto error = new ErrorResponseDto(
+            HttpStatus.NOT_FOUND.value(),
+            "PORTFOLIO_NOT_FOUND",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(DatabaseOperationException.class)
+    public ResponseEntity<ErrorResponseDto> handleDatabaseOperationException(DatabaseOperationException ex, HttpServletRequest request) {
+        ErrorResponseDto error = new ErrorResponseDto(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            "DATABASE_OPERATION_ERROR",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleGeneric(Exception ex, HttpServletRequest request) {
         ErrorResponseDto error = new ErrorResponseDto(

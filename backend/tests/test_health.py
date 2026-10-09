@@ -97,7 +97,7 @@ def test_sentry_not_configured_status():
     """Verify Sentry reports NOT_CONFIGURED when SDK is uninitialized or uninstalled."""
     status, desc = get_sentry_status()
     # In test environment, Sentry is not initialized
-    assert status in ["NOT_CONFIGURED", "ACTIVE"]
+    assert status in ["NOT_CONFIGURED", "CONFIGURED", "ACTIVE"]
     if status == "NOT_CONFIGURED":
         assert "sentry-sdk" in desc or "DSN" in desc or "inactive" in desc
 

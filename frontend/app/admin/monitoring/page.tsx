@@ -202,7 +202,8 @@ export default function AdminMonitoringPage() {
     infraData?.sentry?.status ||
     monitoringData?.metrics?.sentry_status ||
     "NOT_CONFIGURED";
-  const isSentryActive = rawSentryStatus === "ACTIVE";
+  const isSentryActive =
+    rawSentryStatus === "ACTIVE" || rawSentryStatus === "CONFIGURED";
   const sentryDescription =
     infraData?.sentry?.description ||
     monitoringData?.metrics?.sentry_description ||
@@ -701,7 +702,7 @@ export default function AdminMonitoringPage() {
                   isSentryActive ? "text-[#16A34A]" : "text-[#9CA3AF]"
                 }`}
               />
-              {isSentryActive ? "ACTIVE" : "NOT CONFIGURED"}
+              {isSentryActive ? (rawSentryStatus === "ACTIVE" ? "ACTIVE" : "CONFIGURED") : "NOT CONFIGURED"}
             </span>
           </div>
 

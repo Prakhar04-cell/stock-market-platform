@@ -69,8 +69,8 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                // Public Health & Actuator endpoints
-                .requestMatchers("/api/java/health", "/health", "/actuator/**").permitAll()
+                // Public Health, Actuator, Servlet & Evaluation Demo endpoints
+                .requestMatchers("/api/java/health", "/health", "/actuator/**", "/demo/**", "/demo/servlet/**", "/api/java/demo/**").permitAll()
                 // Recording security events (allowed for authenticated clients)
                 .requestMatchers(HttpMethod.POST, "/api/java/security/events").authenticated()
                 // Admin-only Security & Audit monitoring endpoints

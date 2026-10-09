@@ -16,6 +16,7 @@ from app.core.config import settings
 from app.core.database import AsyncSessionLocal, engine
 from app.core.exceptions import TradeXException, format_error_response
 from app.core.redis import close_redis
+from app.core.sentry import capture_exception, init_sentry
 from app.models.base import Base
 from app.models.market import Exchange, Stock
 from app.models.system import SystemSetting
@@ -239,33 +240,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Optional Sentry initialization with strict sensitive data sanitization
-if settings.SENTRY_DSN:
-    try:
-        import sentry_sdk  # type: ignore
-
-        def _sentry_before_send(event, hint):
-            req = event.get("request", {})
-            headers = req.get("headers", {})
-            for h in ["authorization", "cookie", "x-token", "proxy-authorization"]:
-                if h in headers:
-                    headers[h] = "[FILTERED]"
-            data = req.get("data")
-            if isinstance(data, dict):
-                for k in list(data.keys()):
-                    if any(s in k.lower() for s in ["password", "token", "secret", "card", "key"]):
-                        data[k] = "[FILTERED]"
-            return event
-
-        sentry_sdk.init(
-            dsn=settings.SENTRY_DSN,
-            environment=settings.ENVIRONMENT,
-            traces_sample_rate=0.1,
-            before_send=_sentry_before_send,
-        )
-        logger.info("Sentry monitoring initialized with sensitive field sanitization.")
-    except ImportError:
-        logger.info("sentry-sdk not installed; skipping Sentry initialization.")
+# Initialize Sentry error monitoring (optional, configured via environment)
+init_sentry()
 
 
 # Structured HTTP Logging Middleware
@@ -319,6 +295,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     logger.exception(f"Unhandled exception during request {request.url.path}: {exc}")
+    capture_exception(exc)
     # Do NOT expose internal stack traces in production
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -381,6 +358,7 @@ async def proxy_to_java_service(request: Request, path: str):
             ),
         )
     except Exception as exc:
+        capture_exception(exc)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=format_error_response(

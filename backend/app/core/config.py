@@ -120,8 +120,10 @@ class Settings(BaseSettings):
     RATE_LIMIT_GENERAL_MAX_REQUESTS: int = 100
     RATE_LIMIT_GENERAL_WINDOW_SECONDS: int = 60
 
-    # Sentry Configuration (Phase 2 - Placeholder only)
+    # Sentry Error Monitoring Configuration
     SENTRY_DSN: str = ""
+    SENTRY_ENVIRONMENT: str = "production"
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.1
 
     # Upstox API Configuration (Official API)
     UPSTOX_ANALYTICS_TOKEN: str = ""  # Read-only Analytics Token (1-year validity) for market data
