@@ -57,7 +57,7 @@ public class RiskAnalyzer {
             BigDecimal avgBuy = h.getAverageBuyPrice() != null ? h.getAverageBuyPrice() : BigDecimal.ZERO;
 
             Optional<MarketPrice> mpOpt = marketPriceRepository.findLatestByStockId(h.getStockId());
-            BigDecimal price = mpOpt.map(MarketPrice::getLtp).filter(p -> p != null && p.compareTo(BigDecimal.ZERO) > 0).orElse(avgBuy);
+            BigDecimal price = mpOpt.map(mp -> mp.getLtp()).filter(p -> p != null && p.compareTo(BigDecimal.ZERO) > 0).orElse(avgBuy);
 
             BigDecimal val = qty.multiply(price);
             positionValues.add(val);
@@ -88,7 +88,7 @@ public class RiskAnalyzer {
             .divide(totalMarketValue, 2, RoundingMode.HALF_UP);
 
         // Portfolio Exposure = Market Value / (Market Value + Available Cash)
-        BigDecimal cash = walletOpt.map(Wallet::getAvailableCash).orElse(BigDecimal.ZERO);
+        BigDecimal cash = walletOpt.map(w -> w.getAvailableCash()).orElse(BigDecimal.ZERO);
         BigDecimal totalAssets = totalMarketValue.add(cash);
         BigDecimal exposure = BigDecimal.ONE;
         if (totalAssets.compareTo(BigDecimal.ZERO) > 0) {

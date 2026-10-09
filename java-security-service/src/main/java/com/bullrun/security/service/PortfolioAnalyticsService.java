@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -177,7 +176,7 @@ public class PortfolioAnalyticsService {
         }
 
         // Sort allocations descending
-        allocations.sort(Comparator.comparing(AssetAllocationDto::getAllocationPercentage).reversed());
+        allocations.sort((a, b) -> b.getAllocationPercentage().compareTo(a.getAllocationPercentage()));
 
         String largestHolding = "None";
         BigDecimal largestPct = BigDecimal.ZERO;

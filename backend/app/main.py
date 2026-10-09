@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
+import httpx
 
 from app.api.health import router as health_router
 from app.api.v1.router import api_router
@@ -356,8 +357,6 @@ async def proxy_to_java_service(request: Request, path: str):
 
     body = await request.body()
     try:
-        import httpx
-
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.request(
                 method=request.method,
