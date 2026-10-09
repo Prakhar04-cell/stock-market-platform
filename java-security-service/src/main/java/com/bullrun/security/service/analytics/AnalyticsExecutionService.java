@@ -19,7 +19,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 /**
  * Service orchestrating polymorphic analytics strategies and concurrent calculations.
@@ -121,9 +120,14 @@ public class AnalyticsExecutionService {
         // Await all parallel tasks
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-        return futures.stream()
-            .map(CompletableFuture::join)
-            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<String, AnalyticsResult> results = new HashMap<>();
+        for (CompletableFuture<Map.Entry<String, AnalyticsResult>> future : futures) {
+            Map.Entry<String, AnalyticsResult> entry = future.join();
+            if (entry != null) {
+                results.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return Collections.unmodifiableMap(results);
     }
 
     /**

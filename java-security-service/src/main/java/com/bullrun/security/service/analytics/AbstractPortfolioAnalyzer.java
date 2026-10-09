@@ -44,7 +44,7 @@ public abstract class AbstractPortfolioAnalyzer {
         BigDecimal totalInvested = calculateTotalInvested(holdings);
         Map<String, BigDecimal> positionValues = calculatePositionValues(holdings, currentPrices);
         BigDecimal totalMarketValue = positionValues.values().stream()
-            .reduce(BigDecimal.ZERO, BigDecimal::add)
+            .reduce(BigDecimal.ZERO, (a, b) -> a.add(b))
             .setScale(CURRENCY_SCALE, RoundingMode.HALF_UP);
 
         BigDecimal unrealizedPnl = totalMarketValue.subtract(totalInvested)
@@ -122,7 +122,7 @@ public abstract class AbstractPortfolioAnalyzer {
                 BigDecimal avgBuy = h.getAverageBuyPrice() != null ? h.getAverageBuyPrice() : BigDecimal.ZERO;
                 return qty.multiply(avgBuy);
             })
-            .reduce(BigDecimal.ZERO, BigDecimal::add)
+            .reduce(BigDecimal.ZERO, (a, b) -> a.add(b))
             .setScale(CURRENCY_SCALE, RoundingMode.HALF_UP);
     }
 
@@ -149,7 +149,7 @@ public abstract class AbstractPortfolioAnalyzer {
                 currentPrices.getOrDefault(symbol, avgBuy));
 
             BigDecimal val = qty.multiply(price).setScale(CURRENCY_SCALE, RoundingMode.HALF_UP);
-            values.merge(symbol, val, BigDecimal::add);
+            values.merge(symbol, val, (a, b) -> a.add(b));
         }
         return Collections.unmodifiableMap(values);
     }

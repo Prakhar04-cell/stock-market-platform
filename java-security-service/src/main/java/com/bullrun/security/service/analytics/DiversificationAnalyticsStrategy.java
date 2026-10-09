@@ -71,10 +71,10 @@ public class DiversificationAnalyticsStrategy implements AnalyticsStrategy {
                     BigDecimal price = context.getCurrentPrices().getOrDefault(h.getStockId(),
                         context.getCurrentPrices().getOrDefault(symbol, avgBuy));
                     BigDecimal val = qty.multiply(price).setScale(SCALE, RoundingMode.HALF_UP);
-                    symbolValues.merge(symbol, val, BigDecimal::add);
+                    symbolValues.merge(symbol, val, (a, b) -> a.add(b));
                     return val;
                 })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
 
             sectorValues.put(sector, sectorSum);
             totalPortfolioValue = totalPortfolioValue.add(sectorSum);
@@ -99,10 +99,14 @@ public class DiversificationAnalyticsStrategy implements AnalyticsStrategy {
             .collect(Collectors.toUnmodifiableSet());
 
         // Find dominant sector
-        String dominantSector = sectorPercentages.entrySet().stream()
-            .max(Map.Entry.comparingByValue())
-            .map(Map.Entry::getKey)
-            .orElse("None");
+        String dominantSector = "None";
+        BigDecimal maxSectorVal = BigDecimal.ZERO;
+        for (Map.Entry<String, BigDecimal> entry : sectorPercentages.entrySet()) {
+            if (entry.getValue().compareTo(maxSectorVal) > 0) {
+                maxSectorVal = entry.getValue();
+                dominantSector = entry.getKey();
+            }
+        }
 
         BigDecimal dominantSectorPct = sectorPercentages.getOrDefault(dominantSector, BigDecimal.ZERO);
 

@@ -87,8 +87,9 @@ class BullrunDemoServletTest {
     void testServletEndpointViaHttp() {
         ResponseEntity<String> response = restTemplate.getForEntity("/demo/servlet/health", String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertTrue(response.getBody().contains("\"status\":\"UP\""));
-        assertTrue(response.getBody().contains("\"servletClass\":\"com.bullrun.security.servlet.BullrunDemoServlet\""));
+        String body = response.getBody();
+        assertNotNull(body);
+        assertTrue(body.contains("\"status\":\"UP\""));
+        assertTrue(body.contains("\"servletClass\":\"com.bullrun.security.servlet.BullrunDemoServlet\""));
     }
 }
