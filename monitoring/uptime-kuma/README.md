@@ -1,11 +1,11 @@
-# TradeX Uptime Kuma Monitoring Guide
+# BullRun Uptime Kuma Monitoring Guide
 
 ## Overview
-TradeX uses Uptime Kuma as a self-hosted synthetic monitoring and alerting suite for platform health and availability.
+BullRun uses Uptime Kuma as a self-hosted synthetic monitoring and alerting suite for platform health and availability.
 
 > [!IMPORTANT]
 > **Status: Ready for Configuration**
-> Uptime Kuma is included in `docker-compose.yml` (running on port `3001`). Once running, monitors should be added following the specifications below. The system health dashboards inside TradeX (`/admin/monitoring`) will integrate these statuses.
+> Uptime Kuma is included in `docker-compose.yml` (running on port `3001`). Once running, monitors should be added following the specifications below. The system health dashboards inside BullRun (`/admin/monitoring`) will integrate these statuses.
 
 ---
 
@@ -13,11 +13,11 @@ TradeX uses Uptime Kuma as a self-hosted synthetic monitoring and alerting suite
 
 | Monitor Name | Type | URL / Host | Interval | Expected Response / Status Code |
 | :--- | :--- | :--- | :--- | :--- |
-| **TradeX Frontend** | HTTP(s) | `http://frontend:3000/` | 60s | 200 OK |
-| **TradeX Backend Core** | HTTP(s) | `http://backend:8000/health` | 30s | 200 OK (`{"status":"healthy"}`) |
-| **TradeX Database Probe** | HTTP(s) | `http://backend:8000/health/database` | 30s | 200 OK (`{"status":"healthy"}`) |
-| **TradeX Redis Probe** | HTTP(s) | `http://backend:8000/health/redis` | 30s | 200 OK (`{"status":"healthy"}`) |
-| **TradeX System Metrics** | HTTP(s) | `http://backend:8000/health/system` | 60s | 200 OK (`{"status":"healthy"}`) |
+| **BullRun Frontend** | HTTP(s) | `http://frontend:3000/` | 60s | 200 OK |
+| **BullRun Backend Core** | HTTP(s) | `http://backend:8000/health` | 30s | 200 OK (`{"status":"healthy"}`) |
+| **BullRun Database Probe** | HTTP(s) | `http://backend:8000/health/database` | 30s | 200 OK (`{"status":"healthy"}`) |
+| **BullRun Redis Probe** | HTTP(s) | `http://backend:8000/health/redis` | 30s | 200 OK (`{"status":"healthy"}`) |
+| **BullRun System Metrics** | HTTP(s) | `http://backend:8000/health/system` | 60s | 200 OK (`{"status":"healthy"}`) |
 | **Market Data Provider** | HTTP(s) | `http://backend:8000/health/market-data` | 60s | 200 OK (`{"status":"not_configured"}`) |
 | **Trading Engine** | HTTP(s) | `http://backend:8000/health/trading-engine` | 60s | 200 OK (`{"status":"not_configured"}`) |
 

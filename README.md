@@ -1,14 +1,14 @@
-# TradeX - Modern Stock Market & Paper-Trading Platform
+# BullRun - Modern Indian Stock Market & Paper-Trading Platform
 
 > **Phase 2 Complete:**
-> **TradeX features official Upstox Real Market Data integration + Fully Working Virtual Paper Trading Engine.**
+> **BullRun features official Upstox Real Market Data integration + Fully Working Virtual Paper Trading Engine.**
 >
 > ⚠️ **STRICT GUARDRAIL NOTICE:**
 > **This platform uses REAL MARKET DATA from Upstox for live quotes, historical candlesticks, and order matching.**
 > **This platform DOES NOT execute real-money trades. It DOES NOT send real orders to any broker.**
 > **All trading is executed in a virtual paper trading sandbox with initial virtual capital (₹1,00,000) and double-entry ledger audits.**
 
-TradeX is an institutional-grade, original fintech platform inspired by the clean usability and speed of modern trading applications (like Groww, Zerodha Kite, and Upstox) without cloning their proprietary assets, branding, or source code.
+BullRun is an institutional-grade, original fintech platform inspired by the clean usability and speed of modern trading applications (like Groww, Zerodha Kite, and Upstox) without cloning their proprietary assets, branding, or source code.
 
 ---
 
@@ -45,7 +45,7 @@ TradeX is an institutional-grade, original fintech platform inspired by the clea
 
 ### Frontend
 - **Framework**: [Next.js](https://nextjs.org/) (App Router 14.2.15, React 18, TypeScript)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) with an original TradeX dark/light fintech design token system
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) with an original BullRun dark/light fintech design token system
 - **Charts**: [TradingView Lightweight Charts](https://www.tradingview.com/lightweight-charts/) (v5) & Recharts
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Streaming**: Native WebSocket client (`WS /api/v1/ws/market`) with automatic reconnect & exponential backoff
@@ -64,12 +64,12 @@ TradeX is an institutional-grade, original fintech platform inspired by the clea
 
 ## 🔑 Upstox Integration Setup & OAuth 2.0 Flow
 
-TradeX integrates with Upstox through the official OAuth 2.0 developer flow.
+TradeX / BullRun integrates with Upstox through the official OAuth 2.0 developer flow.
 
 ### 1. Create Developer App
 1. Log in to the [Upstox Developer Portal](https://developer.upstox.com/).
 2. Create a new app:
-   - **App Name**: TradeX
+   - **App Name**: BullRun
    - **Redirect URL**: `http://localhost:8000/api/v1/upstox/auth/callback`
 3. Copy your **API Key** (`UPSTOX_API_KEY`) and **API Secret** (`UPSTOX_API_SECRET`).
 
@@ -88,7 +88,7 @@ Upstox access tokens follow Indian market regulations and expire daily (at 03:30
 1. Visit `http://localhost:8000/api/v1/upstox/auth/login` (or click **Authorize Upstox** in the UI).
 2. Complete Upstox login and 2FA in the browser.
 3. Upstox redirects back to `/api/v1/upstox/auth/callback` with an authorization code.
-4. TradeX exchanges the code for an access token and automatically stores it in the `provider_credentials` database table.
+4. BullRun exchanges the code for an access token and automatically stores it in the `provider_credentials` database table.
 5. Upstream Market Feed V3 WebSocket connects automatically in the background.
 
 ### 4. Re-authentication & Graceful Degradation
@@ -208,7 +208,7 @@ The web application will be accessible at:
 
 ## 🧪 Automated Testing
 
-TradeX includes an automated test suite verifying Upstox integration, normalized market data, quote caching, candlestick parsing, paper trading orders (market buy/sell, limit margin locks, cancellations), wallet ledger audits, financial decimal precision, RBAC, and health check endpoints.
+BullRun includes an automated test suite verifying Upstox integration, normalized market data, quote caching, candlestick parsing, paper trading orders (market buy/sell, limit margin locks, cancellations), wallet ledger audits, financial decimal precision, RBAC, and health check endpoints.
 
 ```bash
 cd backend
@@ -258,7 +258,7 @@ npm run build
 
 ## 🏥 Health & Monitoring Endpoints
 
-TradeX exposes standardized health endpoints for automated telemetry:
+BullRun exposes standardized health endpoints for automated telemetry:
 
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
@@ -344,4 +344,4 @@ curl http://localhost:8081/demo/servlet/health
 
 ## 🛡️ License
 
-This project is proprietary and confidential. Developed for the TradeX / BullRun institutional fintech platform.
+This project is proprietary and confidential. Developed for the BullRun institutional fintech platform.

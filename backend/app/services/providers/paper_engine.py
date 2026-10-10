@@ -13,7 +13,7 @@ class PaperExecutionProvider(ExecutionProvider):
 
     @property
     def provider_name(self) -> str:
-        return "TradeX Paper Trading Engine"
+        return "BullRun Paper Trading Engine"
 
     @property
     def status(self) -> str:

@@ -24,7 +24,7 @@ import {
   Layers,
   Sparkles,
 } from "lucide-react";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, clearAuthTokens } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
 import {
   formatINR,
@@ -279,8 +279,7 @@ export function Topbar() {
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("tradex_token");
-      localStorage.removeItem("tradex_refresh_token");
+      clearAuthTokens();
       clearPositionsCache();
       router.push("/login");
     }
@@ -292,6 +291,7 @@ export function Topbar() {
   const navTabs = [
     { name: "Dashboard", href: "/dashboard", isActive: pathname === "/dashboard" },
     { name: "Explore", href: "/explore", isActive: pathname === "/explore" },
+    { name: "Indices", href: "/indices/nifty", isActive: Boolean(pathname?.startsWith("/indices")) },
     { name: "Holdings", href: "/holdings", isActive: pathname === "/holdings" || (pathname === "/portfolio" && currentTab !== "positions") },
     { name: "Positions", href: "/positions", isActive: pathname === "/positions" || (pathname === "/portfolio" && currentTab === "positions") },
     { name: "Orders", href: "/orders", isActive: pathname === "/orders" },

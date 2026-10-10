@@ -9,6 +9,7 @@ import { formatINR, formatPercentage } from "@/lib/formatters";
 import { useMarketWebSocket, WsPriceUpdate } from "@/lib/market-ws";
 import { ChartContainer } from "@/components/ui/chart-container";
 import { OrderPad } from "@/components/trading/order-pad-modal";
+import { Maximize2, Minimize2, Search, X, Check, Activity, BarChart2 } from "lucide-react";
 
 import {
   PositionItem,
@@ -55,6 +56,11 @@ export default function TerminalPage() {
 
   const [selectedSymbol, setSelectedSymbol] = useState("RELIANCE");
   const [symbolDropdownOpen, setSymbolDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showIndicators, setShowIndicators] = useState(true);
   const [timeframe, setTimeframe] = useState<"1D" | "1W" | "1M" | "3M" | "6M" | "1Y">("1D");
   const [chartType, setChartType] = useState<"candle" | "area">("candle");
 
@@ -130,6 +136,39 @@ export default function TerminalPage() {
     loadBottomData();
   }, [loadQuote, loadBottomData]);
 
+  // Debounced search for instruments in terminal
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        setIsSearching(true);
+        const res = await apiRequest<any[]>(
+          `/api/v1/market/search?query=${encodeURIComponent(searchQuery.trim())}&limit=8`
+        );
+        setSearchResults(res || []);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fullscreen escape key listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFullscreen]);
+
   // WebSocket Live Updates
   useMarketWebSocket(selectedSymbol, (update: WsPriceUpdate) => {
     if (update.ltp) {
@@ -168,25 +207,83 @@ export default function TerminalPage() {
             </div>
 
             {symbolDropdownOpen && (
-              <div className="absolute top-full left-0 mt-1 w-64 bg-surface-container-lowest rounded-xl shadow-xl py-1 z-50 border border-outline-variant/20">
-                {SYMBOLS_LIST.map((s) => (
-                  <div
-                    key={s.symbol}
-                    onClick={() => {
-                      setSelectedSymbol(s.symbol);
-                      setSymbolDropdownOpen(false);
-                    }}
-                    className={`px-space-md py-2 hover:bg-surface-container cursor-pointer flex items-center justify-between ${
-                      selectedSymbol === s.symbol ? "bg-primary-container/10 text-primary font-semibold" : ""
-                    }`}
-                  >
-                    <div>
-                      <span className="font-medium text-on-surface">{s.symbol}</span>
-                      <span className="block text-body-sm text-outline truncate">{s.name}</span>
-                    </div>
-                    <span className="text-body-sm text-outline">{s.exchange}</span>
-                  </div>
-                ))}
+              <div className="absolute top-full left-0 mt-1 w-80 bg-surface-container-lowest rounded-xl shadow-2xl p-2 z-50 border border-outline-variant/30 flex flex-col gap-2">
+                {/* Search input field */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-outline absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search any stock or index..."
+                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-surface-container-low border border-outline-variant/20 rounded-lg text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+                    autoFocus
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Search results or Default list */}
+                <div className="max-h-64 overflow-y-auto flex flex-col divide-y divide-surface-container/60">
+                  {searchQuery.trim() ? (
+                    isSearching ? (
+                      <div className="py-4 text-center text-xs text-outline animate-pulse">
+                        Searching instruments...
+                      </div>
+                    ) : searchResults.length === 0 ? (
+                      <div className="py-4 text-center text-xs text-outline">
+                        No instruments matching "{searchQuery}"
+                      </div>
+                    ) : (
+                      searchResults.map((s) => (
+                        <div
+                          key={s.instrument_key || s.symbol}
+                          onClick={() => {
+                            setSelectedSymbol(s.symbol);
+                            setSymbolDropdownOpen(false);
+                            setSearchQuery("");
+                          }}
+                          className="px-2.5 py-2 hover:bg-surface-container-low cursor-pointer flex items-center justify-between transition-colors rounded-lg"
+                        >
+                          <div>
+                            <span className="font-semibold text-xs text-on-surface">{s.symbol}</span>
+                            <span className="block text-[11px] text-outline truncate max-w-[180px]">{s.name}</span>
+                          </div>
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-container text-outline">
+                            {s.exchange || "NSE"}
+                          </span>
+                        </div>
+                      ))
+                    )
+                  ) : (
+                    SYMBOLS_LIST.map((s) => (
+                      <div
+                        key={s.symbol}
+                        onClick={() => {
+                          setSelectedSymbol(s.symbol);
+                          setSymbolDropdownOpen(false);
+                        }}
+                        className={`px-2.5 py-2 hover:bg-surface-container-low cursor-pointer flex items-center justify-between transition-colors rounded-lg ${
+                          selectedSymbol === s.symbol ? "bg-primary-container/10 text-primary font-semibold" : ""
+                        }`}
+                      >
+                        <div>
+                          <span className="font-semibold text-xs text-on-surface">{s.symbol}</span>
+                          <span className="block text-[11px] text-outline truncate max-w-[180px]">{s.name}</span>
+                        </div>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-container text-outline">
+                          {s.exchange}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -213,8 +310,8 @@ export default function TerminalPage() {
           </div>
         </div>
 
-        {/* Timeframes, Chart Types & Indicators */}
-        <div className="flex items-center gap-space-md flex-wrap">
+        {/* Timeframes, Chart Types, Indicators & Fullscreen */}
+        <div className="flex items-center gap-space-sm flex-wrap">
           {/* Timeframes */}
           <div className="flex items-center bg-surface-container-low p-0.5 rounded-lg text-body-sm border border-outline-variant/20">
             {(["1D", "1W", "1M", "3M", "6M", "1Y"] as const).map((tf) => (
@@ -259,9 +356,35 @@ export default function TerminalPage() {
           </div>
 
           {/* Indicators Button */}
-          <button className="flex items-center gap-space-xs px-space-md py-1.5 bg-surface-container-low hover:bg-surface-container text-on-surface rounded-lg text-label-md transition-colors border border-outline-variant/20">
-            <span className="material-symbols-outlined text-[16px] text-primary">analytics</span>
+          <button
+            onClick={() => setShowIndicators(!showIndicators)}
+            className={`flex items-center gap-space-xs px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+              showIndicators
+                ? "bg-primary-container/20 text-primary border-primary/30"
+                : "bg-surface-container-low hover:bg-surface-container text-on-surface border-outline-variant/20"
+            }`}
+          >
+            <BarChart2 className="w-3.5 h-3.5 text-primary" />
             <span>Indicators (EMA, RSI)</span>
+          </button>
+
+          {/* Fullscreen Toggle Button */}
+          <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-surface-container-low hover:bg-surface-container text-on-surface rounded-lg text-xs font-medium transition-colors border border-outline-variant/20"
+            title="Toggle Fullscreen Chart"
+          >
+            {isFullscreen ? (
+              <>
+                <Minimize2 className="w-3.5 h-3.5 text-primary" />
+                <span>Exit Fullscreen</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 className="w-3.5 h-3.5 text-primary" />
+                <span>Fullscreen</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -271,7 +394,13 @@ export default function TerminalPage() {
         {/* Central Workspace: Candlestick Chart & Bottom Drawer (8 Cols on Desktop) */}
         <div className="xl:col-span-8 flex flex-col gap-space-md">
           {/* Chart Container Card */}
-          <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm border border-outline-variant/20 flex flex-col relative h-[520px] overflow-hidden">
+          <div
+            className={
+              isFullscreen
+                ? "fixed inset-0 z-50 bg-surface p-4 flex flex-col h-screen"
+                : "bg-surface-container-lowest rounded-xl p-space-md shadow-sm border border-outline-variant/20 flex flex-col relative h-[520px] overflow-hidden"
+            }
+          >
             {/* Chart Top Stats Bar */}
             <div className="flex items-center justify-between text-body-sm text-outline pb-space-sm border-b border-surface-container z-10 font-tabular-data flex-wrap gap-2">
               <div className="flex items-center gap-space-md flex-wrap">
@@ -281,10 +410,20 @@ export default function TerminalPage() {
                 <span>C: <strong className="text-on-surface">{formatINR(ltp)}</strong></span>
                 <span>Vol: <strong className="text-on-surface">{quote?.volume ? `${(quote.volume / 1000000).toFixed(2)}M` : "4.21M"}</strong></span>
               </div>
-              <div className="flex items-center gap-space-md">
-                <span className="text-tertiary font-medium">RSI (14): 64.2</span>
-                <span className="text-primary font-medium">EMA (20): {formatINR(ltp * 0.992)}</span>
-              </div>
+              {showIndicators && (
+                <div className="flex items-center gap-space-md">
+                  <span className="text-tertiary font-medium">RSI (14): 64.2</span>
+                  <span className="text-primary font-medium">EMA (20): {formatINR(ltp * 0.992)}</span>
+                </div>
+              )}
+              {isFullscreen && (
+                <button
+                  onClick={() => setIsFullscreen(false)}
+                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface ml-auto"
+                >
+                  Exit Fullscreen (Esc)
+                </button>
+              )}
             </div>
 
             {/* TradingView Real Chart Engine */}
@@ -293,7 +432,7 @@ export default function TerminalPage() {
                 symbol={selectedSymbol}
                 timeframe={timeframe}
                 chartType={chartType}
-                height={450}
+                height={isFullscreen ? 800 : 450}
               />
             </div>
           </div>

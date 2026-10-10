@@ -181,3 +181,31 @@ async def test_stocks_category_and_sector_filtering(client: AsyncClient):
     search_stocks = res_search.json()
     assert any(s["symbol"] == "TCS" for s in search_stocks)
 
+
+@pytest.mark.asyncio
+async def test_index_details_endpoint(client: AsyncClient):
+    """Verify detailed index overview, quote structure, constituents, and market breadth."""
+    # 1. Test NIFTY 50
+    res_nifty = await client.get("/api/v1/market/indices/nifty")
+    assert res_nifty.status_code == 200
+    nifty_data = res_nifty.json()
+    assert nifty_data["index"]["symbol"] == "NIFTY 50"
+    assert nifty_data["index"]["category"] == "Benchmark Index"
+    assert "breadth" in nifty_data
+    assert nifty_data["breadth"]["total_constituents"] > 0
+    assert "constituents" in nifty_data
+    assert len(nifty_data["constituents"]) > 0
+    assert any(c["symbol"] == "RELIANCE" for c in nifty_data["constituents"])
+
+    # 2. Test BANKNIFTY
+    res_bank = await client.get("/api/v1/market/indices/banknifty")
+    assert res_bank.status_code == 200
+    bank_data = res_bank.json()
+    assert bank_data["index"]["symbol"] == "BANKNIFTY"
+    assert bank_data["index"]["category"] == "Sectoral Index"
+    assert any(c["symbol"] == "HDFCBANK" for c in bank_data["constituents"])
+
+    # 3. Test Invalid Index returns 404
+    res_invalid = await client.get("/api/v1/market/indices/unknown_index_123")
+    assert res_invalid.status_code == 404
+

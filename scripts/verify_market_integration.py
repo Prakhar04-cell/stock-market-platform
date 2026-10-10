@@ -7,14 +7,14 @@ import websockets  # type: ignore
 import httpx  # type: ignore
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--url", default="http://localhost:8000", help="Base URL of TradeX backend")
+parser.add_argument("--url", default="http://localhost:8000", help="Base URL of BullRun backend")
 args, _ = parser.parse_known_args()
 
 BASE_URL = args.url.rstrip("/")
 WS_URL = BASE_URL.replace("https://", "wss://").replace("http://", "ws://") + "/api/v1/ws/market"
 
 async def test_integration():
-    print(f"=== TRADEX MARKET DATA & ORDER INTEGRATION VERIFICATION ===")
+    print(f"=== BULLRUN MARKET DATA & ORDER INTEGRATION VERIFICATION ===")
     print(f"Target: {BASE_URL}")
     print(f"WebSocket: {WS_URL}")
     async with httpx.AsyncClient(base_url=BASE_URL, timeout=15.0) as client:

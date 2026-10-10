@@ -1,4 +1,4 @@
-// Centralized API Client for TradeX Frontend
+// Centralized API Client for BullRun Frontend
 // NEVER expose secrets, database credentials, or broker private keys here.
 
 const rawBaseUrl =
@@ -31,9 +31,40 @@ interface CustomRequestInit extends Omit<RequestInit, "body"> {
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
 
+export function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("bullrun_token") || localStorage.getItem("tradex_token");
+}
+
+export function getRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("bullrun_refresh_token") || localStorage.getItem("tradex_refresh_token");
+}
+
+export function setAuthTokens(accessToken: string, refreshToken?: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("bullrun_token", accessToken);
+  localStorage.setItem("tradex_token", accessToken); // compatibility
+  if (refreshToken) {
+    localStorage.setItem("bullrun_refresh_token", refreshToken);
+    localStorage.setItem("tradex_refresh_token", refreshToken); // compatibility
+  }
+}
+
+export function clearAuthTokens(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("bullrun_token");
+  localStorage.removeItem("tradex_token");
+  localStorage.removeItem("bullrun_refresh_token");
+  localStorage.removeItem("tradex_refresh_token");
+  try {
+    sessionStorage.removeItem("bullrun_positions_cache");
+  } catch {}
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   if (typeof window === "undefined") return null;
-  const refreshToken = localStorage.getItem("tradex_refresh_token");
+  const refreshToken = getRefreshToken();
   if (!refreshToken) return null;
 
   try {
@@ -44,20 +75,13 @@ async function refreshAccessToken(): Promise<string | null> {
     });
 
     if (!res.ok) {
-      localStorage.removeItem("tradex_token");
-      localStorage.removeItem("tradex_refresh_token");
-      try {
-        sessionStorage.removeItem("bullrun_positions_cache");
-      } catch {}
+      clearAuthTokens();
       return null;
     }
 
     const data = await res.json();
     if (data.access_token) {
-      localStorage.setItem("tradex_token", data.access_token);
-      if (data.refresh_token) {
-        localStorage.setItem("tradex_refresh_token", data.refresh_token);
-      }
+      setAuthTokens(data.access_token, data.refresh_token);
       return data.access_token;
     }
     return null;
@@ -73,7 +97,7 @@ export async function apiRequest<T = any>(
   const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const url = `${API_BASE_URL}${normalizedEndpoint}`;
 
-  let token = typeof window !== "undefined" ? localStorage.getItem("tradex_token") : null;
+  let token = getAuthToken();
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

@@ -3,8 +3,8 @@ from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 
 
-class TradeXException(HTTPException):
-    """Base exception for all TradeX domain errors."""
+class BullRunException(HTTPException):
+    """Base exception for all BullRun domain errors."""
     def __init__(
         self,
         code: str,
@@ -18,7 +18,11 @@ class TradeXException(HTTPException):
         self.details = details or {}
 
 
-class AuthenticationError(TradeXException):
+# Backward compatibility alias for legacy internal imports
+TradeXException = BullRunException
+
+
+class AuthenticationError(BullRunException):
     def __init__(self, message: str = "Invalid authentication credentials", details: Optional[Dict[str, Any]] = None):
         super().__init__(
             code="AUTHENTICATION_FAILED",
@@ -28,7 +32,7 @@ class AuthenticationError(TradeXException):
         )
 
 
-class PermissionDeniedError(TradeXException):
+class PermissionDeniedError(BullRunException):
     def __init__(self, message: str = "Permission denied for this operation", details: Optional[Dict[str, Any]] = None):
         super().__init__(
             code="PERMISSION_DENIED",
@@ -38,7 +42,7 @@ class PermissionDeniedError(TradeXException):
         )
 
 
-class ResourceNotFoundError(TradeXException):
+class ResourceNotFoundError(BullRunException):
     def __init__(self, resource: str = "Resource", identifier: str = "", details: Optional[Dict[str, Any]] = None):
         msg = f"{resource} '{identifier}' was not found" if identifier else f"{resource} was not found"
         super().__init__(
@@ -49,7 +53,7 @@ class ResourceNotFoundError(TradeXException):
         )
 
 
-class ResourceConflictError(TradeXException):
+class ResourceConflictError(BullRunException):
     def __init__(self, message: str = "Resource conflict detected", details: Optional[Dict[str, Any]] = None):
         super().__init__(
             code="RESOURCE_CONFLICT",
@@ -59,7 +63,7 @@ class ResourceConflictError(TradeXException):
         )
 
 
-class RateLimitExceededError(TradeXException):
+class RateLimitExceededError(BullRunException):
     def __init__(self, message: str = "Too many requests. Please slow down and try again later."):
         super().__init__(
             code="RATE_LIMIT_EXCEEDED",
@@ -68,7 +72,7 @@ class RateLimitExceededError(TradeXException):
         )
 
 
-class ProviderNotConfiguredError(TradeXException):
+class ProviderNotConfiguredError(BullRunException):
     def __init__(self, provider_type: str = "Market data provider"):
         super().__init__(
             code="PROVIDER_NOT_CONFIGURED",

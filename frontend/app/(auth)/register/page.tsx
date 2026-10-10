@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, setAuthTokens } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, ArrowRight, AlertCircle, ShieldCheck } from "lucide-react";
@@ -34,8 +34,7 @@ export default function RegisterPage() {
       });
 
       if (typeof window !== "undefined") {
-        localStorage.setItem("tradex_token", data.access_token);
-        localStorage.setItem("tradex_refresh_token", data.refresh_token);
+        setAuthTokens(data.access_token, data.refresh_token);
       }
 
       router.push("/dashboard");

@@ -5,13 +5,14 @@ export interface RecentlyViewedItem {
   timestamp: number;
 }
 
-const STORAGE_KEY = "tradex_recently_viewed";
+const STORAGE_KEY = "bullrun_recently_viewed";
+const LEGACY_STORAGE_KEY = "tradex_recently_viewed";
 const MAX_ITEMS = 8;
 
 export function getRecentlyViewed(): RecentlyViewedItem[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!raw) return [];
     const items = JSON.parse(raw);
     return Array.isArray(items) ? items : [];

@@ -87,7 +87,8 @@ export function getCachedPositions(): PositionItem[] | null {
     const parsed = JSON.parse(raw);
     if (parsed && Array.isArray(parsed.data)) {
       // Validate that cached data belongs to the currently active token
-      const currentToken = localStorage.getItem("tradex_token");
+      const currentToken =
+        localStorage.getItem("bullrun_token") || localStorage.getItem("tradex_token");
       if (parsed.token && currentToken && parsed.token !== currentToken) {
         sessionStorage.removeItem(POSITIONS_CACHE_KEY);
         return null;
@@ -108,7 +109,8 @@ export function saveCachedPositions(positions: PositionItem[]): void {
   memoryCachedPositions = positions;
   if (typeof window !== "undefined") {
     try {
-      const currentToken = localStorage.getItem("tradex_token");
+      const currentToken =
+        localStorage.getItem("bullrun_token") || localStorage.getItem("tradex_token");
       sessionStorage.setItem(
         POSITIONS_CACHE_KEY,
         JSON.stringify({

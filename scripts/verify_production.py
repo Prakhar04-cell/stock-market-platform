@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-TradeX Safe Production Verification Script
-==========================================
-Verifies that a deployed TradeX backend instance is operational and healthy.
+BullRun Safe Production Verification Script
+===========================================
+Verifies that a deployed BullRun backend instance is operational and healthy.
 
 Checks:
 - Backend reachability (Root & Docs)
@@ -31,7 +31,7 @@ def safe_get(url: str, timeout: float = 10.0) -> Tuple[int, Dict[str, Any]]:
     """Safe HTTP GET returning status code and parsed JSON or error dictionary."""
     req = urllib.request.Request(
         url,
-        headers={"User-Agent": "TradeX-Production-Verifier/1.0", "Accept": "application/json"},
+        headers={"User-Agent": "BullRun-Production-Verifier/1.0", "Accept": "application/json"},
     )
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -56,7 +56,7 @@ def safe_get(url: str, timeout: float = 10.0) -> Tuple[int, Dict[str, Any]]:
 def verify_production(base_url: str) -> bool:
     clean_base = base_url.rstrip("/")
     print("=" * 60)
-    print(f"TradeX Production Deployment Verification")
+    print(f"BullRun Production Deployment Verification")
     print(f"Target URL: {clean_base}")
     print(f"Timestamp : {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}")
     print("=" * 60)
@@ -169,11 +169,11 @@ def verify_production(base_url: str) -> bool:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Verify TradeX Production Backend Deployment")
+    parser = argparse.ArgumentParser(description="Verify BullRun Production Backend Deployment")
     parser.add_argument(
         "--url",
         default="http://localhost:8000",
-        help="Target base URL of TradeX backend (e.g. https://your-tradex-api.onrender.com)",
+        help="Target base URL of BullRun backend (e.g. https://your-bullrun-api.onrender.com)",
     )
     args = parser.parse_args()
     success = verify_production(args.url)

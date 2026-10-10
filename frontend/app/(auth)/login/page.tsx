@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, setAuthTokens } from "@/lib/api-client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,10 +35,7 @@ export default function LoginPage() {
 
       if (typeof window !== "undefined") {
         if (data.access_token) {
-          localStorage.setItem("tradex_token", data.access_token);
-        }
-        if (data.refresh_token) {
-          localStorage.setItem("tradex_refresh_token", data.refresh_token);
+          setAuthTokens(data.access_token, data.refresh_token);
         }
         if (rememberMe) {
           localStorage.setItem("bullrun_remember_email", identifier);
@@ -61,8 +58,7 @@ export default function LoginPage() {
     setIdentifier("demo@bullrun.in");
     setPassword("demopass123");
     if (typeof window !== "undefined") {
-      localStorage.setItem("tradex_token", "demo_jwt_session_token");
-      localStorage.setItem("tradex_refresh_token", "demo_refresh_token");
+      setAuthTokens("demo_jwt_session_token", "demo_refresh_token");
     }
     router.push("/dashboard");
   };

@@ -224,10 +224,11 @@ export default function ExplorePage() {
         cat === "All Markets"
           ? "/api/v1/stocks?limit=50"
           : `/api/v1/stocks?category=${encodeURIComponent(cat)}&limit=50`;
-      const res = await apiRequest<{ items: any[]; total: number }>(url);
-      if (res && Array.isArray(res.items)) {
+      const res = await apiRequest<any>(url);
+      const items = Array.isArray(res) ? res : (Array.isArray(res?.items) ? res.items : []);
+      if (items.length > 0) {
         setCategoryStocks(
-          res.items.map((i: any) => ({
+          items.map((i: any) => ({
             id: i.id || i.symbol,
             symbol: (i.symbol || "").toUpperCase(),
             name: i.name || i.symbol,

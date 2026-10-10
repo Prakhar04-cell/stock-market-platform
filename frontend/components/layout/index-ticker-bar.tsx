@@ -130,11 +130,21 @@ export function IndexTickerBar() {
         {indices.map((idx) => {
           const hasValue = idx.value !== null && idx.value !== undefined && idx.status !== "UNAVAILABLE";
           const isPos = idx.is_positive;
+          const norm = (idx.symbol || idx.name).toLowerCase().replace(/[^a-z0-9]/g, "");
+          const indexSlug = norm.includes("bank")
+            ? "banknifty"
+            : norm.includes("fin")
+            ? "finnifty"
+            : norm.includes("mid")
+            ? "midcpnifty"
+            : norm.includes("sensex")
+            ? "sensex"
+            : "nifty";
 
           return (
             <Link
               key={idx.symbol}
-              href={`/stocks/${encodeURIComponent(idx.symbol)}`}
+              href={`/indices/${indexSlug}`}
               className="flex items-center gap-2 group hover:opacity-80 transition-opacity"
             >
               <span className="font-medium text-on-surface text-xs sm:text-[13px] group-hover:text-primary transition-colors">

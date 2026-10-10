@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, clearAuthTokens } from "@/lib/api-client";
 import { MobileProfileView } from "@/components/mobile";
 import { clearPositionsCache } from "@/lib/positions-service";
 
@@ -107,8 +107,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("tradex_token");
-      localStorage.removeItem("tradex_refresh_token");
+      clearAuthTokens();
       clearPositionsCache();
     }
     router.push("/login");
