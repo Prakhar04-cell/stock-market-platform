@@ -197,7 +197,7 @@ class CandleService:
                     }
                     for c in deduped
                 ]
-                await redis.setex(cache_key, ttl, json.dumps(serialized))
+                await redis.set(cache_key, json.dumps(serialized), ex=ttl)
             except Exception as e:
                 logger.debug(f"Failed to cache candles in Redis: {e}")
 

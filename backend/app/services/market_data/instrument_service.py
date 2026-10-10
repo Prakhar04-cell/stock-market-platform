@@ -13,6 +13,16 @@ logger = logging.getLogger("tradex.instruments")
 
 # Common static mappings for instant resolution
 WELL_KNOWN_INSTRUMENT_KEYS: Dict[str, str] = {
+    # Benchmark & Sectoral Indices
+    "NIFTY": "NSE_INDEX|Nifty 50",
+    "NIFTY 50": "NSE_INDEX|Nifty 50",
+    "NIFTY50": "NSE_INDEX|Nifty 50",
+    "BANKNIFTY": "NSE_INDEX|Nifty Bank",
+    "NIFTY BANK": "NSE_INDEX|Nifty Bank",
+    "FINNIFTY": "NSE_INDEX|Nifty Fin Service",
+    "MIDCPNIFTY": "NSE_INDEX|NIFTY MID SELECT",
+    "SENSEX": "BSE_INDEX|SENSEX",
+    # Benchmark Constituents (Nifty 50 & Bank Nifty)
     "RELIANCE": "NSE_EQ|INE002A01018",
     "TCS": "NSE_EQ|INE467B01029",
     "HDFCBANK": "NSE_EQ|INE040A01034",
@@ -23,14 +33,39 @@ WELL_KNOWN_INSTRUMENT_KEYS: Dict[str, str] = {
     "SBIN": "NSE_EQ|INE062A01020",
     "BHARTIARTL": "NSE_EQ|INE397D01024",
     "LT": "NSE_EQ|INE018A01030",
-    "NIFTY": "NSE_INDEX|Nifty 50",
-    "NIFTY 50": "NSE_INDEX|Nifty 50",
-    "NIFTY50": "NSE_INDEX|Nifty 50",
-    "BANKNIFTY": "NSE_INDEX|Nifty Bank",
-    "NIFTY BANK": "NSE_INDEX|Nifty Bank",
-    "FINNIFTY": "NSE_INDEX|Nifty Fin Service",
-    "MIDCPNIFTY": "NSE_INDEX|NIFTY MID SELECT",
-    "SENSEX": "BSE_INDEX|SENSEX",
+    "KOTAKBANK": "NSE_EQ|INE237A01028",
+    "AXISBANK": "NSE_EQ|INE238A01034",
+    "MARUTI": "NSE_EQ|INE585B01010",
+    "SUNPHARMA": "NSE_EQ|INE044A01036",
+    "TITAN": "NSE_EQ|INE280A01028",
+    "BAJFINANCE": "NSE_EQ|INE296A01024",
+    "ASIANPAINT": "NSE_EQ|INE021A01026",
+    "HCLTECH": "NSE_EQ|INE860A01027",
+    "M&M": "NSE_EQ|INE101A01026",
+    "NTPC": "NSE_EQ|INE733E01010",
+    "ONGC": "NSE_EQ|INE213A01029",
+    "POWERGRID": "NSE_EQ|INE752E01010",
+    "ULTRACEMCO": "NSE_EQ|INE481G01011",
+    "NESTLEIND": "NSE_EQ|INE239A01016",
+    "TATASTEEL": "NSE_EQ|INE081A01012",
+    "JSWSTEEL": "NSE_EQ|INE019A01038",
+    "ADANIENT": "NSE_EQ|INE423A01024",
+    "ADANIPORTS": "NSE_EQ|INE742F01042",
+    "COALINDIA": "NSE_EQ|INE522F01014",
+    "BAJAJFINSV": "NSE_EQ|INE918I01018",
+    "TECHM": "NSE_EQ|INE669C01036",
+    "HINDUNILVR": "NSE_EQ|INE030A01027",
+    "CIPLA": "NSE_EQ|INE059A01026",
+    "DRREDDY": "NSE_EQ|INE089A01023",
+    "DIVISLAB": "NSE_EQ|INE361B01024",
+    "WIPRO": "NSE_EQ|INE075A01022",
+    "INDUSINDBK": "NSE_EQ|INE095A01012",
+    "BANKBARODA": "NSE_EQ|INE077A01010",
+    "PNB": "NSE_EQ|INE160A01022",
+    "AUBANK": "NSE_EQ|INE949L01017",
+    "FEDERALBNK": "NSE_EQ|INE171A01029",
+    "IDFCFIRSTB": "NSE_EQ|INE092T01019",
+    "BANDHANBNK": "NSE_EQ|INE545U01014",
 }
 
 
@@ -150,7 +185,7 @@ class InstrumentService:
         try:
             redis = await get_redis()
             if redis:
-                await redis.setex(f"instrument:{symbol}", self.CACHE_TTL_SECONDS, instrument_key)
+                await redis.set(f"instrument:{symbol}", instrument_key, ex=self.CACHE_TTL_SECONDS)
         except Exception as e:
             logger.debug(f"Redis cache set failed: {e}")
 

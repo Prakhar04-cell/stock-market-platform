@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Dict, List, Optional, TypedDict
 from fastapi import APIRouter, Depends, Query, status
@@ -375,12 +376,12 @@ async def get_index_details(symbol: str):
     else:
         raise ResourceNotFoundError(resource="Index", identifier=clean_sym)
 
-    # 1. Fetch live index quote
-    idx_quote = await quote_service.get_quote(target_name)
-
-    # 2. Batch fetch real quotes for constituents
+    # 1. Fetch live index quote and constituent quotes concurrently
     constituent_symbols = [c["symbol"] for c in constituents_meta]
-    quotes_map = await quote_service.get_quotes(constituent_symbols)
+    idx_quote, quotes_map = await asyncio.gather(
+        quote_service.get_quote(target_name),
+        quote_service.get_quotes(constituent_symbols),
+    )
 
     # 3. Build enriched constituents & calculate real market breadth
     advances = 0

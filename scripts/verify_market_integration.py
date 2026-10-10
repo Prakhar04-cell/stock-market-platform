@@ -74,7 +74,7 @@ async def test_integration():
         w_res = await client.get("/api/v1/wallet", headers=auth_headers)
         assert w_res.status_code == 200
         balance_before = float(w_res.json()["balance"])
-        print(f"[PASS] Initial paper wallet balance: ₹{balance_before:,.2f}")
+        print(f"[PASS] Initial paper wallet balance: INR {balance_before:,.2f}")
 
         # Place Paper BUY order for NIFTY 50 using resolved stock ID
         buy_res = await client.post("/api/v1/orders", headers=auth_headers, json={
@@ -87,7 +87,7 @@ async def test_integration():
         buy_order = buy_res.json()
         assert buy_order["status"] == "FILLED", f"Order not filled: {buy_order}"
         fill_price = float(buy_order["average_execution_price"])
-        print(f"[PASS] Paper BUY 1 share of NIFTY 50 FILLED at ₹{fill_price:,.2f}")
+        print(f"[PASS] Paper BUY 1 share of NIFTY 50 FILLED at INR {fill_price:,.2f}")
 
         # Also test Paper BUY with stock_id="NIFTY 50" directly
         buy_sym_res = await client.post("/api/v1/orders", headers=auth_headers, json={
