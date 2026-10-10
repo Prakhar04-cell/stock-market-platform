@@ -133,3 +133,51 @@ async def test_market_api_endpoints(client: AsyncClient):
     ticker_data = ticker_res.json()
     assert "indices" in ticker_data
     assert len(ticker_data["indices"]) == 5
+
+
+@pytest.mark.asyncio
+async def test_stocks_category_and_sector_filtering(client: AsyncClient):
+    # 1. All markets
+    res_all = await client.get("/api/v1/stocks")
+    assert res_all.status_code == 200
+    all_stocks = res_all.json()
+    assert len(all_stocks) > 0
+    all_symbols = [s["symbol"] for s in all_stocks]
+    assert "RELIANCE" in all_symbols
+    assert "TCS" in all_symbols
+
+    # 2. Large Cap category
+    res_large = await client.get("/api/v1/stocks?category=Large+Cap")
+    assert res_large.status_code == 200
+    large_stocks = res_large.json()
+    assert len(large_stocks) > 0
+    for s in large_stocks:
+        assert s["symbol"] in [
+            "RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK", "SBIN",
+            "BHARTIARTL", "ITC", "LT", "KOTAKBANK", "AXISBANK", "MARUTI",
+            "TATAMOTORS", "SUNPHARMA", "CIPLA", "NTPC", "ONGC", "WIPRO",
+            "HCLTECH", "M&M", "POWERGRID", "DRREDDY", "DIVISLAB"
+        ]
+
+    # 3. Banking & Finance category
+    res_bank = await client.get("/api/v1/stocks?category=Banking+%26+Finance")
+    assert res_bank.status_code == 200
+    bank_stocks = res_bank.json()
+    assert len(bank_stocks) > 0
+    for s in bank_stocks:
+        assert "bank" in s["sector"].lower() or "finance" in s["sector"].lower()
+
+    # 4. Technology category
+    res_tech = await client.get("/api/v1/stocks?category=Technology")
+    assert res_tech.status_code == 200
+    tech_stocks = res_tech.json()
+    assert len(tech_stocks) > 0
+    for s in tech_stocks:
+        assert "tech" in s["sector"].lower() or "information" in s["sector"].lower()
+
+    # 5. Search filtering
+    res_search = await client.get("/api/v1/stocks?search=TCS")
+    assert res_search.status_code == 200
+    search_stocks = res_search.json()
+    assert any(s["symbol"] == "TCS" for s in search_stocks)
+

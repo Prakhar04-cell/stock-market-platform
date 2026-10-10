@@ -64,17 +64,19 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         # Seed Stocks & Instruments
         from app.models.market import Instrument
         stocks_data = [
-            ("RELIANCE", "Reliance Industries Limited", "NSE_EQ|INE002A01018", "INE002A01018"),
-            ("TCS", "Tata Consultancy Services Limited", "NSE_EQ|INE467B01029", "INE467B01029"),
-            ("INFY", "Infosys Limited", "NSE_EQ|INE009A01021", "INE009A01021"),
+            ("RELIANCE", "Reliance Industries Limited", "NSE_EQ|INE002A01018", "INE002A01018", "Energy"),
+            ("TCS", "Tata Consultancy Services Limited", "NSE_EQ|INE467B01029", "INE467B01029", "Technology"),
+            ("INFY", "Infosys Limited", "NSE_EQ|INE009A01021", "INE009A01021", "Technology"),
+            ("HDFCBANK", "HDFC Bank Limited", "NSE_EQ|INE040A01034", "INE040A01034", "Banking & Finance"),
         ]
-        for sym, name, ikey, isin in stocks_data:
+        for sym, name, ikey, isin, sector in stocks_data:
             s = Stock(
                 exchange_id=nse.id,
                 symbol=sym,
                 instrument_key=ikey,
                 name=name,
                 isin=isin,
+                sector=sector,
                 is_tradable=True,
                 lot_size=1,
                 tick_size=Decimal("0.05"),

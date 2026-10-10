@@ -421,4 +421,83 @@
   line-height: 16px;
 }
 
+/* ==========================================================================
+   Standardized BullRun Typography & Spacing System
+   ========================================================================== */
+.ui-page-title {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 26px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+@media (max-width: 640px) {
+  .ui-page-title {
+    font-size: 22px;
+    line-height: 28px;
+  }
+}
+
+.ui-section-title {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 19px;
+  line-height: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+@media (max-width: 640px) {
+  .ui-section-title {
+    font-size: 18px;
+    line-height: 24px;
+  }
+}
+
+.ui-card-title {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ui-body-text {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.ui-control-text {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.ui-description-text {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.ui-meta-text {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.ui-financial-number {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+
 

@@ -1,4 +1,5 @@
-from typing import List, Optional
+from typing import Any, List, Optional
+from decimal import Decimal
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +14,25 @@ from app.services.providers.bharatstock_provider import bharatstock_provider
 router = APIRouter(prefix="/stocks", tags=["Stocks & Markets"])
 
 
-def _to_stock_response(stock: Stock) -> StockResponse:
+MID_CAP_SYMBOLS = {"FEDERALBNK", "PERSISTENT", "COFORGE", "ASHOKLEY", "TATAPOWER", "LUPIN", "AUROPHARMA"}
+LARGE_CAP_SYMBOLS = {
+    "RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK", "SBIN",
+    "BHARTIARTL", "ITC", "LT", "KOTAKBANK", "AXISBANK", "MARUTI",
+    "TATAMOTORS", "SUNPHARMA", "CIPLA", "NTPC", "ONGC", "WIPRO",
+    "HCLTECH", "M&M", "POWERGRID", "DRREDDY", "DIVISLAB"
+}
+
+
+def _to_stock_response(stock: Stock, quote: Optional[Any] = None) -> StockResponse:
+    ltp = quote.ltp if quote else None
+    day_change = quote.change if quote else None
+    day_change_pct = quote.change_percent if quote else None
+    market_status = quote.status if quote else "NOT_CONFIGURED"
+    market_msg = (
+        f"Live market feed active ({quote.status})"
+        if quote
+        else "Market data provider is not connected yet."
+    )
     return StockResponse(
         id=stock.id,
         exchange_code=stock.exchange.code if stock.exchange else "NSE",
@@ -24,24 +43,51 @@ def _to_stock_response(stock: Stock) -> StockResponse:
         lot_size=stock.lot_size,
         tick_size=stock.tick_size,
         is_tradable=stock.is_tradable,
-        market_data_status="NOT_CONFIGURED",
-        market_data_message="Market data provider is not connected yet. Phase 1 foundation active.",
-        ltp=None,
-        day_change=None,
-        day_change_percent=None,
+        market_data_status=market_status,
+        market_data_message=market_msg,
+        ltp=Decimal(str(ltp)) if ltp is not None else None,
+        day_change=Decimal(str(day_change)) if day_change is not None else None,
+        day_change_percent=Decimal(str(day_change_pct)) if day_change_pct is not None else None,
     )
 
 
 @router.get("", response_model=List[StockResponse], summary="List and search stocks")
 async def list_stocks(
     search: Optional[str] = Query(None, description="Search by symbol or company name"),
+    category: Optional[str] = Query(None, description="Category filter (All Markets, Large Cap, Mid Cap, Banking & Finance, Technology, Automobile, Energy, Pharma)"),
+    sector: Optional[str] = Query(None, description="Sector filter"),
     exchange: Optional[str] = Query(None, description="Filter by exchange code (e.g. NSE, BSE)"),
     limit: int = 50,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
 ):
-    """List tradable stocks across exchanges."""
+    """List tradable stocks across exchanges with category and sector filtering."""
+    from app.services.market_data.quote_service import quote_service
+
     stmt = select(Stock).options(selectinload(Stock.exchange))
+
+    # Exclude pure market indices from standard stock exploration lists
+    stmt = stmt.where(or_(Stock.sector == None, Stock.sector != "Index"))  # noqa: E711
+
+    if category:
+        cat_norm = category.strip().lower()
+        if cat_norm in ["large cap", "large_cap", "largecap"]:
+            stmt = stmt.where(Stock.symbol.in_(LARGE_CAP_SYMBOLS))
+        elif cat_norm in ["mid cap", "mid_cap", "midcap"]:
+            stmt = stmt.where(Stock.symbol.in_(MID_CAP_SYMBOLS))
+        elif "bank" in cat_norm or "finance" in cat_norm:
+            stmt = stmt.where(or_(Stock.sector.ilike("%Bank%"), Stock.sector.ilike("%Finance%")))
+        elif "tech" in cat_norm or "it" in cat_norm:
+            stmt = stmt.where(or_(Stock.sector.ilike("%Tech%"), Stock.sector.ilike("%Information%")))
+        elif "auto" in cat_norm:
+            stmt = stmt.where(or_(Stock.sector.ilike("%Auto%"), Stock.sector.ilike("%Motor%")))
+        elif "energy" in cat_norm or "power" in cat_norm:
+            stmt = stmt.where(or_(Stock.sector.ilike("%Energy%"), Stock.sector.ilike("%Power%"), Stock.sector.ilike("%Oil%")))
+        elif "pharma" in cat_norm or "health" in cat_norm:
+            stmt = stmt.where(or_(Stock.sector.ilike("%Pharma%"), Stock.sector.ilike("%Health%")))
+
+    if sector:
+        stmt = stmt.where(Stock.sector.ilike(f"%{sector.strip()}%"))
 
     if search:
         from urllib.parse import unquote
@@ -55,7 +101,16 @@ async def list_stocks(
     stmt = stmt.offset(offset).limit(limit)
     res = await db.execute(stmt)
     stocks = res.scalars().all()
-    return [_to_stock_response(s) for s in stocks]
+
+    symbols = [s.symbol for s in stocks]
+    quotes = {}
+    if symbols:
+        try:
+            quotes = await quote_service.get_quotes(symbols)
+        except Exception:
+            quotes = {}
+
+    return [_to_stock_response(s, quotes.get(s.symbol)) for s in stocks]
 
 
 @router.get("/{symbol}", response_model=StockDetailResponse, summary="Get stock details by symbol")

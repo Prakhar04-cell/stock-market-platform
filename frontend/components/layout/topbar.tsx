@@ -544,7 +544,7 @@ export function Topbar() {
                           <p className="text-[#6B7280] text-[11px] mt-0.5 line-clamp-2 font-normal">
                             {notif.message}
                           </p>
-                          <span className="text-[9.5px] text-[#9CA3AF] font-mono mt-1 block">
+                          <span className="text-[11px] text-[#9CA3AF] font-mono mt-1 block">
                             {new Date(notif.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                           </span>
                         </div>
@@ -573,14 +573,12 @@ export function Topbar() {
           <div className="relative" ref={profileRef}>
             <div
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant/30 cursor-pointer"
+              className="flex items-center gap-1.5 pl-space-sm border-l border-outline-variant/30 cursor-pointer"
             >
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-medium text-label-md">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-semibold text-xs shadow-sm">
                 BR
               </div>
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary">
-                <span className="material-symbols-outlined text-[18px]">person</span>
-              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-on-surface-variant" />
             </div>
 
             {isProfileOpen && (

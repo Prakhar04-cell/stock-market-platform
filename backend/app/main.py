@@ -92,16 +92,40 @@ async def seed_initial_data():
             # 4. Seed Essential Foundation Stocks & Instruments
             from app.models.market import Instrument
             stocks_data = [
-                ("RELIANCE", "Reliance Industries Limited", "NSE_EQ|INE002A01018", "INE002A01018", "Energy & Conglomerate", "NSE", "NSE_EQ", "EQ"),
-                ("TCS", "Tata Consultancy Services Limited", "NSE_EQ|INE467B01029", "INE467B01029", "Information Technology", "NSE", "NSE_EQ", "EQ"),
+                # Large Cap - Energy
+                ("RELIANCE", "Reliance Industries Limited", "NSE_EQ|INE002A01018", "INE002A01018", "Energy", "NSE", "NSE_EQ", "EQ"),
+                ("NTPC", "NTPC Limited", "NSE_EQ|INE733E01010", "INE733E01010", "Energy", "NSE", "NSE_EQ", "EQ"),
+                ("ONGC", "Oil and Natural Gas Corporation Limited", "NSE_EQ|INE213A01029", "INE213A01029", "Energy", "NSE", "NSE_EQ", "EQ"),
+                # Large Cap - Technology
+                ("TCS", "Tata Consultancy Services Limited", "NSE_EQ|INE467B01029", "INE467B01029", "Technology", "NSE", "NSE_EQ", "EQ"),
+                ("INFY", "Infosys Limited", "NSE_EQ|INE009A01021", "INE009A01021", "Technology", "NSE", "NSE_EQ", "EQ"),
+                # Large Cap - Banking & Finance
                 ("HDFCBANK", "HDFC Bank Limited", "NSE_EQ|INE040A01034", "INE040A01034", "Banking & Finance", "NSE", "NSE_EQ", "EQ"),
-                ("INFY", "Infosys Limited", "NSE_EQ|INE009A01021", "INE009A01021", "Information Technology", "NSE", "NSE_EQ", "EQ"),
                 ("ICICIBANK", "ICICI Bank Limited", "NSE_EQ|INE090A01021", "INE090A01021", "Banking & Finance", "NSE", "NSE_EQ", "EQ"),
-                ("TATAMOTORS", "Tata Motors Limited", "NSE_EQ|INE155A01022", "INE155A01022", "Automotive", "NSE", "NSE_EQ", "EQ"),
-                ("ITC", "ITC Limited", "NSE_EQ|INE154A01025", "INE154A01025", "FMCG", "NSE", "NSE_EQ", "EQ"),
                 ("SBIN", "State Bank of India", "NSE_EQ|INE062A01020", "INE062A01020", "Banking & Finance", "NSE", "NSE_EQ", "EQ"),
+                ("KOTAKBANK", "Kotak Mahindra Bank Limited", "NSE_EQ|INE237A01028", "INE237A01028", "Banking & Finance", "NSE", "NSE_EQ", "EQ"),
+                ("AXISBANK", "Axis Bank Limited", "NSE_EQ|INE238A01034", "INE238A01034", "Banking & Finance", "NSE", "NSE_EQ", "EQ"),
+                # Large Cap - Automobile
+                ("TATAMOTORS", "Tata Motors Limited", "NSE_EQ|INE155A01022", "INE155A01022", "Automobile", "NSE", "NSE_EQ", "EQ"),
+                ("MARUTI", "Maruti Suzuki India Limited", "NSE_EQ|INE585B01010", "INE585B01010", "Automobile", "NSE", "NSE_EQ", "EQ"),
+                # Large Cap - Pharma
+                ("SUNPHARMA", "Sun Pharmaceutical Industries Limited", "NSE_EQ|INE044A01036", "INE044A01036", "Pharma", "NSE", "NSE_EQ", "EQ"),
+                ("CIPLA", "Cipla Limited", "NSE_EQ|INE059A01026", "INE059A01026", "Pharma", "NSE", "NSE_EQ", "EQ"),
+                # Large Cap - Diversified Leaders
+                ("ITC", "ITC Limited", "NSE_EQ|INE154A01025", "INE154A01025", "FMCG", "NSE", "NSE_EQ", "EQ"),
                 ("BHARTIARTL", "Bharti Airtel Limited", "NSE_EQ|INE397D01024", "INE397D01024", "Telecommunications", "NSE", "NSE_EQ", "EQ"),
                 ("LT", "Larsen & Toubro Limited", "NSE_EQ|INE018A01030", "INE018A01030", "Construction & Engineering", "NSE", "NSE_EQ", "EQ"),
+                # Mid Cap - Banking & Finance
+                ("FEDERALBNK", "The Federal Bank Limited", "NSE_EQ|INE171A01029", "INE171A01029", "Banking & Finance", "NSE", "NSE_EQ", "EQ"),
+                # Mid Cap - Technology
+                ("PERSISTENT", "Persistent Systems Limited", "NSE_EQ|INE262H01013", "INE262H01013", "Technology", "NSE", "NSE_EQ", "EQ"),
+                ("COFORGE", "Coforge Limited", "NSE_EQ|INE591G01017", "INE591G01017", "Technology", "NSE", "NSE_EQ", "EQ"),
+                # Mid Cap - Automobile
+                ("ASHOKLEY", "Ashok Leyland Limited", "NSE_EQ|INE208A01029", "INE208A01029", "Automobile", "NSE", "NSE_EQ", "EQ"),
+                # Mid Cap - Energy
+                ("TATAPOWER", "The Tata Power Company Limited", "NSE_EQ|INE245A01021", "INE245A01021", "Energy", "NSE", "NSE_EQ", "EQ"),
+                # Mid Cap - Pharma
+                ("LUPIN", "Lupin Limited", "NSE_EQ|INE326A01037", "INE326A01037", "Pharma", "NSE", "NSE_EQ", "EQ"),
             ]
             for sym, name, ikey, isin, sector, exch_code, seg, itype in stocks_data:
                 exch = nse if exch_code == "NSE" else bse
@@ -121,6 +145,7 @@ async def seed_initial_data():
                     )
                     db.add(stock_obj)
                 else:
+                    stock_obj.sector = sector
                     if not stock_obj.instrument_key:
                         stock_obj.instrument_key = ikey
 
