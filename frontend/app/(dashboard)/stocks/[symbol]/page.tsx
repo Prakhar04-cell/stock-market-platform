@@ -15,6 +15,7 @@ import {
   formatCompactINR,
   formatIndianNumber,
 } from "@/lib/formatters";
+import { NewsHeadlinesFeed } from "@/components/news/news-headlines-feed";
 
 interface StockQuote {
   symbol: string;
@@ -539,36 +540,13 @@ export default function StockDetailPage() {
               </div>
             </div>
 
-            {/* News Sentiment */}
-            <div className="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md border border-outline-variant/20">
-              <h2 className="text-headline-md text-on-surface font-semibold">
-                Recent News &amp; Sentiment
-              </h2>
-              <div className="flex flex-col gap-space-md">
-                <div className="flex flex-col gap-1 pb-space-sm border-b border-surface-container-high">
-                  <div className="flex items-center justify-between">
-                    <span className="text-label-sm px-2 py-0.5 bg-tertiary-container/10 text-tertiary rounded font-medium">
-                      Bullish
-                    </span>
-                    <span className="text-body-sm text-outline">2h ago</span>
-                  </div>
-                  <p className="text-body-md font-medium text-on-surface">
-                    {symbol} expands manufacturing footprint across 12 new economic industrial zones.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-label-sm px-2 py-0.5 bg-tertiary-container/10 text-tertiary rounded font-medium">
-                      Bullish
-                    </span>
-                    <span className="text-body-sm text-outline">5h ago</span>
-                  </div>
-                  <p className="text-body-md font-medium text-on-surface">
-                    Quarterly operating margin outperforms consensus benchmarks by 180 basis points.
-                  </p>
-                </div>
-              </div>
-            </div>
+            {/* Live News Headlines for this stock */}
+            <NewsHeadlinesFeed
+              symbol={symbol}
+              title={`${symbol} News Headlines`}
+              maxItems={5}
+              onClearSymbolFilter={() => router.push("/explore")}
+            />
           </div>
         </div>
 

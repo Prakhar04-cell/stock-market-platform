@@ -149,6 +149,12 @@ class Settings(BaseSettings):
     MARKET_DATA_API_BASE_URL: str = "https://bharatstockapi.com"
     MARKET_DATA_API_PROVIDER: str = "BharatStockAPI"
 
+    # Marketaux Financial News API (Optional provider)
+    # Server-side only — never exposed to frontend
+    MARKETAUX_API_TOKEN: str = ""
+    MARKETAUX_API_BASE_URL: str = "https://api.marketaux.com/v1"
+    NEWS_CACHE_TTL_SECONDS: int = 600  # 10 minutes cache TTL
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

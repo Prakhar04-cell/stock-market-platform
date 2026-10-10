@@ -14,6 +14,7 @@ import {
   formatPercentage,
 } from "@/lib/formatters";
 import { MobileExploreView, ExploreStockItem } from "@/components/mobile";
+import { NewsHeadlinesFeed } from "@/components/news/news-headlines-feed";
 
 interface QuoteItem {
   symbol: string;
@@ -67,26 +68,6 @@ const TREASURY_RATES = [
   { name: "RBI Repo Rate", tenure: "Policy Rate", rate: "6.50%", change: "0.00", positive: true },
 ];
 
-const MARKET_NEWS = [
-  {
-    ticker: "RELIANCE",
-    timeAgo: "15m ago",
-    title: "Reliance Retail Expands Omnichannel Logistics Across Tier-2 Markets",
-    summary: "New automated fulfillment centers launched in 12 regional hubs to speed up next-day delivery operations.",
-  },
-  {
-    ticker: "TCS",
-    timeAgo: "35m ago",
-    title: "TCS Inks Strategic Multi-Year Enterprise AI Infrastructure Deal",
-    summary: "Large European banking conglomerate selects TCS to orchestrate sovereign cloud and localized AI reasoning models.",
-  },
-  {
-    ticker: "HDFCBANK",
-    timeAgo: "1h ago",
-    title: "HDFC Bank Reports Robust Advance Growth in Corporate and SME Portfolios",
-    summary: "Quarterly credit expansion beats consensus estimates driven by manufacturing sector capex demand.",
-  },
-];
 
 export default function ExplorePage() {
   const router = useRouter();
@@ -858,33 +839,7 @@ export default function ExplorePage() {
             </div>
 
             {/* Stocks in News */}
-            <div className="flex flex-col gap-space-md">
-              <div className="flex items-center justify-between">
-                <h2 className="font-headline-sm text-on-surface flex items-center gap-space-xs">
-                  <span className="material-symbols-outlined text-primary text-[20px]">newspaper</span>
-                  <span>Stocks in News</span>
-                </h2>
-                <span className="font-label-sm text-on-surface-variant">Real-time Feed</span>
-              </div>
-              <div className="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col divide-y divide-surface-container-high border border-outline-variant/20">
-                {MARKET_NEWS.slice(0, 2).map((news, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => router.push(`/stocks/${news.ticker}`)}
-                    className="p-space-md flex flex-col gap-space-xs hover:bg-surface-container-low/60 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="px-space-xs py-0.5 bg-primary-container/10 text-primary rounded font-label-sm font-semibold">
-                        {news.ticker}
-                      </span>
-                      <span className="font-body-sm text-on-surface-variant">{news.timeAgo}</span>
-                    </div>
-                    <h3 className="font-headline-sm text-on-surface line-clamp-1">{news.title}</h3>
-                    <p className="font-body-sm text-on-surface-variant line-clamp-2">{news.summary}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <NewsHeadlinesFeed maxItems={4} />
           </div>
 
           {/* Popular ETFs & Bonds */}
