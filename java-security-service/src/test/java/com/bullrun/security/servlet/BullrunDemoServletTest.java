@@ -91,5 +91,12 @@ class BullrunDemoServletTest {
         assertNotNull(body);
         assertTrue(body.contains("\"status\":\"UP\""));
         assertTrue(body.contains("\"servletClass\":\"com.bullrun.security.servlet.BullrunDemoServlet\""));
+
+        // Verify proxy mapping route
+        ResponseEntity<String> proxyResponse = restTemplate.getForEntity("/api/java/demo/servlet/health", String.class);
+        assertEquals(HttpStatus.OK, proxyResponse.getStatusCode());
+        String proxyBody = proxyResponse.getBody();
+        assertNotNull(proxyBody);
+        assertTrue(proxyBody.contains("\"status\":\"UP\""));
     }
 }

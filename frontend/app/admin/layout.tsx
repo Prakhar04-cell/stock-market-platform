@@ -25,9 +25,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-50/60 text-slate-900">
-      {/* Admin Sidebar */}
-      <aside className="hidden md:flex flex-col w-60 border-r border-[#E5E7EB] bg-white p-3 shrink-0 min-h-screen select-none">
+    <div className="flex min-h-screen bg-slate-50/60 text-slate-900 pt-16">
+      {/* Topbar: Fixed at top (h-16, z-50) */}
+      <Topbar />
+
+      {/* Admin Sidebar: Sticky below Topbar */}
+      <aside className="hidden md:flex flex-col w-60 border-r border-[#E5E7EB] bg-white p-3 shrink-0 h-[calc(100vh-4rem)] sticky top-16 select-none overflow-y-auto">
         <Link href="/admin" className="flex items-center gap-3 px-3 py-3 mb-4">
           <div className="w-8 h-8 rounded-lg bg-[#0F172A] flex items-center justify-center text-white font-semibold text-sm shadow-xs">
             <span>B</span>
@@ -81,8 +84,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
-        <Topbar />
+      <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-8">
         <main className="flex-1 p-4 sm:p-6 lg:p-7 max-w-7xl w-full mx-auto">
           {children}
         </main>

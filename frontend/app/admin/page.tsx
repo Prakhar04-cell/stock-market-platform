@@ -105,36 +105,36 @@ export default function AdminOverviewPage() {
   };
 
   return (
-    <div className="flex flex-col w-full bg-surface pb-16">
+    <div className="space-y-6 select-none w-full">
       {/* Top Banner / Greeting Row */}
-      <div className="px-space-lg lg:px-space-xl py-space-lg bg-surface-container-lowest flex flex-col md:flex-row md:items-center justify-between gap-space-md shadow-sm border-b border-outline-variant/20">
-        <div className="flex flex-col gap-space-xs">
-          <div className="flex items-center gap-space-sm">
-            <span className="px-space-sm py-0.5 rounded-full bg-primary-container text-on-primary-container text-label-sm font-semibold">
+      <div className="bg-white border border-[#E5E7EB] p-5 lg:p-6 rounded-2xl shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
               SUPER_ADMIN
             </span>
-            <span className="text-outline text-tabular-data font-tabular-data text-body-sm">
+            <span className="text-[#6B7280] font-mono text-xs">
               Session ID: #BR-88942-X
             </span>
           </div>
-          <h1 className="text-headline-lg text-on-surface font-semibold tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#111827] tracking-tight">
             Platform Control Center
           </h1>
-          <p className="text-body-md text-on-surface-variant">
+          <p className="text-xs sm:text-sm text-[#6B7280]">
             Real-time metrics, system health, and high-value trade surveillance for BullRun.
           </p>
         </div>
-        <div className="flex items-center gap-space-md flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={exportAudit}
-            className="px-space-md py-space-sm bg-surface-container hover:bg-surface-container-high text-on-surface text-label-md rounded-xl transition-colors flex items-center gap-space-xs shadow-sm font-medium"
+            className="px-4 py-2 bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E5E7EB] text-[#111827] text-xs sm:text-sm rounded-xl transition-colors flex items-center gap-2 shadow-xs font-medium"
           >
             <span className="material-symbols-outlined text-[18px]">download</span>
             <span>Export Audit Report</span>
           </button>
           <button
             onClick={() => alert("Emergency protocol check initiated: All gateways operating nominally.")}
-            className="px-space-md py-space-sm bg-primary text-on-primary text-label-md rounded-xl transition-colors flex items-center gap-space-xs shadow-sm font-semibold hover:bg-primary/90"
+            className="px-4 py-2 bg-primary text-white text-xs sm:text-sm rounded-xl transition-colors flex items-center gap-2 shadow-xs font-semibold hover:bg-primary/90"
           >
             <span className="material-symbols-outlined text-[18px]">bolt</span>
             <span>Emergency Protocols</span>
@@ -143,7 +143,7 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* Main Content Layout */}
-      <div className="px-space-lg lg:px-space-xl py-space-lg flex flex-col gap-space-xl">
+      <div className="flex flex-col gap-6">
         {/* Stat Cards Grid (7 Cards as in Platform Control Center) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
           {/* 1. Total Users */}
@@ -411,7 +411,7 @@ export default function AdminOverviewPage() {
               <p className="text-body-sm text-outline">Recent high-value transactions and auth events</p>
             </div>
             <Link
-              href="/admin/audit-logs"
+              href="/admin/monitoring"
               className="text-label-md text-primary font-medium hover:underline flex items-center gap-1"
             >
               <span>View All Logs</span>

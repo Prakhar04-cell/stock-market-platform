@@ -37,7 +37,7 @@ export function Modal({ isOpen, onClose, title, description, children, className
       <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs" onClick={onClose} />
       <div
         className={cn(
-          "relative z-10 w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-dropdown transition-all",
+          "relative z-10 w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-dropdown transition-all max-h-[calc(100vh-2rem)] overflow-y-auto",
           className
         )}
       >

@@ -272,6 +272,76 @@ TradeX exposes standardized health endpoints for automated telemetry:
 
 ---
 
+## ☕ Java Microservice & Desktop GUI Terminal (Rubric Implementation)
+
+BullRun integrates a dedicated high-performance **Java 21 Microservice** (`java-security-service`) and a standalone **JavaFX Desktop Trading Terminal** (`java-gui-client`), satisfying all requirements of the Java GUI and Java Web Evaluation Rubrics:
+
+### 1. Architectural Highlights
+- **Core OOP & Polymorphism**: Abstract base class [`AbstractPortfolioAnalyzer`](file:///a:/stock%20market%20platform/java-security-service/src/main/java/com/bullrun/security/service/analytics/AbstractPortfolioAnalyzer.java) utilizing Template Method pattern; runtime polymorphic strategies ([`RiskAnalyticsStrategy`](file:///a:/stock%20market%20platform/java-security-service/src/main/java/com/bullrun/security/service/analytics/RiskAnalyticsStrategy.java), [`PerformanceAnalyticsStrategy`](file:///a:/stock%20market%20platform/java-security-service/src/main/java/com/bullrun/security/service/analytics/PerformanceAnalyticsStrategy.java), [`DiversificationAnalyticsStrategy`](file:///a:/stock%20market%20platform/java-security-service/src/main/java/com/bullrun/security/service/analytics/DiversificationAnalyticsStrategy.java)) dispatched dynamically via [`AnalyticsExecutionService`](file:///a:/stock%20market%20platform/java-security-service/src/main/java/com/bullrun/security/service/analytics/AnalyticsExecutionService.java).
+- **Collections & Generics**: Streams, `Collectors.groupingBy`, `BigDecimal` arithmetic with `RoundingMode.HALF_UP`, and generic response wrapper [`ApiResponse<T>`](file:///a:/stock%20market%20platform/java-security-service/src/main/java/com/bullrun/security/dto/ApiResponse.java).
+- **Multithreading & Synchronization**: Bounded `ThreadPoolTaskExecutor` (core: 4, max: 16, queue: 100) running concurrent computations with `CompletableFuture.allOf()`; thread-safe metrics tracking via `ConcurrentHashMap` and `AtomicLong` in [`ConcurrentAnalyticsTracker`](file:///a:/stock%20market%20platform/java-security-service/src/main/java/com/bullrun/security/service/analytics/ConcurrentAnalyticsTracker.java).
+- **Direct JDBC with PreparedStatement**: PostgreSQL JDBC driver, `try-with-resources`, parameterized SQL operations, and transaction integrity via [`SecurityEventJdbcDaoImpl`](file:///a:/stock%20market%20platform/java-security-service/src/main/java/com/bullrun/security/repository/jdbc/SecurityEventJdbcDaoImpl.java) and [`JdbcDemoController`](file:///a:/stock%20market%20platform/java-security-service/src/main/java/com/bullrun/security/controller/JdbcDemoController.java).
+- **Jakarta HttpServlet Integration**: Dedicated servlet [`BullrunDemoServlet`](file:///a:/stock%20market%20platform/java-security-service/src/main/java/com/bullrun/security/servlet/BullrunDemoServlet.java) registered at `/demo/servlet/*` with embedded Tomcat container routing.
+- **JavaFX Native Desktop Terminal**: Standalone desktop application [`BullrunGuiApp`](file:///a:/stock%20market%20platform/java-gui-client/src/main/java/com/bullrun/gui/BullrunGuiApp.java) with multi-tab dashboard, real-time analytics views, risk meters, and direct JDBC test trigger controls.
+
+### 2. Environment Variables
+Configure in `java-security-service/src/main/resources/application.properties` or environment:
+```env
+PORT=8081
+SPRING_DATASOURCE_URL=jdbc:postgresql://ep-silent-wave-a19e2777-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+SPRING_DATASOURCE_USERNAME=neondb_owner
+SPRING_DATASOURCE_PASSWORD=your_db_password
+JWT_SECRET=your-256-bit-secret-key-here
+```
+
+### 3. Quick Run Commands
+
+#### A. Run Java Security & Analytics Backend (Port 8081)
+```bash
+cd java-security-service
+mvn spring-boot:run
+```
+
+#### B. Run Automated Java Test Suites
+```bash
+# Test java-security-service (41 tests: OOP, Collections, Concurrency, JDBC, Servlet)
+cd java-security-service
+mvn test
+
+# Test java-gui-client (3 tests: JavaFX Client, API deserialization, error states)
+cd ../java-gui-client
+mvn test
+```
+
+#### C. Launch JavaFX Desktop Client
+```bash
+cd java-gui-client
+mvn clean javafx:run
+```
+
+#### D. Verify Direct JDBC Demonstration
+```bash
+# Create Security Event via direct JDBC PreparedStatement
+curl -X POST http://localhost:8081/api/java/demo/jdbc/events \
+  -H "Content-Type: application/json" \
+  -d '{"eventType":"LOGIN_SUCCESS","endpoint":"/api/v1/auth/login","status":"SUCCESS","severity":"INFO"}'
+
+# Query all Security Events via direct JDBC
+curl http://localhost:8081/api/java/demo/jdbc/events
+```
+
+#### E. Verify Jakarta HttpServlet
+```bash
+# Query BullrunDemoServlet health check
+curl http://localhost:8081/demo/servlet/health
+```
+
+### 4. Detailed Evaluation Documentation
+- **Architecture & System Design**: [`docs/JAVA_RUBRIC_SYSTEM_DESIGN.md`](file:///a:/stock%20market%20platform/docs/JAVA_RUBRIC_SYSTEM_DESIGN.md) (Contains 4 Mermaid architecture and flow diagrams, database mapping, and security model).
+- **Core Java Viva Guide**: [`docs/JAVA_VIVA_GUIDE.md`](file:///a:/stock%20market%20platform/docs/JAVA_VIVA_GUIDE.md) (Contains concept-to-file mapping, code proofs, and high-frequency viva Q&A).
+
+---
+
 ## 🛡️ License
 
-This project is proprietary and confidential. Developed for the TradeX institutional fintech platform.
+This project is proprietary and confidential. Developed for the TradeX / BullRun institutional fintech platform.

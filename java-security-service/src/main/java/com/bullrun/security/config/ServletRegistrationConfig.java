@@ -17,7 +17,8 @@ public class ServletRegistrationConfig {
     public ServletRegistrationBean<BullrunDemoServlet> bullrunDemoServletRegistration() {
         ServletRegistrationBean<BullrunDemoServlet> registrationBean = new ServletRegistrationBean<>(
             new BullrunDemoServlet(),
-            "/demo/servlet/*"
+            "/demo/servlet/*",
+            "/api/java/demo/servlet/*"
         );
         registrationBean.setName("BullrunDemoServlet");
         registrationBean.setLoadOnStartup(1);

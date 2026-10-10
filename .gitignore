@@ -84,3 +84,5 @@ Thumbs.db
 target/
 **/target/
 *.class
+dependency-reduced-pom.xml
+**/dependency-reduced-pom.xml
