@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -32,66 +32,84 @@ async def register_user(
     user_agent: Optional[str] = None,
 ) -> User:
     """Register a new user, profile, role, paper wallet, and default watchlist."""
+    normalized_email = user_in.email.strip().lower()
+
     # Check if email is already taken
-    stmt = select(User).where(User.email == user_in.email)
+    stmt = select(User).where(func.lower(User.email) == normalized_email)
     existing = (await db.execute(stmt)).scalar_one_or_none()
     if existing:
-        raise ResourceConflictError(message=f"User with email '{user_in.email}' already exists.")
+        raise ResourceConflictError(message=f"User with email '{normalized_email}' already exists.")
 
-    # Hash password
-    hashed_pwd = get_password_hash(user_in.password)
+    try:
+        # Hash password
+        hashed_pwd = get_password_hash(user_in.password)
 
-    user = User(
-        email=user_in.email,
-        hashed_password=hashed_pwd,
-        is_active=True,
-        is_verified=False,
+        user = User(
+            email=normalized_email,
+            hashed_password=hashed_pwd,
+            is_active=True,
+            is_verified=False,
+        )
+        db.add(user)
+        await db.flush()
+
+        # Create profile
+        profile = Profile(
+            user_id=user.id,
+            first_name=user_in.first_name,
+            last_name=user_in.last_name,
+            phone=user_in.phone,
+        )
+        db.add(profile)
+
+        # Assign role
+        role = await get_or_create_role(db, role_name, f"System {role_name} role")
+        user_role = UserRole(user_id=user.id, role_id=role.id)
+        db.add(user_role)
+        await db.flush()
+
+        # Create paper trading wallet with initial balance from system config
+        await create_user_wallet(db, user.id)
+
+        # Create default watchlist
+        default_watchlist = Watchlist(
+            user_id=user.id,
+            name="My Watchlist",
+            is_default=True,
+        )
+        db.add(default_watchlist)
+
+        # Audit log
+        await record_audit_log(
+            db=db,
+            action="USER_REGISTRATION",
+            entity_type="user",
+            user_id=user.id,
+            entity_id=user.id,
+            new_values={"email": user.email, "role": role_name},
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+
+        await db.commit()
+
+        # Reload user with relationships
+        return await get_user_by_id(db, user.id)
+    except Exception:
+        await db.rollback()
+        raise
+
+
+async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
+    """Retrieve user by email (case-insensitive) including roles and profile."""
+    normalized_email = email.strip().lower()
+    stmt = (
+        select(User)
+        .where(func.lower(User.email) == normalized_email)
+        .options(selectinload(User.roles), selectinload(User.profile))
     )
-    db.add(user)
-    await db.flush()
-
-    # Create profile
-    profile = Profile(
-        user_id=user.id,
-        first_name=user_in.first_name,
-        last_name=user_in.last_name,
-        phone=user_in.phone,
-    )
-    db.add(profile)
-
-    # Assign role
-    role = await get_or_create_role(db, role_name, f"System {role_name} role")
-    user_role = UserRole(user_id=user.id, role_id=role.id)
-    db.add(user_role)
-    await db.flush()
-
-    # Create paper trading wallet with initial balance from system config
-    await create_user_wallet(db, user.id)
-
-    # Create default watchlist
-    default_watchlist = Watchlist(
-        user_id=user.id,
-        name="My Watchlist",
-        is_default=True,
-    )
-    db.add(default_watchlist)
-
-    # Audit log
-    await record_audit_log(
-        db=db,
-        action="USER_REGISTRATION",
-        entity_type="user",
-        user_id=user.id,
-        entity_id=user.id,
-        new_values={"email": user.email, "role": role_name},
-        ip_address=ip_address,
-        user_agent=user_agent,
-    )
-
-    await db.commit()
-
-    # Reload user with relationships
-    return await get_user_by_id(db, user.id)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
 
 
 async def authenticate_user(
@@ -102,9 +120,10 @@ async def authenticate_user(
     user_agent: Optional[str] = None,
 ) -> User:
     """Verify user credentials and check active status."""
+    normalized_email = email.strip().lower()
     stmt = (
         select(User)
-        .where(User.email == email)
+        .where(func.lower(User.email) == normalized_email)
         .options(selectinload(User.roles), selectinload(User.profile))
     )
     result = await db.execute(stmt)

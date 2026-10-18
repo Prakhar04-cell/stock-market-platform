@@ -1,6 +1,9 @@
 from datetime import timedelta
-from typing import Any
+from typing import Any, Optional
+from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, Request, status
+from fastapi.responses import RedirectResponse
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -12,6 +15,8 @@ from app.core.database import get_db
 from app.models.user import User
 from app.schemas.auth import (
     ForgotPasswordRequest,
+    GoogleAuthRequest,
+    GoogleAuthUrlResponse,
     RefreshTokenRequest,
     ResetPasswordRequest,
     Token,
@@ -21,6 +26,12 @@ from app.schemas.auth import (
 )
 from app.services.audit_service import record_audit_log
 from app.services.auth_service import authenticate_user, register_user
+from app.services.google_oauth_service import (
+    authenticate_or_register_google_user,
+    exchange_google_code,
+    get_google_auth_url,
+    verify_google_identity,
+)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -208,9 +219,8 @@ async def reset_password(
     if claims.get("purpose") != "password_reset":
         raise AuthenticationError(message="Invalid token for password reset.")
 
-    email = claims.get("sub")
-    from sqlalchemy import select
-    stmt = select(User).where(User.email == email)
+    email = str(claims.get("sub", "")).strip().lower()
+    stmt = select(User).where(func.lower(User.email) == email)
     user = (await db.execute(stmt)).scalar_one_or_none()
     if not user:
         raise ResourceNotFoundError(resource="User", identifier=email)
@@ -230,3 +240,86 @@ async def reset_password(
     )
     await db.commit()
     return {"success": True, "message": "Password has been successfully updated."}
+
+
+@router.get("/google/url", response_model=GoogleAuthUrlResponse, summary="Get Google OAuth authorization URL")
+async def google_auth_url(
+    redirect_uri: Optional[str] = None,
+    state: Optional[str] = None,
+):
+    """
+    Generate and return a Google OAuth 2.0 authorization URL with anti-CSRF state token.
+    Uses standard scopes (openid, email, profile).
+    """
+    url, generated_state = get_google_auth_url(redirect_uri=redirect_uri, state=state)
+    return GoogleAuthUrlResponse(url=url, state=generated_state)
+
+
+@router.post("/google", response_model=Token, summary="Authenticate via Google OAuth")
+async def google_auth(
+    request: Request,
+    payload: GoogleAuthRequest,
+    db: AsyncSession = Depends(get_db),
+    _limiter: None = Depends(login_rate_limiter),
+):
+    """
+    Authenticate user via Google OAuth 2.0.
+    Accepts either an authorization code (exchanged securely on backend) or a direct verified Google ID token.
+    Creates new BullRun user with ₹1,00,000 paper trading wallet or safely links to existing account.
+    """
+    client_ip = request.client.host if request.client else None
+    user_agent = request.headers.get("User-Agent")
+
+    if payload.code:
+        token_data = await exchange_google_code(code=payload.code, redirect_uri=payload.redirect_uri)
+        google_user_info = await verify_google_identity(
+            id_token=token_data.get("id_token"),
+            access_token=token_data.get("access_token"),
+        )
+    elif payload.id_token:
+        google_user_info = await verify_google_identity(id_token=payload.id_token)
+    else:
+        raise AuthenticationError(message="Either authorization code or Google ID token is required.")
+
+    user = await authenticate_or_register_google_user(
+        db=db,
+        google_info=google_user_info,
+        ip_address=client_ip,
+        user_agent=user_agent,
+    )
+
+    primary_role = user.roles[0].name if user.roles else "TRADER"
+    access_token = create_access_token(subject=user.id, role=primary_role)
+    refresh_token = create_refresh_token(subject=user.id)
+
+    return Token(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=_build_user_response(user),
+    )
+
+
+@router.get("/google/callback", summary="Direct browser callback handler for Google OAuth")
+async def google_callback(
+    request: Request,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
+):
+    """
+    Handles Google redirect when Google directly calls the backend URL.
+    Redirects user to the frontend callback handler.
+    """
+    frontend_base = settings.FRONTEND_URL.rstrip("/")
+    if error:
+        return RedirectResponse(url=f"{frontend_base}/login?oauth_error={error}")
+    if not code:
+        return RedirectResponse(url=f"{frontend_base}/login?oauth_error=missing_code")
+
+    params = {"code": code}
+    if state:
+        params["state"] = state
+    return RedirectResponse(url=f"{frontend_base}/auth/callback/google?{urlencode(params)}")
+

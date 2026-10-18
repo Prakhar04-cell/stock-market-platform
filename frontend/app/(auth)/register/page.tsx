@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { apiRequest, setAuthTokens } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, ArrowRight, AlertCircle, ShieldCheck } from "lucide-react";
+import { ArrowRight, AlertCircle, ShieldCheck } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,12 +26,12 @@ export default function RegisterPage() {
     try {
       const data = await apiRequest("/api/v1/auth/register", {
         method: "POST",
-        body: JSON.stringify({
-          email,
+        body: {
+          email: email.trim().toLowerCase(),
           password,
-          first_name: firstName,
-          last_name: lastName,
-        }),
+          first_name: firstName.trim() || undefined,
+          last_name: lastName.trim() || undefined,
+        },
       });
 
       if (typeof window !== "undefined") {
@@ -42,6 +43,29 @@ export default function RegisterPage() {
       setErrorMessage(err.message || "Failed to create account. Please verify input.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setIsGoogleLoading(true);
+    setErrorMessage(null);
+    try {
+      const state = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("bullrun_oauth_state", state);
+        const redirectUri = `${window.location.origin}/auth/callback/google`;
+        const res = await apiRequest(
+          `/api/v1/auth/google/url?redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`
+        );
+        if (res?.url) {
+          window.location.href = res.url;
+        } else {
+          throw new Error("Unable to obtain Google sign-up authorization URL.");
+        }
+      }
+    } catch (err: any) {
+      setIsGoogleLoading(false);
+      setErrorMessage(err.message || "Google registration is currently unavailable. Please sign up with email.");
     }
   };
 
@@ -66,13 +90,48 @@ export default function RegisterPage() {
         </div>
 
         {/* Form Card */}
-        <div className="rounded-[10px] border border-[#E5E7EB] bg-white p-6 space-y-4">
+        <div className="rounded-[10px] border border-[#E5E7EB] bg-white p-6 space-y-4 shadow-sm">
           {errorMessage && (
             <div className="p-3 rounded-[8px] bg-rose-50 border border-rose-200 text-[#DC2626] text-xs flex items-center gap-2 font-normal">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
+
+          {/* Continue with Google */}
+          <button
+            type="button"
+            onClick={handleGoogleSignUp}
+            disabled={isGoogleLoading || isLoading}
+            className="w-full py-2.5 px-4 bg-white hover:bg-neutral-50 text-neutral-800 rounded-[8px] font-medium text-xs border border-[#E5E7EB] shadow-xs flex items-center justify-center gap-2.5 transition-all cursor-pointer disabled:opacity-60"
+          >
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.04h3.88c2.27-2.09 3.66-5.17 3.66-9.14z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.04c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.13C3.26 21.36 7.33 24 12 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.28 14.28c-.25-.72-.38-1.49-.38-2.28s.13-1.56.38-2.28V6.59H1.24C.45 8.16 0 9.94 0 12s.45 3.84 1.24 5.41l4.04-3.13z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.24 6.59l4.04 3.13c.95-2.83 3.6-4.97 6.72-4.97z"
+              />
+            </svg>
+            <span>{isGoogleLoading ? "Connecting to Google..." : "Continue with Google"}</span>
+          </button>
+
+          {/* Divider */}
+          <div className="relative flex py-1 items-center">
+            <div className="flex-grow border-t border-[#E5E7EB]"></div>
+            <span className="flex-shrink mx-3 text-[11px] text-[#9CA3AF] uppercase font-medium">or with email</span>
+            <div className="flex-grow border-t border-[#E5E7EB]"></div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -88,7 +147,6 @@ export default function RegisterPage() {
                 placeholder="Singh"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                required
               />
             </div>
 

@@ -106,14 +106,20 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 @pytest_asyncio.fixture(scope="function")
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    from app.core.limiter import _memory_limiter, login_rate_limiter, auth_rate_limiter
+    _memory_limiter.clear()
+
     async def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[login_rate_limiter] = lambda: None
+    app.dependency_overrides[auth_rate_limiter] = lambda: None
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
     app.dependency_overrides.clear()
+    _memory_limiter.clear()
 
 
 @pytest_asyncio.fixture

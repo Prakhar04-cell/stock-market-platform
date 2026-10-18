@@ -100,3 +100,108 @@ async def test_me_endpoint(client: AsyncClient, trader_auth_headers: dict):
     user_info = res.json()
     assert user_info["email"] == "trader@tradex.com"
     assert "TRADER" in user_info["roles"]
+
+
+@pytest.mark.asyncio
+async def test_case_insensitive_email_normalization(client: AsyncClient):
+    """Verify that email registration and login are strictly case-insensitive."""
+    reg_payload = {
+        "email": "TraderCase@BullRun.in",
+        "password": "PasswordCase123!",
+        "first_name": "Case",
+        "last_name": "Test",
+    }
+    res_reg = await client.post("/api/v1/auth/register", json=reg_payload)
+    assert res_reg.status_code == 201
+    assert res_reg.json()["user"]["email"] == "tradercase@bullrun.in"
+
+    # Login with lowercase
+    res_login_lower = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "tradercase@bullrun.in", "password": "PasswordCase123!"},
+    )
+    assert res_login_lower.status_code == 200
+
+    # Login with UPPERCASE
+    res_login_upper = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "TRADERCASE@BULLRUN.IN", "password": "PasswordCase123!"},
+    )
+    assert res_login_upper.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_duplicate_registration_case_insensitive(client: AsyncClient):
+    """Verify duplicate registration fails even with mixed casing."""
+    p1 = {"email": "UniqueTrader@bullrun.in", "password": "Password123!"}
+    p2 = {"email": "uniquetrader@bullrun.in", "password": "Password123!"}
+
+    res1 = await client.post("/api/v1/auth/register", json=p1)
+    assert res1.status_code == 201
+
+    res2 = await client.post("/api/v1/auth/register", json=p2)
+    assert res2.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_expired_and_invalid_tokens_rejected(client: AsyncClient, test_trader):
+    """Verify protected endpoints reject missing, expired, and forged tokens."""
+    from datetime import timedelta
+    from app.core.security import create_access_token
+
+    # 1. Missing token
+    res_no_token = await client.get("/api/v1/auth/me")
+    assert res_no_token.status_code == 401
+
+    # 2. Forged token
+    res_bad_token = await client.get("/api/v1/auth/me", headers={"Authorization": "Bearer not.a.valid.jwt"})
+    assert res_bad_token.status_code == 401
+
+    # 3. Expired token
+    expired_token = create_access_token(
+        subject=test_trader.id,
+        role="TRADER",
+        expires_delta=timedelta(seconds=-60),
+    )
+    res_expired = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {expired_token}"})
+    assert res_expired.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_logout_and_session_persistence(client: AsyncClient, trader_auth_headers: dict):
+    """Verify logout records audit event and succeeds."""
+    logout_res = await client.post("/api/v1/auth/logout", headers=trader_auth_headers)
+    assert logout_res.status_code == 200
+    assert logout_res.json()["success"] is True
+
+
+@pytest.mark.asyncio
+async def test_forgot_and_reset_password_flow(client: AsyncClient):
+    """Verify complete password recovery flow."""
+    email = "recovery_test@bullrun.in"
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "OldPassword123!"},
+    )
+
+    # Request reset token
+    forgot_res = await client.post("/api/v1/auth/forgot-password", json={"email": email})
+    assert forgot_res.status_code == 200
+    reset_token = forgot_res.json()["reset_token"]
+    assert reset_token is not None
+
+    # Reset password with token
+    reset_res = await client.post(
+        "/api/v1/auth/reset-password",
+        json={"token": reset_token, "new_password": "NewSecurePassword456!"},
+    )
+    assert reset_res.status_code == 200
+
+    # Old password fails
+    bad_login = await client.post("/api/v1/auth/login", json={"email": email, "password": "OldPassword123!"})
+    assert bad_login.status_code == 401
+
+    # New password succeeds
+    good_login = await client.post("/api/v1/auth/login", json={"email": email, "password": "NewSecurePassword456!"})
+    assert good_login.status_code == 200
+

@@ -7,10 +7,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "TradeX Trading Platform"
+    PROJECT_NAME: str = "BullRun Trading Platform"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
     VERSION: str = "1.0.0"
+
+    # Google OAuth Configuration
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = ""
 
     # API Configuration
     API_V1_STR: str = "/api/v1"
